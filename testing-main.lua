@@ -425,18 +425,24 @@ end
 
 function GetPlayer(Arg)
 	local Target = {}
-
 	local PlayerNames = split(Arg, Settings.Player)
-	for i, String in next, PlayerNames or {"me"} do
+
+	for i, String in next, PlayerNames or {} do
 		if String == nil then
 			table.insert(Target, Local.Player)
 		elseif String:lower() == "random" then
 			table.insert(Target, Services.Players:GetPlayers()[math.random(#Services.Players:GetPlayers())])
 		elseif String:lower() == "me" then
 			table.insert(Target, Local.Player)
-		elseif String:lower() == "others" or String:lower() == "all" then
+		elseif String:lower() == "all" then
 			for i, Player in next, Services.Players:GetPlayers() do
 				table.insert(Target, Player)
+			end
+		elseif String:lower() == "others" then
+			for i, Player in next, Services.Players:GetPlayers() do
+				if Player ~= Local.Player then
+				   table.insert(Target, Player)
+				end
 			end
 		elseif String:lower() == "closest" then
 			local Lowest = math.huge
@@ -611,6 +617,66 @@ Command.Toggles = {}
 
 -- command functions 
 
+Methods = {}
+
+Methods.RemoveRightGrip = function(Tool)
+	Tool.Parent = Services.Character
+	Tool.Parent = Local.Player.Backpack
+	Tool.Parent = Services.Character.Humanoid
+	Tool.Parent = Services.Character
+end
+
+Methods.CheckIfVulnerable = function()
+	if Services.Replicated:FindFirstChild("DeleteCar") then
+		return true
+	elseif Local.Character:FindFirstChild("HandlessSegway") then
+		return true
+	elseif Local.Player.Backpack:FindFirstChild("Building Tools") then
+		return true
+	else
+		for i, Descendant in next, game:GetDescendants() do
+			if Descendant.Name == "DestroySegway" then
+				return true
+			end
+		end
+	end
+end
+
+Methods.Destroy = function(Part)
+	if Services.Replicated:FindFirstChild("DeleteCar") then
+		Services.Replicated.DeleteCar:FireServer(Part)
+	elseif Services.Character:FindFirstChild("HandlessSegway") then
+		for i, Descendant in next, game:GetDescendants() do
+			if Descendant.Name == "DestroySegway" then
+				Descentdant:FireServer(Part, {Value = Part})
+			end
+		end
+	elseif Services.ReplicatedStorage:FindFirstChild("GuiHandler") then
+		Services.ReplicatedStorage.GuiHandler:FireServer(false, Part)
+	elseif Local.Player.Backpack:FindFirstChild("Building Tools") then
+		local ArgumentTable = {
+			[1] = "Remove",
+			[2] = {
+				[1] = Part
+			}
+		}
+
+		Local.Player.Backpack:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint:InvokeServer(
+		unpack(ArgumentTable)
+		)
+	end
+end
+
+
+local Modules = {
+	Freecam = nil,
+	Glass = nil,
+}
+
+spawn(function()
+    Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets%20/freecam"))()
+end)
+
 local PromptChangeRigType = function(RigType)
 	Services.AvatarEditor:PromptSaveAvatar(
 		GetHumanoid(Local.Character).HumanoidDescription,
@@ -618,7 +684,6 @@ local PromptChangeRigType = function(RigType)
 	)
 
 	Services.AvatarEditor.PromptSaveAvatarCompleted:Wait()
-
 	Command.Parse("respawn")
 end
 
@@ -640,7 +705,7 @@ local Walkfling = function(Power, Bool)
 					end
 
 					if Command.Toggles.WalkFling then
-						if unpack(GetPlayer("closest")):DistanceFromCharacter(GetRoot(Local.Character).Position) <= 10 then
+						if unpack(GetPlayer("closest")):DistanceFromCharacter(GetRoot(Local.Character).Position) <= 5 then
 							Velocity = HumanoidRootPart.Velocity
 							HumanoidRootPart.Velocity = Velocity * tonumber(Power) + Vector3.new(0, tonumber(Power), 0)
 							Services.Run.RenderStepped:Wait()
@@ -1728,7 +1793,7 @@ Command.Add({
 
 		local Tabs = Main.Tabs
 		local MainTab = Tabs.Main.Scroll	
-		local URL = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=200"
+		local URL = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"
 		local ServerTable = {}
 		local Info = game:GetService("HttpService"):JSONDecode(game:HttpGetAsync(URL))
 
@@ -2490,6 +2555,21 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "godmode", "god" },
+	Description = "Touching any kill bricks won't kill you",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Part in next, workspace:GetDescendants() do
+            if Part:IsA("BasePart") then
+                Part.CanTouch = false
+			end
+		end
+	end,
+})
+
+
+Command.Add({
 	Aliases = { "serverfreeze", "freezewalk" },
 	Description = "Freezes your character on the server but lets you walk on the client, lets you kill enemies without them seeing you",
 	Arguments = {},
@@ -2986,6 +3066,33 @@ Command.Add({
 	end,
 })
 
+Command.Toggles.Fakelag = false
+Command.Add({
+	Aliases = { "fakelag" },
+	Description = "Makes it seem like you're lagging",
+	Arguments = {},
+	Plugin = false,
+	Task = function()	
+		Command.Toggles.Fakelag = true
+
+		repeat
+			GetRoot(Local.Character).Anchored = true
+			task.wait(.05)
+			GetRoot(Local.Character).Anchored = false
+			task.wait(.05)
+		until not Command.Toggles.Fakelag or not Local.Character
+	end,
+})
+
+Command.Add({
+	Aliases = { "unfakelag" },
+	Description = "Stops the fake lag command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()	
+		Command.Toggles.Fakelag = false
+	end,
+})
 
 Command.Add({
 	Aliases = { "fpsbooster" },
@@ -3641,6 +3748,42 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "vehiclespeed" },
+	Description = "Set the speed of the vehicle you're in",
+	Arguments = {
+		{ Name = "Speed", Type = "Number" }	
+	},
+	Plugin = false,
+	Task = function(Speed)	
+		local Amount = SetNumber(Speed)
+
+		if VehicleSpeed then
+		    VehicleSpeed = VehicleSpeed:Disconnect()
+		end
+		
+		VehicleSpeed = Services.Run.Stepped:Connect(function()
+			local Hum = GetHumanoid(Local.Character)
+
+			if Hum.SeatPart then
+			    Hum.SeatPart:ApplyImpulse(Hum.SeatPart.CFrame.LookVector * Vector3.new(Amount, Amount, Amount))
+			end
+		end)
+	end,
+})
+
+Command.Add({
+	Aliases = { "unvehiclespeed" },
+	Description = "Stops the vehicle speed command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()	
+		if VehicleSpeed then
+		    VehicleSpeed = VehicleSpeed:Disconnect()
+		end
+	end,
+})
+
+Command.Add({
 	Aliases = { "seat" },
 	Description = "Sits you in a random seat in the game",
 	Arguments = {},
@@ -3722,6 +3865,38 @@ Command.Add({
 		if Part then
 			Part:Destroy()
 		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "freecam" },
+	Description = "Spectate the game freely",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Speed)
+    local Free = Modules.Freecam
+
+    if typeof(Free) == "table" then
+		Modules.Freecam:EnableFreecam()
+    else
+       Utils.Notify("Error", "Error!", "Freecam failed to load", 5)
+    end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unfreecam" },
+	Description = "Stops free camming",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Speed)
+    local Free = Modules.Freecam
+
+    if typeof(Free) == "table" then
+		Modules.Freecam:StopFreecam()
+    else
+       Utils.Notify("Error", "Error!", "Freecam failed to load", 5)
+    end
 	end,
 })
 
@@ -4247,6 +4422,204 @@ Command.Add({
 		loadstring(game:HttpGet("https://github.com/exxtremestuffs/SimpleSpySource/raw/master/SimpleSpy.lua"))()
 	end,
 })
+
+if Methods.CheckIfVulnerable() then
+    Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Cmd, use the <b>vuln</b> command for more information", 15)
+
+	Command.Add({
+		Aliases = { "vuln" },
+		Description = "Using the vulnerability feature built into Cmd, you can use bonus commands on players",
+		Arguments = {},
+		Plugin = false,
+		Task = function()
+			if not Screen:FindFirstChild("Vuln") then
+
+				local Main = Tab.new({
+					Title = "Vuln",
+					Drag = true
+				})
+	
+				local Tabs = Main.Tabs
+				local MainTab = Tabs.Main.Scroll
+				
+				Library.new("Input", { 
+					Title = "Kill",
+					Description = "Kill your target",
+					Parent = MainTab,
+					Default = "",
+					Callback = function(Message)
+						local Plr = GetPlayer(Message)
+
+						for Index, Target in next, Plr do
+							if Character(Target) then
+								Methods.Destroy(Character(Target).Head)
+							end
+						end
+					end,
+				})
+
+				Library.new("Input", { 
+					Title = "Sink",
+					Description = "Sink your target to the ground",
+					Parent = MainTab,
+					Default = "",
+					Callback = function(Message)
+						local Plr = GetPlayer(Message)
+
+						for Index, Target in next, Plr do
+							if Character(Target) then
+								Methods.Destroy(GetRoot(Character(Target)))
+							end
+						end
+					end,
+				})
+
+				Library.new("Input", { 
+					Title = "Bald",
+					Description = "Turns your target bald",
+					Parent = MainTab,
+					Default = "",
+					Callback = function(Message)
+						local Plr = GetPlayer(Message)
+
+						for Index, Target in next, Plr do
+							if Character(Target) then
+								for i, v in next, Character(Target):GetChildren() do
+									if v:IsA("Accessory") then
+										Methods.Destroy(v)
+									end
+								end
+							end
+						end
+					end,
+				})
+
+				Library.new("Input", { 
+					Title = "Fat",
+					Description = "Turns your target fat",
+					Parent = MainTab,
+					Default = "",
+					Callback = function(Message)
+						local Plr = GetPlayer(Message)
+
+						for Index, Target in next, Plr do
+							if Character(Target) then
+								for i, v in next, Character(Target):GetChildren() do
+									if v:IsA("CharacterMesh") then
+										Methods.Destroy(v)
+									end
+								end
+							end
+						end
+					end,
+				})
+
+				Library.new("Input", { 
+					Title = "Naked",
+					Description = "Turns your target naked",
+					Parent = MainTab,
+					Default = "",
+					Callback = function(Message)
+						local Plr = GetPlayer(Message)
+						local Classes = { "Shirt", "Pants", "ShirtGraphics" }
+
+						for Index, Target in next, Plr do
+							if Character(Target) then
+								for i, v in next, Character(Target):GetChildren() do
+									if Classes[v.ClassName] then
+										Methods.Destroy(v)
+									end
+								end
+							end
+						end
+					end,
+				})
+
+				Library.new("Input", { 
+					Title = "Punish",
+					Description = "Makes your target's character not able to reset",
+					Parent = MainTab,
+					Default = "",
+					Callback = function(Message)
+						local Plr = GetPlayer(Message)
+						local Classes = { "Shirt", "Pants", "ShirtGraphics" }
+
+						for Index, Target in next, Plr do
+							if Character(Target) then
+								Methods.Destroy(Character(Target))
+							end
+						end
+					end,
+				})
+
+				Library.new("Button", { 
+					Title = "BTools",
+					Description = "Give yourself BTools",
+					Parent = MainTab,
+					Callback = function()
+						local DestroyTool = CreateInstance("Tool", {
+							Parent = Local.Backpack,
+							RequiresHandle = false,
+							Name = "Delete",
+							ToolTip = "Btools (Delete)",
+							TextureId = "https://www.roblox.com/asset/?id=12223874",
+							CanBeDropped = false
+				        })
+
+					local BtoolsEquipped = false
+					DestroyTool.Equipped:Connect(function()
+						BtoolsEquipped = true
+					end)
+			
+					DestroyTool.Unequipped:Connect(function()
+						BtoolsEquipped = false
+					end)
+			
+					DestroyTool.Activated:Connect(function()
+							local Explosion = CreateInstance("Explosion", {
+									Parent = workspace,
+									BlastPressure = 0,
+									BlastRadius = 0,
+									DestroyJointRadiusPercent = 0,
+									ExplosionType = Enum.ExplosionType.NoCraters,
+									Position = Local.Mouse.Target.Position
+								})
+							Methods.Destroy(Local.Mouse.Target)
+					    end)
+					end,
+				})
+
+				Library.new("Button", { 
+					Title = "Clear Map",
+					Description = "Gets rid of the map",
+					Parent = MainTab,
+					Callback = function()
+						for i, v in next, workspace:GetChildren() do
+							Methods.Destroy(v)
+						end
+					end,
+				})
+
+				Library.new("Button", { 
+					Title = "Break Game",
+					Description = "Deletes every remote and script in the game",
+					Parent = MainTab,
+					Callback = function()
+						for i, v in next, Services.Replicated:GetChildren() do
+							Methods.Destroy(v)
+						end
+					end,
+				})
+	
+	
+	
+				Tweens.Open({ Canvas = Main, Speed = 0.3 })
+			else
+				Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
+			end
+		end,
+	})
+end
 
 spawn(function()
     if Checks.File then
