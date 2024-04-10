@@ -15,10 +15,8 @@ if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
 
-if getgenv then
-    if getgenv().CmdLoaded then
-		getgenv().CmdPath.Parent = nil
-	end
+if getgenv and getgenv().CmdLoaded then
+   getgenv().CmdPath.Parent = nil
 end
 
 local Settings = {
