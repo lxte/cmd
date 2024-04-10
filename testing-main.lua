@@ -297,7 +297,6 @@ local function SetFlying(flying)
 
 	if (isFlying) then
 		BodyGyro.CFrame = Local.Character.HumanoidRootPart.CFrame
-	else
 	end
 end
 
@@ -415,13 +414,13 @@ if Controller and TouchFrame then
 		end
 	)
 end
-end
 
 function Fly(Boolean, SpeedValue)
 	FlySpeed = SpeedValue or 1
 	SetFlying(Boolean)
 
 	Services.Run.RenderStepped:Connect(onUpdate)
+end
 end
 
 function GetPlayer(Arg)
@@ -3734,7 +3733,7 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Speed)
-		local Speed = SetNumber(Speed, 1, math.huge)
+		local Speed = tonumber(Speed) or 10
 
 		Fly(true, Speed)
 	end,
