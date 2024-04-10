@@ -13,7 +13,7 @@
 # ✨ Loadstring [W.I.P]
 
 ```lua
-loadstring(game:HttpGet("i forgor :("))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/main.lua"))()
 ```
 <br/>
 
