@@ -93,6 +93,7 @@ local Screen = game:GetObjects("rbxassetid://17078695559")[1] --script.Parent
 local Cmd = Screen.Command
 local Lib = Screen.Library
 local Example = Screen.Example
+local Open = Screen.Open
 local Bar = Cmd.Bar
 local Autofill = Cmd.Autofill
 local Box = Bar.Box
@@ -108,6 +109,8 @@ if not CoreSuccess then
 end
 
 Example.Visible = false
+Open.Visible = false
+
 for Index, Canvas in  next, Cmd:GetChildren() do
 	if Canvas:IsA("CanvasGroup") then
 		Canvas.Visible = false
@@ -3755,7 +3758,7 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Speed)	
-		local Amount = SetNumber(Speed)
+		local Amount = SetNumber(Speed, -math.huge, math.huge)
 
 		if VehicleSpeed then
 		    VehicleSpeed = VehicleSpeed:Disconnect()
@@ -4643,8 +4646,6 @@ end
 Library.LoadTheme()
 Autofills.Search("")
 
-Library.Hover(Bar.Top.Buttons.Info)
-
 Box:GetPropertyChangedSignal("Text"):Connect(function()
 	Autofills.Recommend(Box.Text)
 	Autofills.Search(Box.Text)
@@ -4690,6 +4691,19 @@ Box.FocusLost:Connect(function(Enter)
 
 	Library.Bar(false)
 end)
+
+if table.find({Enum.Platform.IOS, Enum.Platform.Android}, Services.Input:GetPlatform()) then 
+    Open.Visible = true
+    Library.Drag(Open)
+    Library.Hover(Open)
+
+    Open.Title.MouseButton1Click:Connect(function()
+		Library.Bar(true)
+		Wait()
+		Box.Text = ""
+		Box:CaptureFocus()
+    end)
+end
 
 if getgenv then
 	getgenv().CmdLoaded = true
