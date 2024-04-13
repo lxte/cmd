@@ -12,8 +12,14 @@
 
 # ✨ Loadstring [W.I.P]
 
+## Main [DON'T USE THIS FOR NOW]
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/main.lua"))()
+```
+
+## Testing [USE THIS FOR NOW]
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))()
 ```
 <br/>
 
