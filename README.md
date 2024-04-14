@@ -23,6 +23,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing
 ```
 <br/>
 
+# 🌐 Wiki
+
+- [Plugins](https://github.com/lxte/cmd/wiki/Plugins) - Wiki on how to create your own plugins
+- [Themes](https://github.com/lxte/cmd/wiki/Themes) - Wiki on how to apply themes
+  
 # 🔨 Credits
 
 - [7kayoh](https://github.com/7kayoh) - UI Inspiration
