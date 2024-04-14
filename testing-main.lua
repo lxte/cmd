@@ -5001,4 +5001,5 @@ if getgenv then
 	getgenv().CmdPath = Screen
 end
 
+Utils.Notify("Information", "IMPORTANT", "This is the testing loadstring, if you find any bugs DM them to me on discord @qipu", 10)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
