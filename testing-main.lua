@@ -7,8 +7,7 @@
    
    todo: (so i remember lol)
    
-   1. code the http logging
-   2. re-enable the automatic fpsbooster (it lags lol)
+   1. re-enable the automatic fpsbooster (it lags lol)
 ]]
 
 if not game:IsLoaded() then
@@ -77,10 +76,14 @@ Players.LocalPlayer.CharacterAdded:Connect(function(Character)
 	Local.Character = Character
 end)
 
-pcall(function()
+local FSuccess, FResult = pcall(function()
     if Checks.File then
         if not isfolder('Cmd') then
 			makefolder('Cmd')
+		end
+
+		if not isfolder('Cmd/Data') then
+			makefolder('Cmd/Data')
 		end
 		
 		if not isfolder('Cmd/Plugins') then
@@ -88,6 +91,11 @@ pcall(function()
 		end
 	end
 end)
+
+if not FSuccess then
+       warn(FResult)
+end
+
 -- ui - insert
 local Screen = game:GetObjects("rbxassetid://17078695559")[1] --script.Parent
 local Cmd = Screen.Command
@@ -572,6 +580,17 @@ function RGB(Color, Factor)
 	end
 end
 
+function StringToRGB(Item)
+    local Color = nil
+    if typeof(Item) == "string" then
+        Color = Color3.new(unpack(split(Item, ",")))
+    elseif typeof(Item) == "table" then
+        Color = Color3.new(unpack(Item))
+    end
+
+    return Color3.fromRGB(Color.R * 255, Color.G * 255, Color.B * 255)
+end
+
 function DivideUDim2(Value, Amount)
 	local New = {
 		Value.X.Scale / Amount;
@@ -604,17 +623,11 @@ local Tween = function(Object, Info, Table)
 	end
 end
 
-local Sum = function(Number, Amount)
-	Number = Number + Amount
-
-	return Number
-end
-
 -- command lib
-local Command = {}
-local Commands = {}
-local Admins = {}
-local FullArgs = {}
+Command = {}
+Commands = {}
+Admins = {}
+FullArgs = {}
 Command.Count = 0
 Command.Toggles = {}
 
@@ -623,10 +636,10 @@ Command.Toggles = {}
 Methods = {}
 
 Methods.RemoveRightGrip = function(Tool)
-	Tool.Parent = Services.Character
-	Tool.Parent = Local.Player.Backpack
-	Tool.Parent = Services.Character.Humanoid
-	Tool.Parent = Services.Character
+	Tool.Parent = Local.Character
+	Tool.Parent = Local.Backpack
+	Tool.Parent = Local.Character.Humanoid
+	Tool.Parent = Local.Character
 end
 
 Methods.CheckIfVulnerable = function()
@@ -634,7 +647,7 @@ Methods.CheckIfVulnerable = function()
 		return true
 	elseif Local.Character:FindFirstChild("HandlessSegway") then
 		return true
-	elseif Local.Player.Backpack:FindFirstChild("Building Tools") then
+	elseif Local.Backpack:FindFirstChild("Building Tools") then
 		return true
 	else
 		for i, Descendant in next, game:GetDescendants() do
@@ -648,7 +661,7 @@ end
 Methods.Destroy = function(Part)
 	if Services.Replicated:FindFirstChild("DeleteCar") then
 		Services.Replicated.DeleteCar:FireServer(Part)
-	elseif Services.Character:FindFirstChild("HandlessSegway") then
+	elseif Local.Character:FindFirstChild("HandlessSegway") then
 		for i, Descendant in next, game:GetDescendants() do
 			if Descendant.Name == "DestroySegway" then
 				Descentdant:FireServer(Part, {Value = Part})
@@ -674,10 +687,12 @@ end
 local Modules = {
 	Freecam = nil,
 	Glass = nil,
+    Bhop = nil,
 }
 
 spawn(function()
     Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets%20/freecam"))()
+ --   Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets%20/freecam"))()
 end)
 
 local PromptChangeRigType = function(RigType)
@@ -1267,7 +1282,13 @@ for Index, Button in next, Lib:GetChildren() do
 	end
 end
 
-Library.LoadTheme = function()
+Library.LoadTheme = function(Table)
+    if Table then
+        Settings.Themes = Table
+    else
+        Settings.Themes = Settings.Themes
+    end
+
 	for Index, Object in next, Screen:GetDescendants() do
 		if Library.Theming.Names[Object.Name] then
 			local Function = Library.Theming.Names[Object.Name]
@@ -1604,6 +1625,97 @@ Utils.Popup = function(Title, Description, Callback)
 		Canvas = New,
 		Speed = 0.25,
 	})
+end
+
+-- data functions
+local Data = {}
+
+Data.new = function(Name, Info)
+	if Checks.File then
+		writefile(format('Cmd/Data/%s', Name), Info)
+	else
+		warn("Exploit doesn't support file functions")
+	end
+end
+
+Data.get = function(Name)
+	if Checks.File and isfile(format('Cmd/Data/%s', Name)) then
+		return readfile(format('Cmd/Data/%s', Name))
+	else
+	warn("Data not found :(")
+	end
+end
+
+Data.GetSetting = function(Info)
+       local Settings = Services.Http:JSONDecode(Data.get("Settings.json")) or Settings
+
+	   if Settings[Info] then
+		   return Settings[Info]
+		else
+		    warn(Info)
+	   end
+end
+
+Data.SetSetting = function(Setting, Info)
+	local Decoded = Services.Http:JSONDecode(Data.get("Settings.json")) or Settings
+
+	if Decoded[Setting] then
+		Decoded[Setting] = Info
+		Settings[Setting] = Info
+	end
+
+	Data.new("Settings.json", Services.Http:JSONEncode(Decoded))
+end
+
+Data.SaveTheme = function(ThemeTable)
+    Library.LoadTheme(ThemeTable)
+    local Themes = {}
+
+    for Index, Color in next, ThemeTable do
+        Themes[Index] = tostring(Color)
+    end
+
+	Data.new("Themes.json", Services.Http:JSONEncode(Themes))
+end
+
+Data.SetUpThemeTable = function(ThemeTable)
+    local Themes = {}
+
+    for Index, Theme in next, ThemeTable do
+        if Index ~= "Transparency" and Index ~= "Mode" then
+            Themes[Index] = StringToRGB(Theme)
+        elseif Index == "Transparency" then
+            Themes[Index] = tonumber(Theme)
+        else
+            Themes[Index] = Theme
+        end
+    end
+
+    return Themes
+end
+
+if not Data.get("Settings.json") then
+	Data.new("Settings.json", Services.Http:JSONEncode(Settings))
+end
+
+if not Data.get("Themes.json") then
+    local Themes = {}
+
+    for Index, Color in next, Settings.Themes do
+        Themes[Index] = tostring(Color)
+    end
+
+	Data.new("Themes.json", Services.Http:JSONEncode(Themes))
+end
+
+if Checks.File then
+    Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+end
+
+if Checks.File then
+      local Themes = Settings.Themes
+      Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
+      Settings.Themes = Themes
 end
 
 -- command lib
@@ -2034,6 +2146,16 @@ Command.Add({
 				end
 			end})
 
+            Library.new("Button", { 
+                Title = "Save Theme",
+                Description = "Save the current theme you have applied",
+                Parent = Custom,
+                Callback = function()
+                    Data.SaveTheme(Settings.Themes)
+                    Utils.Notify("Success", "Success!", "Theme has been saved", 5)
+                end,
+            })
+
 			for Index, Theme in Library.Themes do
 				Library.new("Button", { 
 					Title = Index,
@@ -2333,7 +2455,63 @@ Command.Add({
 					SetOrder(Library.new("Label", { Title = format("%s (@%s)", Player.DisplayName, Player.Name), Description = format('said "%s"', Message), Parent = Chat }))
 				end)
 			end
-			
+
+            pcall(function()
+
+            local Httpget
+
+				Httpget =
+					hookfunction(
+						game.HttpGet,
+						newcclosure(
+							function(self, url)
+								SetOrder(Library.new("Label", { Title = "HttpGet logged", Description = url, Parent = Http }))
+								return Httpget(self, url)
+							end
+						)
+					)
+
+				local Httppost
+				Httppost =
+					hookfunction(
+						game.HttpPost,
+						newcclosure(
+							function(self, url)
+								SetOrder(Library.new("Label", { Title = "HttpPost logged", Description = url, Parent = Http }))
+								return Httppost(self, url)
+							end
+						)
+					)
+
+				if (game.HttpGet ~= game.HttpGetAsync) then
+					local HttpgetAsync
+					HttpgetAsync =
+						hookfunction(
+							game.HttpGetAsync,
+							newcclosure(
+								function(self, url)
+									SetOrder(Library.new("Label", { Title = "HttpGetAsync request logged", Description = url, Parent = Http }))
+									return HttpgetAsync(self, url)
+								end
+							)
+						)
+				end
+
+				if (game.HttpPost ~= game.HttpPostAsync) then
+					local HttppostAsync
+					HttppostAsync =
+						hookfunction(
+							game.HttpPostAsync,
+							newcclosure(
+								function(self, url)
+									SetOrder(Library.new("Label", { Title = "HttpPostAsync request logged", Description = url, Parent = Http }))
+									return HttppostAsync(self, url)
+								end
+							)
+						)
+				end
+			end)
+
 			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
 			Tweens.Open({ Canvas = Screen:FindFirstChild("Logs"), Speed = 0.3 })
@@ -2422,6 +2600,40 @@ Command.Add({
 
 		Humanoid.JumpPower = Amount
 		Humanoid.UseJumpPower = true
+	end,
+})
+
+Command.Add({
+	Aliases = { "prefix" },
+	Description = "Set the prefix for the command bar & chat",
+	Arguments = {
+		{ Name = "Prefix", Type = "String" }
+	},
+	Plugin = false,
+	Task = function(Prefix)
+		if Prefix and #Prefix == 1 then
+			Settings.Prefix = Prefix
+			Utils.Notify("Success", "Success!", format("Set your command bar to %s", Prefix))
+		else
+			Utils.Notify("Error", "Error!", "Failed to set prefix")
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "saveprefix" },
+	Description = "Save the prefix for the command bar & chat",
+	Arguments = {
+		{ Name = "Prefix", Type = "String" }
+	},
+	Plugin = false,
+	Task = function(Prefix)
+		if Prefix and #Prefix == 1 then
+			Data.SetSetting("Prefix", Prefix)
+			Utils.Notify("Success", "Success!", format("Set your command bar to %s", Prefix))
+		else
+			Utils.Notify("Error", "Error!", "Failed to set prefix")
+		end
 	end,
 })
 
@@ -2804,8 +3016,87 @@ Command.Add({
 			Services.TeleportService:TeleportCancel()
 			Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Local.Player)
 		end
+	end,
+})
 
-		Command.Parse("rejoin")
+Command.Add({
+	Aliases = { "rejoinreload" },
+	Description = "Rejoins and reloads Cmd",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local QueueTeleport =
+			(syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
+		local Done = false
+		local Run
+		local CF = GetRoot(Local.Character).CFrame
+
+		if not Done then
+			Done = not Done
+			local Run = "loadstring(game:HttpGet('https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua'))()"
+			QueueTeleport(Run)
+			Services.TeleportService:TeleportCancel()
+			Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Local.Player)
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "tickgoto", "tto" },
+	Description = "Teleports you to a player for a set amount of seconds",
+	Arguments = {
+		{ Name = "Target", Type = "Player" }, 
+		{ Name = "Time", Type = "Seconds" }, 
+	},
+	Plugin = false,
+	Task = function(Player, Time)
+		local OldCFrame = GetRoot(Local.Character).CFrame 
+		local Seconds = SetNumber(Time)
+
+		for i, Player in next, GetPlayer(Player) do
+			if Character(Player) and GetHumanoid(Character(Player)) then
+				Local.Character:SetPrimaryPartCFrame(GetRoot(Character(Player)).CFrame)
+				Wait(Seconds)
+				GetRoot(Local.Character).CFrame = OldCFrame
+				break
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "toolballs" },
+	Description = "Makes all your tools in inventory act like balls",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Humanoid = GetHumanoid(Local.Character)
+		local Tools = GetTools(Local.Player)
+
+		if not Humanoid then return end
+	
+		for _, x in next, Tools do
+			Methods.RemoveRightGrip(x)
+		end
+
+		for i,v in next, Tools do
+			local Part = Instance.new("Part", workspace)
+			Part.CFrame = GetRoot(Local.Character).CFrame
+			Part.Size = Vector3.new(3.5,3.5,3.5)
+			Part.Shape = "Ball"
+			Part.Transparency = 0.9
+			spawn(function()
+				while Wait() do
+					if v and v.Parent == Local.Character then
+						v.Handle.Position = Part.Position
+						v.Handle.CFrame = Part.CFrame
+					else
+						Wait()
+						Part:Destroy()
+					end
+				end
+			end)
+		end
 	end,
 })
 
@@ -4627,8 +4918,8 @@ end
 spawn(function()
     if Checks.File then
 		local Success, Result = pcall(function()
-			 for i,v in next, listfiles("Cmd/Plugins") do
-				loadstring(readfile(listfiles("Cmd/Plugins")[i]))();
+			 for Index, File in next, listfiles("Cmd/Plugins") do
+				loadstring(readfile(File))()
 			end
 	    end)
 
@@ -4643,7 +4934,7 @@ for Index, Table in next, Commands do
 	Autofills.Add(Table)
 end
 
-Library.LoadTheme()
+Library.LoadTheme(Settings.Themes)
 Autofills.Search("")
 
 Box:GetPropertyChangedSignal("Text"):Connect(function()
