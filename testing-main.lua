@@ -138,7 +138,7 @@ local spawn = task.spawn
 local delay = task.delay
 local Wait = task.wait
 
-local SetNumber = function(Input, Minimum, Max)
+SetNumber = function(Input, Minimum, Max)
 	Minimum = tonumber(Minimum) or 0 
 	Max = tonumber(Max) or math.huge
 
@@ -157,7 +157,7 @@ local SetNumber = function(Input, Minimum, Max)
 	end
 end
 
-local Character = function(Player)
+Character = function(Player)
 	local Character = Player.Character
 
 	if Character then
@@ -167,7 +167,7 @@ local Character = function(Player)
 	end
 end
 
-local GetRoot = function(Character)
+GetRoot = function(Character)
 	local Root = Character:FindFirstChild("HumanoidRootPart")
 
 	if Character and Root then
@@ -177,7 +177,7 @@ local GetRoot = function(Character)
 	end
 end
 
-local GetHumanoid = function(Character)
+GetHumanoid = function(Character)
 	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
 
 	if Character and Humanoid then
@@ -187,7 +187,7 @@ local GetHumanoid = function(Character)
 	end
 end
 
-local FindTable = function(Table, Input)	
+FindTable = function(Table, Input)	
 	for Index, Value in next, Table do
 		if Value == Input then
 			return Value
@@ -195,7 +195,7 @@ local FindTable = function(Table, Input)
 	end
 end
 
-local GetTools = function(Player)
+GetTools = function(Player)
 	Player = Player or Local.Player
 	local Backpack = Player.Backpack
 	local Char = Character(Player)
@@ -218,7 +218,7 @@ local GetTools = function(Player)
 	return Tools
 end
 
-local R6Check = function(Player)
+R6Check = function(Player)
 	Player = Player or Local.Player
 	if Player then
 		if Player.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
@@ -229,7 +229,7 @@ local R6Check = function(Player)
 	end
 end
 
-local StringToInstance = function(String)
+StringToInstance = function(String)
 	local Split = split(String, ".")
 	local Current = game
 
@@ -246,7 +246,7 @@ local StringToInstance = function(String)
 	return Current
 end
 
-local minimum = function(Table, Minimum)
+minimum = function(Table, Minimum)
 	local New = {}
 
 	if Table then
@@ -260,7 +260,7 @@ local minimum = function(Table, Minimum)
 	return New
 end
 
-function Chat(Message)
+Chat = function(Message)
 	if Services.Chat:FindFirstChild("TextChannels") then
 		Services.Chat.TextChannels.RBXGeneral:SendAsync(Message)
 	else
@@ -1467,7 +1467,7 @@ Autofills.Recommend = function(Input)
 		end
 	end
 
-	if not Found then
+	if not Found or #split(Input, " ") > 1 then
 		Recommend.Text = ""
 	end
 end
