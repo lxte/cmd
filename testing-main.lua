@@ -691,8 +691,8 @@ local Modules = {
 }
 
 spawn(function()
-    Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets%20/freecam"))()
- --   Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets%20/freecam"))()
+    Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))()
+    Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))()
 end)
 
 local PromptChangeRigType = function(RigType)
@@ -4196,6 +4196,17 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "bhop" },
+	Description = "Bunny hop",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+           Modules.Bhop.Start()
+	end,
+})
+
+
+Command.Add({
 	Aliases = { "fly" },
 	Description = "Lets you fly around the map",
 	Arguments = {
@@ -4691,6 +4702,105 @@ Command.Add({
                if Animation then
                       Animation:Stop()
 			   end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "freezeanimations" },
+	Description = "Freezes your character's animations",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Local.Character.Animate.Disabled = true
+	end,
+})
+
+Command.Add({
+	Aliases = { "unfreezeanimations" },
+	Description = "Unfreezes your character's animations",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Local.Character.Animate.Disabled = false
+	end,
+})
+
+Command.Add({
+	Aliases = { "freeze" },
+	Description = "Freezes your character",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, BodyPart in next, Local.Character:GetChildren() do
+			if BodyPart:IsA("BasePart") then
+				BodyPart.Anchored = true
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unfreeze" },
+	Description = "Unfreezes your character",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, BodyPart in next, Local.Character:GetChildren() do
+			if BodyPart:IsA("BasePart") then
+				BodyPart.Anchored = false
+			end
+		end
+	end,
+})
+
+Command.Toggles.Hitbox = false
+Command.Add({
+	Aliases = { "hitbox" },
+	Description = "Set everyone's character hitbox in the server",
+	Arguments = {
+        { Name = "Size", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Size)
+		Size = tonumber(Size) or 10
+		Command.Toggles.Hitbox = false
+		task.wait(0.1)
+		Command.Toggles.Hitbox = true
+
+		repeat task.wait(0.1)
+		for Index, Player in next, Services.Players:GetPlayers() do
+	        local Char = Character(Player)
+			local Root = GetRoot(Char)
+
+			if Char and Root and Player ~= Local.Player then
+				Root.Size = Vector3.new(Size, Size, Size)
+				Root.Transparency = 0.7
+				Root.CanCollide = false
+			end
+		end
+	    until not Command.Toggles.Hitbox
+	end,
+})
+
+Command.Add({
+	Aliases = { "unhitbox" },
+	Description = "Set everyone's character hitbox back to normal",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Size)
+		Command.Toggles.Hitbox = false
+
+		task.wait(0.2)
+
+		for Index, Player in next, Services.Players:GetPlayers() do
+	        local Char = Character(Player)
+			local Root = GetRoot(Char)
+
+			if Char and Root and Player ~= Local.Player then
+				Root.Size = Vector3.new(5, 5, 5)
+				Root.Transparency = 1
+			end
 		end
 	end,
 })
