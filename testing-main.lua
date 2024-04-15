@@ -917,6 +917,7 @@ Tab.new = function(Info)
 	local Info = TweenInfo.new(0.3)
 	
 	New.Parent = Screen
+	New.TabPopup.Visible = false
 	New.Visible = false
 	Top.Title.Text = Title
 	New.Name = Title
