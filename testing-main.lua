@@ -4662,6 +4662,7 @@ Command.Add({
 	end,
 })
 
+Command.Toggles.Animations = {}
 Command.Add({
 	Aliases = { "playanimation" },
 	Description = "Plays animation using its ID",
@@ -4671,9 +4672,26 @@ Command.Add({
 	Plugin = false,
 	Task = function(Animation)
 		Services.StarterPlayer.AllowCustomAnimations = true
-		local Dance = GetHumanoid(Local.Character):LoadAnimation(Animation)
-		Dance.Looped = true
+
+		local Anim = Instance.new("Animation")
+		Anim.AnimationId = format("rbxassetid://%s", Animation)
+		local Dance = GetHumanoid(Local.Character):LoadAnimation(Anim)
+		table.insert(Command.Toggles.Animations, Dance)
 		Dance:Play()
+	end,
+})
+
+Command.Add({
+	Aliases = { "stopanimations" },
+	Description = "Stops all the animations that were ran using the playanimation command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Animation in next, Command.Toggles.Animations do
+               if Animation then
+                      Animation:Stop()
+			   end
+		end
 	end,
 })
 
