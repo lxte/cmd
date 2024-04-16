@@ -25,6 +25,7 @@ local Settings = {
 	Seperator = ",",
 	Player = "/",
 	Version = "1.0",
+	ScaleSize = 1,
 	Themes = {
 		Primary = Color3.fromRGB(35, 35, 35),
 		Secondary = Color3.fromRGB(40, 40, 40),
@@ -1674,6 +1675,7 @@ Data.GetSetting = function(Info)
 		return Settings[Info]
 	else
 		warn(Info)
+		return false
 	end
 end
 
@@ -1729,14 +1731,32 @@ if not Data.get("Themes.json") then
 	Data.new("Themes.json", Services.Http:JSONEncode(Themes))
 end
 
-if Checks.File then
-	Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+if not Data.get("Scale.json") then
+	Data.new("Scale.json", "1")
 end
 
 if Checks.File then
+	Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+
 	local Themes = Settings.Themes
 	Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
 	Settings.Themes = Themes
+	Settings.ScaleSize = Data.get("Scale.json")
+end
+
+SetUIScale = function(Scale)
+	if not tonumber(Scale) then return end
+    Settings.ScaleSize = tonumber(Scale)
+
+	for Index, UIScale in next, Screen:GetDescendants() do
+		if UIScale:IsA("UIScale") and UIScale.Name == "DeviceScale" then
+			UIScale.Scale = tonumber(Scale)
+		end
+	end
+
+	if Checks.File then
+		Data.new("Scale.json", tostring(Scale))
+	end
 end
 
 -- command lib
@@ -2187,6 +2207,21 @@ Command.Add({
 				Parent = Information 
 			})
 
+			Library.new("Label", { Title = "Prefix",
+				Description = Settings.Prefix,
+				Parent = Information 
+			})
+
+			Library.new("Label", { Title = "Player Seperator (player1,player2)",
+				Description = Settings.Player,
+				Parent = Information 
+			})
+
+			Library.new("Label", { Title = "UI Scale Size",
+				Description = tostring(Settings.ScaleSize),
+				Parent = Information 
+			})
+
 
 			-- Themes
 			Library.new("Input", { Title = "Transparency", Description = "Set transparency of the UI", Default = "0.05", Parent = Themes, Callback = function(Input) 
@@ -2195,6 +2230,18 @@ Command.Add({
 				if Numeral and Numeral < 0.9 then
 					Settings.Themes.Transparency = Numeral
 					Library.LoadTheme()
+				end
+			end})
+
+			Library.new("Input", { Title = "UIScale", Description = "Set the Scale of the UI.\nDefault - 1", Default = tostring(Settings.ScaleSize), Parent = Themes, Callback = function(Input) 
+				local Numeral = tonumber(Input)
+
+				if Numeral and Numeral < 2 and Numeral > 0.2 then
+					SetUIScale(Numeral)
+
+					Utils.Notify("Success", "Success!", "Set and saved your UIScale successfully!", 15)
+				else
+					Utils.Notify("Error", "Error!", "Couldn't set UIScale, make sure that the value inputted is more than 0.2 and less than 2!", 15)
 				end
 			end})
 
@@ -5218,6 +5265,8 @@ Box.FocusLost:Connect(function(Enter)
 
 	Library.Bar(false)
 end)
+
+SetUIScale(Settings.ScaleSize)
 
 if table.find({Enum.Platform.IOS, Enum.Platform.Android}, Services.Input:GetPlatform()) then 
 	Open.Visible = true
