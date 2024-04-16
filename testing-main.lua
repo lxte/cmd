@@ -1819,6 +1819,35 @@ end
 -- Commands
 
 Command.Add({
+	Aliases = { "tutorial" },
+	Description = "Explanation on how to use Cmd",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		if not Screen:FindFirstChild("Tutorial") then
+
+			local Main = Tab.new({
+				Title = "Tutorial",
+				Drag = true
+			})
+
+			local Tabs = Main.Tabs
+			local MainTab = Tabs.Main.Scroll
+
+
+            Library.new("Label", { Title = "Seperating arguments for running commands", Description = "To seperate the arguments for example ;command arg1, arg2 - you need to seperate it using a ',' (comma)", Parent = MainTab })
+            Library.new("Label", { Title = "Player arguments", Description = "The current arguments for getting players are - their username, their displayname, all, others, seated, stood, me, closest, farthest, *team_name, enemies, dead, alive, friends, nonfriends", Parent = MainTab })
+            Library.new("Label", { Title = "Adding plugins", Description = "For a tutorial on how to add plugins visit - github.com/lxte/cmd/wiki/Plugins", Parent = MainTab })
+            Library.new("Label", { Title = "Applying themes", Description = "To apply themes open the Settings tab (by using the 'settings' command), and go to the Themes section. There you can edit them.", Parent = MainTab })
+
+			Tweens.Open({ Canvas = Main, Speed = 0.3 })
+		else
+			Tweens.Open({ Canvas = Screen:FindFirstChild("Tutorial"), Speed = 0.3 })
+		end
+	end,
+})
+
+Command.Add({
 	Aliases = { "commands", "cmds" },
 	Description = "See all the commands",
 	Arguments = {},
@@ -2715,7 +2744,6 @@ Command.Add({
 		for Index, Player in next, Target do
 			Command.Whitelist(Player)
 			Chat(format("/w %s You are now admin! Prefix is '%s'", Player.Name, Settings.Prefix))
-			Chat(format("/w %s To see commands go to github.com/lxte/cmd/cmds", Player.Name))
 		end
 	end,
 })
