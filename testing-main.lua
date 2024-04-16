@@ -15,7 +15,9 @@ if not game:IsLoaded() then
 end
 
 if getgenv and getgenv().CmdLoaded then
-	getgenv().CmdPath.Parent = nil
+	pcall(function()
+	    getgenv().CmdPath.Parent = nil
+	end)
 end
 
 local Settings = {
@@ -4295,11 +4297,12 @@ Command.Add({
 		end
 
 		task.wait(0.2)
-
 		Command.Parse("clip")
 		workspace.CurrentCamera.CameraSubject = GetHumanoid(Local.Character)
 		LocalRoot.CFrame = Old
 		Walkfling(10000, 1000, false)
+		Utils.Notify("Success", "Success", "Finished flinging!")
+
 	end,
 })
 
