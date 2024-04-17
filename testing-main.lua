@@ -2907,10 +2907,10 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		Command.Toggles.Flood = true
-		local Character = "—"
+		local Character = "⸻"
 
 		repeat task.wait(1)
-		    Chat(Character:rep(200))
+		    Chat(Character:rep(180))
 		until not Command.Toggles.Flood
 	end,
 })
