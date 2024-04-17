@@ -4582,7 +4582,6 @@ Command.Add({
 		for Index, Target in next, Targets do
 			local Success, Result = pcall(function()
 			local Timer = tick()
-			Command.Parse("noclip")
 
 			repeat task.wait()
 				local Character = Character(Target);
@@ -4609,7 +4608,6 @@ Command.Add({
 		end
 
 		task.wait(0.2)
-		Command.Parse("clip")
 		workspace.CurrentCamera.CameraSubject = GetHumanoid(Local.Character)
 		LocalRoot.CFrame = Old
 		Walkfling(10000, 1000, false)
