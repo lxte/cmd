@@ -1135,7 +1135,9 @@ Library.new = function(Object, Info)
 			end)
 
 			TextBox.FocusLost:Connect(function(Enter)
-				Callback(TextBox.Text)
+				if Enter then
+			   	    Callback(TextBox.Text)
+				end
 			end)
 
 			return TextBox
@@ -1749,6 +1751,36 @@ Data.SaveTheme = function(ThemeTable)
 	Data.new("Themes.json", Services.Http:JSONEncode(Themes))
 end
 
+Data.AddWaypoint = function(Name, Position)
+	if Name and Position then
+		local Table = Services.Http:JSONDecode(Data.get("Waypoints.json"))
+		
+		if not Table[Name] then
+			Table[Name] = Position
+			Data.new("Waypoints.json", Services.Http:JSONEncode(Table))
+			Utils.Notify("Success", "Success!", format("Added the Waypoint '%s'", Name))
+		else
+			Utils.Notify("Error", "Error trying to save waypoint", format("There's already a waypoint with the name '%s'", Name))
+		end
+	else
+		Utils.Notify("Error", "Error!", "One or more arguments missing trying to make Waypoint")
+	end
+end
+
+Data.DeleteWaypoint = function(Name)
+	if Name then
+		local Table = Services.Http:JSONDecode(Data.get("Waypoints.json"))
+		
+		if Table[Name] then
+			Table[Name] = nil
+			Data.new("Waypoints.json", Services.Http:JSONEncode(Table))
+			Utils.Notify("Success", "Success!", format("Deleted the Waypoint '%s'", Name))
+		end
+	else
+		Utils.Notify("Error", "Error!", "Name missing")
+	end
+end
+
 Data.SetUpThemeTable = function(ThemeTable)
 	local Themes = {}
 
@@ -1781,6 +1813,10 @@ end
 
 if not Data.get("Scale.json") then
 	Data.new("Scale.json", "1")
+end
+
+if not Data.get("Waypoints.json") then
+	Data.new("Waypoints.json", Services.Http:JSONEncode({}))
 end
 
 if Checks.File then
@@ -2009,6 +2045,123 @@ Command.Add({
 			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
 			Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "waypoints" },
+	Description = "Tab that allows you to use and create waypoints",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		if not Screen:FindFirstChild("Waypoints") then
+
+			local Main = Tab.new({
+				Title = "Waypoints",
+				Drag = true
+			})
+
+			local Tabs = Main.Tabs
+			local MainTab = Tabs.Main.Scroll
+			local WaypointName = nil
+
+			local Waypoints = Library.new("Switch", { 
+				Title = "Waypoints",
+				Description = "List of waypoints you've saved",
+				Parent = MainTab,
+			})
+
+			local AddWaypoint = Library.new("Switch", { 
+				Title = "Add Waypoint",
+				Description = "Add a brand new waypoint",
+				Parent = MainTab,
+			})
+
+			Library.new("Input", { 
+				Title = "Delete Waypoint",
+				Description = "Input the name of the Waypoint you'd like to delete",
+				Parent = MainTab,
+				Default = "WaypointName",
+				Callback = function(Waypoint)
+					Data.DeleteWaypoint(Waypoint)
+				end,
+			})
+
+			local ShowWaypointResults = function(Message)
+				Message = Message:lower()
+
+				for Index, Waypoint in next, Waypoints:GetChildren() do
+					if Waypoint.Name == "Button" and Waypoint:IsA("GuiButton") and Waypoint.Name ~= "Example" then
+						local Title = Waypoint.Content.Title
+						Waypoint.Visible = find(lower(Title.Text), Message)
+					end
+				end
+			end
+
+			local Search = Library.new("Input", { 
+				Title = "Search",
+				Parent = Waypoints,
+				Default = "",
+				Callback = function(Message)
+				end,
+			})
+
+			Search:GetPropertyChangedSignal("Text"):Connect(function()
+				ShowWaypointResults(Search.Text)
+			end)
+
+			
+			local AddWayPointButton = function(WaypointTable)
+				local Name, CFrame = WaypointTable[1], WaypointTable[2]
+
+				
+			local Waypoint = Library.new("Button", { 
+				Title = Name,
+				Parent = Waypoints,
+				Callback = function()
+					GetRoot(Local.Character).CFrame = CFrame
+				end,
+			})
+
+			end
+
+			Library.new("Input", { 
+				Title = "Waypoint Name",
+				Description = "Name of the waypoint you're creating",
+				Parent = AddWaypoint,
+				Default = "",
+				Callback = function(Waypoint)
+					WaypointName = Waypoint
+					Utils.Notify("Success", "Success", format("Waypoint name is now set to '%s'", Waypoint))
+				end,
+			})
+
+			Library.new("Button", { 
+				Title = "Create Waypoint",
+				Description = "Create your brand new waypoint",
+				Parent = AddWaypoint,
+				Callback = function()
+					local Root = GetRoot(Local.Character)
+
+					if Root then
+					   Data.AddWaypoint(WaypointName, tostring(Root.CFrame))
+					   AddWayPointButton({ WaypointName, Root.CFrame })
+					else
+						Utils.Notify("Error", "Error", "HumanoidRootPart not found")
+					end
+				end,
+			})
+
+			if Checks.File then
+				for Index, Waypoint in next, Services.Http:JSONDecode(Data.get("Waypoints.json")) do
+					AddWayPointButton({Index, CFrame.new(unpack(Waypoint:gsub(" ",""):split(",")))})
+				end
+			end
+
+			Tweens.Open({ Canvas = Main, Speed = 0.3 })
+		else
+			Tweens.Open({ Canvas = Screen:FindFirstChild("Waypoints"), Speed = 0.3 })
 		end
 	end,
 })
@@ -5372,5 +5525,5 @@ if getgenv then
 end
 
 Utils.Notify("Information", "IMPORTANT", "This is the testing loadstring, if you find any bugs DM them to me on discord @qipu", 10)
-Utils.Notify("Information", "Update Log", "Added custom themes, find them in the Settings Tab", 10)
+Utils.Notify("Information", "Update Log", "Added custom themes, find them in the Settings Tab and Waypoints (command name - waypoints)", 10)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
