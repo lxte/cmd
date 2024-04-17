@@ -3326,18 +3326,17 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		local QueueTeleport =
-			(syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
+		local QueueTeleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 		local Done = false
 		local Run
 		local CF = GetRoot(Local.Character).CFrame
 
 		if not Done then
 			Done = not Done
-			local Run = format("spawn(function() game.Loaded:Wait() local Player = game:GetService('Players').LocalPlayer local Character = Player.Character or Player.CharacterAdded:Wait() Character:WaitForChild('HumanoidRootPart').CFrame = CFrame.new(%s) end)", tostring(CF))
+			local Run = "spawn(function() repeat task.wait() until game:IsLoaded() local Player = game:GetService('Players').LocalPlayer local Character = Player.Character or Player.CharacterAdded:Wait() Character:WaitForChild('HumanoidRootPart').CFrame = CFrame.new(" ..tostring(CF) .. ") end)"
 			QueueTeleport(Run)
-			Services.TeleportService:TeleportCancel()
-			Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Local.Player)
+			Services.Teleport:TeleportCancel()
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, Services.LocalPlayer)
 		end
 	end,
 })
@@ -3358,8 +3357,8 @@ Command.Add({
 			Done = not Done
 			local Run = "loadstring(game:HttpGet('https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua'))()"
 			QueueTeleport(Run)
-			Services.TeleportService:TeleportCancel()
-			Services.TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Local.Player)
+			Services.Teleport:TeleportCancel()
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, Local.Player)
 		end
 	end,
 })
@@ -3369,7 +3368,7 @@ Command.Add({
 	Description = "Teleports you to a player for a set amount of seconds",
 	Arguments = {
 		{ Name = "Target", Type = "Player" }, 
-		{ Name = "Time", Type = "Seconds" }, 
+		{ Name = "Time", Type = "Number" }, 
 	},
 	Plugin = false,
 	Task = function(Player, Time)
