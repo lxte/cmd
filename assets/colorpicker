@@ -19,7 +19,7 @@ local movingSlider = false
 
 local function updateColour(centreOfWheel)
 
-if not Frame then return end
+if not Frame or not colourWheel or not colourWheel:FindFirstChild("Picker") then return end
 	
 	
 	local colourPickerCentre = Vector2.new(
