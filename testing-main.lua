@@ -110,6 +110,7 @@ local Autofill = Cmd.Autofill
 local Box = Bar.Box
 local Recommend = Bar.Recommend
 local Popup = Screen.Popup
+local ColorPopup = Screen.ColorPopup
 
 local CoreSuccess = pcall(function()
 	Screen.Parent = game:GetService("CoreGui")
@@ -442,6 +443,7 @@ end
 
 function GetPlayer(Arg)
 	local Target = {}
+	if not Arg then return Target end
 	local PlayerNames = split(Arg, Settings.Player)
 
 	for i, String in next, PlayerNames or {} do
@@ -707,11 +709,13 @@ local Modules = {
 	Freecam = nil,
 	Glass = nil,
 	Bhop = nil,
+	ColorPicker = nil,
 }
 
 spawn(function()
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))()
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))()
+	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))()
 end)
 
 local PromptChangeRigType = function(RigType)
@@ -1281,11 +1285,13 @@ Library.Theming = {
 		end,
 
 		["ImageLabel"] = function(Item)
-			Item.ImageColor3 = Settings.Themes.Icon
+			if Item.Name ~= "ColourDisplay" then
+			   Item.ImageColor3 = Settings.Themes.Icon
+			end
 		end,
 
 		["ImageButton"] = function(Item)
-			if not Autofills.Args[Item.Name] then
+			if not Autofills.Args[Item.Name] and Item.Name ~= "DarknessPicker" and Item.Name ~= "ColourWheel" then
 				Item.ImageColor3 = Settings.Themes.Icon
 			end
 		end,
@@ -1542,14 +1548,14 @@ Autofills.Search = function(Input)
 				local Content = Frame.Content
 
 				if find(lower(Content.Title.Text), Split) then 
-					Amount = Amount + 1
-
 					if not FoundFirst then
 						Frame.BackgroundColor3 = Settings.Themes.Secondary
 						FoundFirst = true
 					else
 						Frame.BackgroundColor3 = RGB(Settings.Themes.Primary, 3)
 					end
+
+					Amount = Amount + 1
 
 					Frame.Visible = true
 				else
@@ -1639,6 +1645,48 @@ Utils.Popup = function(Title, Description, Callback)
 				end
 
 				Close()
+			end)
+		end
+	end
+
+	Tweens.Open({
+		Canvas = New,
+		Speed = 0.25,
+	})
+end
+
+Utils.ColorPopup = function(Callback)
+	local New = ColorPopup:Clone()
+	New.Parent = Screen
+
+	local Close = function()
+		Tweens.Close({
+			Canvas = New,
+			Speed = 0.25,
+		})
+	end
+
+	local Success, Result = pcall(function()
+		Modules.ColorPicker.SetColorPicker(New)
+	end)
+
+	if not Success then
+		warn(format("Failed to run the ColorPicker module, error - %s", Result))
+	end
+
+
+	for Index, Button in next, New.Buttons:GetChildren() do
+		if Button:IsA("GuiButton") then
+			Library.Hover(Button, 0.2, Settings.Themes.Secondary)
+
+			Button.MouseButton1Click:Connect(function()
+				if Button.Name == "Done" then
+					Callback(New.ColourDisplay.ImageColor3)
+				end
+
+				Close()
+				task.wait(0.5)
+				New:Destroy()
 			end)
 		end
 	end
@@ -2212,8 +2260,8 @@ Command.Add({
 				Parent = Information 
 			})
 
-			Library.new("Label", { Title = "Player Seperator (player1,player2)",
-				Description = Settings.Player,
+			Library.new("Label", { Title = "Player Seperator",
+				Description = format("kill player1%splayer2", Settings.Player),
 				Parent = Information 
 			})
 
@@ -2254,6 +2302,25 @@ Command.Add({
 					Utils.Notify("Success", "Success!", "Theme has been saved", 5)
 				end,
 			})
+
+			for Index, Theme in next, Settings.Themes do
+				if Index ~= "Transparency" and Index ~= "Mode" then
+				Library.new("Button", { 
+					Title = Index,
+					Parent = Custom,
+					Callback = function()
+						Utils.ColorPopup(function(RGB)
+							if RGB then
+								Settings.Themes[Index] = RGB
+								Library.LoadTheme(Settings.Themes)
+							else
+								Utils.Notify("Error", "Error!", "Failed to get RGB value", 5)
+							end
+						end)
+					end,
+				})
+			end
+			end
 
 			for Index, Theme in Library.Themes do
 				Library.new("Button", { 
@@ -3457,6 +3524,19 @@ Command.Add({
 	Plugin = false,
 	Task = function(Player)	
 		print(unpack(GetPlayer(Player)))
+	end,
+})
+
+Command.Add({
+	Aliases = { "colorpicker" },
+	Description = "Testing out the color picker",
+	Arguments = {},
+	Plugin = false,
+	Task = function()	
+		Utils.ColorPopup(function(RGB)
+			print(RGB) 
+			print(typeof(RGB))
+		end)
 	end,
 })
 
@@ -5287,4 +5367,5 @@ if getgenv then
 end
 
 Utils.Notify("Information", "IMPORTANT", "This is the testing loadstring, if you find any bugs DM them to me on discord @qipu", 10)
+Utils.Notify("Information", "Update Log", "Added custom themes, find them in the Settings Tab", 10)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
