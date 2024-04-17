@@ -2870,6 +2870,61 @@ Command.Add({
 	end,
 })
 
+Command.Toggles.Spam = false
+Command.Add({
+	Aliases = { "spamchat" },
+	Description = "Repeatedly spam a message in chat",
+	Arguments = { 
+		{ Name = "Text", Type = "String" }
+	},
+	Plugin = false,
+	Task = function(Input)
+		Command.Toggles.Spam = true
+
+		repeat task.wait(1)
+		    Chat(Input)
+		until not Command.Toggles.Spam
+	end,
+})
+
+Command.Add({
+	Aliases = { "unspamchat" },
+	Description = "Stops spamming the chat",
+	Arguments = { 
+		{ Name = "Text", Type = "String" }
+	},
+	Plugin = false,
+	Task = function(Input)
+		Command.Toggles.Spam = false
+	end,
+})
+
+Command.Toggles.Flood = false
+Command.Add({
+	Aliases = { "flood" },
+	Description = "Flood the chat",
+	Arguments = { },
+	Plugin = false,
+	Task = function()
+		Command.Toggles.Flood = true
+		local Character = "—"
+
+		repeat task.wait(1)
+		    Chat(Character:rep(200))
+		until not Command.Toggles.Flood
+	end,
+})
+
+Command.Add({
+	Aliases = { "unflood" },
+	Description = "Stops flooding the chat",
+	Arguments = { },
+	Plugin = false,
+	Task = function()
+		Command.Toggles.Flood = false
+	end,
+})
+
 Command.Add({
 	Aliases = { "fieldofview", "fov" },
 	Description = "Set your field of view amount",
@@ -3304,6 +3359,8 @@ Command.Add({
 		if Humanoid then
 			Humanoid.Health = 0
 			Local.Player.CharacterAdded:Wait()
+			task.wait(0.5)
+			
 			GetRoot(Local.Character).CFrame = Old
 		end
 	end,
@@ -4999,10 +5056,14 @@ Command.Add({
 Command.Add({
 	Aliases = { "walkfling" },
 	Description = "Fling without spinning",
-	Arguments = {},
+	Arguments = {
+        { Name = "Power", Type = "Number" },
+		{ Name = "Closest Distance", Type = "Number" },
+	},
 	Plugin = false,
-	Task = function()
-		Walkfling(10000, 5, true)
+	Task = function(Power, Distance)
+		Power = tonumber(Power) or 10000; Distance = Distance or 5
+		Walkfling(Power, Distance, true)
 	end,
 })
 
