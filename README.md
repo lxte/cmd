@@ -3,9 +3,9 @@
 # 🌟 Features
 
 - Sleek design, easy to use & understand
-- Documentation for making plugins, binds, themes.
-- Fast load speeds 
-- Very customizable
+- Customizable
+- Documentation for making plugins, themes.
+- Fast loading speeds 
 - Support for most executors
  
 <br/> 
