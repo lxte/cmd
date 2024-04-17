@@ -2303,10 +2303,15 @@ Command.Add({
 				end,
 			})
 
+			local ThemeDescriptions = {
+				["Primary"] = "Changes the background color of Cmd", ["Secondary"] = "Changes the secondary color of Cmd (buttons, topbar, etc.)", ["Title"] = "Changes the Text Color of the Titles", ["Description"] = "Changes the Text Color of descriptions", ["Icon"] = "Changes the color of all icons", ["Shadow"] = "Changes the color of the outlines around Tabs, etc.", ["Outline"] = "Changes the color of outlines inside of Tabs, etc."
+			}
+
 			for Index, Theme in next, Settings.Themes do
 				if Index ~= "Transparency" and Index ~= "Mode" then
 				Library.new("Button", { 
 					Title = Index,
+					Description = ThemeDescriptions[Index] or "",
 					Parent = Custom,
 					Callback = function()
 						Utils.ColorPopup(function(RGB)
