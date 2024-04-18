@@ -2,7 +2,6 @@
 
 # 🌟 Features
 
-- Sleek design, easy to use & understand
 - Customizable
 - Documentation for making plugins, themes.
 - Fast loading speeds 
