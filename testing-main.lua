@@ -1,14 +1,14 @@
---[[
-  THIS IS A TESTING LOADSTRING, EXPECT BUGS!
-  THIS IS A TESTING LOADSTRING, EXPECT BUGS!
-  
-   cmd v1.0
-   github - lxte/cmd
-   
-   todo: (so i remember lol)
-   
-   1. re-enable the automatic fpsbooster (it lags lol)
-]]
+		--[[
+		THIS IS A TESTING LOADSTRING, EXPECT BUGS!
+		THIS IS A TESTING LOADSTRING, EXPECT BUGS!
+		
+		cmd v1.0
+		github - lxte/cmd
+		
+		todo: (so i remember lol)
+		
+		1. re-enable the automatic fpsbooster (it lags lol)
+		]]
 
 if not game:IsLoaded() then
 	game.Loaded:Wait()
@@ -16,7 +16,7 @@ end
 
 if getgenv and getgenv().CmdLoaded then
 	pcall(function()
-	    getgenv().CmdPath.Parent = nil
+		getgenv().CmdPath.Parent = nil
 	end)
 end
 
@@ -77,6 +77,7 @@ local Checks = {
 
 Players.LocalPlayer.CharacterAdded:Connect(function(Character)
 	Local.Character = Character
+	Local.Backpack = Local.Player.Backpack
 end)
 
 local FSuccess, FResult = pcall(function()
@@ -111,6 +112,7 @@ local Box = Bar.Box
 local Recommend = Bar.Recommend
 local Popup = Screen.Popup
 local ColorPopup = Screen.ColorPopup
+local pressTab = Bar.Description
 
 local CoreSuccess = pcall(function()
 	Screen.Parent = game:GetService("CoreGui")
@@ -141,6 +143,17 @@ local unpack = table.unpack
 local spawn = task.spawn
 local delay = task.delay
 local Wait = task.wait
+
+Spoof = function(Instance, Property, Value)
+	local Hook;
+	Hook = hookmetamethod(game, "__index", newcclosure(function(self, Key)
+		if self == Instance and Key == Property then
+			return Value
+		end
+
+		return Hook(self, Key)
+	end))
+end
 
 SetNumber = function(Input, Minimum, Max)
 	Minimum = tonumber(Minimum) or 0 
@@ -588,6 +601,8 @@ function GetPlayer(Arg)
 					table.insert(Target, Player)
 				end
 			end
+
+
 		end
 	end
 	return Target
@@ -1136,7 +1151,7 @@ Library.new = function(Object, Info)
 
 			TextBox.FocusLost:Connect(function(Enter)
 				if Enter then
-			   	    Callback(TextBox.Text)
+					Callback(TextBox.Text)
 				end
 			end)
 
@@ -1288,7 +1303,7 @@ Library.Theming = {
 
 		["ImageLabel"] = function(Item)
 			if Item.Name ~= "ColourDisplay" then
-			   Item.ImageColor3 = Settings.Themes.Icon
+				Item.ImageColor3 = Settings.Themes.Icon
 			end
 		end,
 
@@ -1478,27 +1493,6 @@ Autofills.AddArguments = function(Frame, Arguments)
 				UI.Name = Name;
 			end
 		end
-	end
-end
-
-Autofills.Recommend = function(Input)
-	local Split = lower(split(Input, ' ')[1])
-	local Found = false
-
-	for Index, Table in Commands do
-		for Index, Name in Table[1] do
-			if Name == Split then
-				Recommend.Text = gsub(Name, Split, split(Input, " ")[1])
-				Found = true
-			elseif find(sub(Name, 1, #Split), lower(Split)) then
-				Recommend.Text = gsub(Name, Split, split(Input, " ")[1])
-				Found = true
-			end
-		end
-	end
-
-	if not Found or #split(Input, " ") > 1 then
-		Recommend.Text = ""
 	end
 end
 
@@ -1701,6 +1695,7 @@ end
 
 -- data functions
 local Data = {}
+Data.Webhook = {}
 
 Data.new = function(Name, Info)
 	if Checks.File then
@@ -1754,7 +1749,7 @@ end
 Data.AddWaypoint = function(Name, Position)
 	if Name and Position then
 		local Table = Services.Http:JSONDecode(Data.get("Waypoints.json"))
-		
+
 		if not Table[Name] then
 			Table[Name] = Position
 			Data.new("Waypoints.json", Services.Http:JSONEncode(Table))
@@ -1770,7 +1765,7 @@ end
 Data.DeleteWaypoint = function(Name)
 	if Name then
 		local Table = Services.Http:JSONDecode(Data.get("Waypoints.json"))
-		
+
 		if Table[Name] then
 			Table[Name] = nil
 			Data.new("Waypoints.json", Services.Http:JSONEncode(Table))
@@ -1795,6 +1790,21 @@ Data.SetUpThemeTable = function(ThemeTable)
 	end
 
 	return Themes
+end
+
+-- planned webhook command
+Data.Webhook.Send = function(Webhook, Message)
+	request({
+		Url = Webhook,
+		Method = "POST",
+		Headers = {
+			["content-type"] = "application/json"
+		},
+
+		Body = Services.Http:JSONEncode({
+			["content"] = Message
+		})
+	})
 end
 
 if not Data.get("Settings.json") then
@@ -1830,7 +1840,7 @@ end
 
 SetUIScale = function(Scale)
 	if not tonumber(Scale) then return end
-    Settings.ScaleSize = tonumber(Scale)
+	Settings.ScaleSize = tonumber(Scale)
 
 	for Index, UIScale in next, Screen:GetDescendants() do
 		if UIScale:IsA("UIScale") and UIScale.Name == "DeviceScale" then
@@ -1878,7 +1888,7 @@ Command.Run = function(Name, Callbacks)
 			local Callback = Table[5]
 
 			local Success, Result = pcall(function()
-			Callback(unpack(Callbacks))
+				Callback(unpack(Callbacks))
 			end)
 
 			if not Success then
@@ -1893,18 +1903,18 @@ end
 
 Command.Parse = function(Input)
 	if Screen.Parent then
-	local Name, ArgsString = gsub(Input, Settings.Prefix, ""):match("^%s*([^%s]+)%s*(.*)$")
+		local Name, ArgsString = gsub(Input, Settings.Prefix, ""):match("^%s*([^%s]+)%s*(.*)$")
 
-	if Name then
-		local Arguments = {}
-		for arg in ArgsString:gmatch("%s*([^"..Settings.Seperator .."]+)") do
-			table.insert(Arguments, arg)
+		if Name then
+			local Arguments = {}
+			for arg in ArgsString:gmatch("%s*([^"..Settings.Seperator .."]+)") do
+				table.insert(Arguments, arg)
+			end
+
+			FullArgs = Arguments
+			Command.Run(lower(Name), Arguments)
 		end
-
-		FullArgs = Arguments
-		Command.Run(lower(Name), Arguments)
 	end
-    end
 end
 
 Command.Whitelist = function(Player)
@@ -1919,6 +1929,74 @@ end
 Command.RemoveWhitelist = function(Player)
 	Admins[Player.UserId] = false
 end
+
+Autofills.Recommend = function(Input)
+	local Split = lower(split(Input, ' ')[1])
+	local Found = false
+
+	for Index, Table in Commands do
+		for Index, Name in Table[1] do
+			if find(sub(Name, 1, #Split), lower(Split)) or Name == Split then
+				Tween(pressTab, TweenInfo.new(0.35), { TextTransparency = 0 })
+				Recommend.Text = gsub(Name, Split, split(Input, " ")[1])
+				Found = true
+			end
+		end
+	end
+
+	-- close ur eyes theres trash code
+	if #split(Input, " ") > 1 and Screen.Parent then
+		local Command = Command.Find(Split)
+		if Command then
+			local Arguments = Command[3]
+			local New = split(Input, " ")
+
+			if #Arguments > 0 then
+				if Arguments[#New - 1] and Arguments[#New - 1].Type == "Player" then
+					local PlayerFound = false
+					local Player = New[#New]
+					for Index, Plr in next, Services.Players:GetPlayers() do
+						if find(sub(lower(Plr.DisplayName), 1, #Player), lower(Player)) then
+							local Name = format(" %s", gsub(lower(Plr.DisplayName), lower(Player), Player))
+							Recommend.Text = string.sub(Input, 1, #Input - #Player - 1) .. Name
+							Found = true
+							PlayerFound = true
+						end
+					end
+
+					if not PlayerFound then
+						for Index, Plr in next, Services.Players:GetPlayers() do
+							if find(sub(lower(Plr.Name), 1, #Player), lower(Player)) then
+								local Name = format(" %s", gsub(lower(Plr.Name), lower(Player), Player))
+								Recommend.Text = string.sub(Input, 1, #Input - #Player - 1) .. Name
+								Found = true
+								PlayerFound = true
+							end
+						end
+					end
+
+					if not PlayerFound then -- if still not found lol
+						local GetPlayerArguments = { "all", "others", "seated", "stood", "me", "closest", "farthest", "enemies", "dead", "alive", "friends", "nonfriends"}
+						for Index, Arg in next, GetPlayerArguments do
+							if find(sub(Arg, 1, #Player), lower(Player)) then
+								local Name = format(" %s", gsub(lower(Arg), lower(Player), Player))
+								Recommend.Text = string.sub(Input, 1, #Input - #Player - 1) .. Name
+								Found = true
+								PlayerFound = true
+							end
+						end 
+					end
+				end
+			end
+		end
+	end
+
+	if not Found then
+		Tween(pressTab, TweenInfo.new(0.35), { TextTransparency = 1 })
+		Recommend.Text = ""
+	end
+end
+
 
 -- Commands
 
@@ -1939,10 +2017,10 @@ Command.Add({
 			local MainTab = Tabs.Main.Scroll
 
 
-            Library.new("Label", { Title = "Seperating arguments for running commands", Description = "To seperate the arguments for example ;command arg1, arg2 - you need to seperate it using a ',' (comma)", Parent = MainTab })
-            Library.new("Label", { Title = "Player arguments", Description = "The current arguments for getting players are - their username, their displayname, all, others, seated, stood, me, closest, farthest, *team_name, enemies, dead, alive, friends, nonfriends", Parent = MainTab })
-            Library.new("Label", { Title = "Adding plugins", Description = "For a tutorial on how to add plugins visit - github.com/lxte/cmd/wiki/Plugins", Parent = MainTab })
-            Library.new("Label", { Title = "Applying themes", Description = "To apply themes open the Settings tab (by using the 'settings' command), and go to the Themes section. There you can edit them.", Parent = MainTab })
+			Library.new("Label", { Title = "Seperating arguments for running commands", Description = "To seperate the arguments for example ;command arg1, arg2 - you need to seperate it using a ',' (comma)", Parent = MainTab })
+			Library.new("Label", { Title = "Player arguments", Description = "The current arguments for getting players are - their username, their displayname, all, others, seated, stood, me, closest, farthest, *team_name, enemies, dead, alive, friends, nonfriends", Parent = MainTab })
+			Library.new("Label", { Title = "Adding plugins", Description = "For a tutorial on how to add plugins visit - github.com/lxte/cmd/wiki/Plugins", Parent = MainTab })
+			Library.new("Label", { Title = "Applying themes", Description = "To apply themes open the Settings tab (by using the 'settings' command), and go to the Themes section. There you can edit them.", Parent = MainTab })
 
 			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
@@ -2111,18 +2189,18 @@ Command.Add({
 				ShowWaypointResults(Search.Text)
 			end)
 
-			
+
 			local AddWayPointButton = function(WaypointTable)
 				local Name, CFrame = WaypointTable[1], WaypointTable[2]
 
-				
-			local Waypoint = Library.new("Button", { 
-				Title = Name,
-				Parent = Waypoints,
-				Callback = function()
-					GetRoot(Local.Character).CFrame = CFrame
-				end,
-			})
+
+				local Waypoint = Library.new("Button", { 
+					Title = Name,
+					Parent = Waypoints,
+					Callback = function()
+						GetRoot(Local.Character).CFrame = CFrame
+					end,
+				})
 
 			end
 
@@ -2145,8 +2223,8 @@ Command.Add({
 					local Root = GetRoot(Local.Character)
 
 					if Root then
-					   Data.AddWaypoint(WaypointName, tostring(Root.CFrame))
-					   AddWayPointButton({ WaypointName, Root.CFrame })
+						Data.AddWaypoint(WaypointName, tostring(Root.CFrame))
+						AddWayPointButton({ WaypointName, Root.CFrame })
 					else
 						Utils.Notify("Error", "Error", "HumanoidRootPart not found")
 					end
@@ -2462,22 +2540,22 @@ Command.Add({
 
 			for Index, Theme in next, Settings.Themes do
 				if Index ~= "Transparency" and Index ~= "Mode" then
-				Library.new("Button", { 
-					Title = Index,
-					Description = ThemeDescriptions[Index] or "",
-					Parent = Custom,
-					Callback = function()
-						Utils.ColorPopup(function(RGB)
-							if RGB then
-								Settings.Themes[Index] = RGB
-								Library.LoadTheme(Settings.Themes)
-							else
-								Utils.Notify("Error", "Error!", "Failed to get RGB value", 5)
-							end
-						end)
-					end,
-				})
-			end
+					Library.new("Button", { 
+						Title = Index,
+						Description = ThemeDescriptions[Index] or "",
+						Parent = Custom,
+						Callback = function()
+							Utils.ColorPopup(function(RGB)
+								if RGB then
+									Settings.Themes[Index] = RGB
+									Library.LoadTheme(Settings.Themes)
+								else
+									Utils.Notify("Error", "Error!", "Failed to get RGB value", 5)
+								end
+							end)
+						end,
+					})
+				end
 			end
 
 			for Index, Theme in Library.Themes do
@@ -2882,7 +2960,7 @@ Command.Add({
 		Command.Toggles.Spam = true
 
 		repeat task.wait(1)
-		    Chat(Input)
+			Chat(Input)
 		until not Command.Toggles.Spam
 	end,
 })
@@ -2910,7 +2988,7 @@ Command.Add({
 		local Character = "⸻"
 
 		repeat task.wait(1)
-		    Chat(Character:rep(180))
+			Chat(Character:rep(180))
 		until not Command.Toggles.Flood
 	end,
 })
@@ -3360,7 +3438,7 @@ Command.Add({
 			Humanoid.Health = 0
 			Local.Player.CharacterAdded:Wait()
 			task.wait(0.5)
-			
+
 			GetRoot(Local.Character).CFrame = Old
 		end
 	end,
@@ -3445,41 +3523,41 @@ Command.Add({
 
 
 -- might be patched, will look into it.
---[[Command.Add({
-	Aliases = { "toolballs" },
-	Description = "Makes all your tools in inventory act like balls",
-	Arguments = {},
-	Plugin = false,
-	Task = function()
-		local Humanoid = GetHumanoid(Local.Character)
-		local Tools = GetTools(Local.Player)
+		--[[Command.Add({
+			Aliases = { "toolballs" },
+			Description = "Makes all your tools in inventory act like balls",
+			Arguments = {},
+			Plugin = false,
+			Task = function()
+				local Humanoid = GetHumanoid(Local.Character)
+				local Tools = GetTools(Local.Player)
 
-		if not Humanoid then return end
+				if not Humanoid then return end
 
-		for _, x in next, Tools do
-			Methods.RemoveRightGrip(x)
-		end
-
-		for i,v in next, Tools do
-			local Part = Instance.new("Part", workspace)
-			Part.CFrame = GetRoot(Local.Character).CFrame
-			Part.Size = Vector3.new(3.5,3.5,3.5)
-			Part.Shape = "Ball"
-			Part.Transparency = 0.9
-			spawn(function()
-				while Wait() do
-					if v and v.Parent == Local.Character then
-						v.Handle.Position = Part.Position
-						v.Handle.CFrame = Part.CFrame
-					else
-						Wait()
-						Part:Destroy()
-					end
+				for _, x in next, Tools do
+					Methods.RemoveRightGrip(x)
 				end
-			end)
-		end
-	end,
-})]]
+
+				for i,v in next, Tools do
+					local Part = Instance.new("Part", workspace)
+					Part.CFrame = GetRoot(Local.Character).CFrame
+					Part.Size = Vector3.new(3.5,3.5,3.5)
+					Part.Shape = "Ball"
+					Part.Transparency = 0.9
+					spawn(function()
+						while Wait() do
+							if v and v.Parent == Local.Character then
+								v.Handle.Position = Part.Position
+								v.Handle.CFrame = Part.CFrame
+							else
+								Wait()
+								Part:Destroy()
+							end
+						end
+					end)
+				end
+			end,
+		})]]
 
 Command.Add({
 	Aliases = { "antisit", "nosit" },
@@ -3832,9 +3910,9 @@ Command.Add({
 
 			Boost()
 
-			--[[workspace.DescendantAdded:Connect(function()
-				Boost()
-			end)]]
+					--[[workspace.DescendantAdded:Connect(function()
+						Boost()
+					end)]]
 		end)
 	end,
 })
@@ -4421,7 +4499,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "vehicleseat" },
+	Aliases = { "vehicleseat", "vseat" },
 	Description = "Sits you in a vehicle seat, useful for trying to find cars in games",
 	Arguments = {},
 	Plugin = false,
@@ -4436,7 +4514,27 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "vehiclespeed" },
+	Aliases = { "vehiclegoto", "vgoto" },
+	Description = "Teleports your vehicle to your target",
+	Arguments = {
+		{ Name = "Target", Type = "Player" }	
+	},
+	Plugin = false,
+	Task = function(Player)	
+		local Targets = GetPlayer(Player)
+
+		for Index, Target in next, Targets do
+			local Character = Character(Target)
+			local Root = GetRoot(Character)
+
+			GetHumanoid(Local.Character).SeatPart:FindFirstAncestorWhichIsA("Model"):PivotTo(Root.CFrame)
+		end
+	end,
+})
+
+
+Command.Add({
+	Aliases = { "vehiclespeed", "vspeed" },
 	Description = "Set the speed of the vehicle you're in",
 	Arguments = {
 		{ Name = "Speed", Type = "Number" }	
@@ -4460,7 +4558,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "unvehiclespeed" },
+	Aliases = { "unvehiclespeed", "vspeed" },
 	Description = "Stops the vehicle speed command",
 	Arguments = {},
 	Plugin = false,
@@ -4624,9 +4722,178 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "reach" },
+	Description = "Set the reach for the item you're holding",
+	Arguments = {
+		{ Name = "Size", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Input)
+		local Num = SetNumber(Input)
+		local Tool = Local.Character:FindFirstChildOfClass("Tool")
+		local Handles = {}
+
+		if Tool then
+			for Index, Handle in next, Tool:GetChildren() do
+				if Handle:IsA("Part") then
+					table.insert(Handles, Handle)
+				end
+			end
+
+			for Index, Handle in next, Handles do
+				if Handle then
+					if Handle:FindFirstChild("OriginalSize") then
+						if Handle:FindFirstChildOfClass("Highlight") then
+							Handle:FindFirstChildOfClass("Highlight"):Destroy()
+						end
+						Handle.Size = Handle.OriginalSize.Value
+					end
+					Instance.new("Highlight", Handle)
+					local Vector3Value = Instance.new("Vector3Value", Handle)
+					Vector3Value.Name = "OriginalSize"
+					Vector3Value.Value = Handle.Size
+					Handle.Massless = true
+					Handle.Size = Vector3.new(Handle.Size.X, Handle.Size.Y, Num)
+				end
+			end
+		else
+			Utils.Notify("Error", "Error!", "Please equip a tool before running this command")
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unreach" },
+	Description = "Disables reach",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Tool = Local.Character:FindFirstChildOfClass("Tool")
+		local Handles = {}
+
+		if Tool then
+			for Index, Handle in next, Tool:GetChildren() do
+				if Handle:IsA("Part") then
+					table.insert(Handles, Handle)
+				end
+			end
+
+			for Index, Handle in next, Handles do
+				if Handle:FindFirstChild("OriginalSize") then
+					Handle:FindFirstChildOfClass("Highlight"):Destroy()
+					Handle.Size = Handle.OriginalSize.Value
+					Handle.OriginalSize:Destroy()
+				else
+					Utils.Notify("Error", "Error!", "Tool does not have reach enabled")
+				end
+			end
+		else
+			Utils.Notify("Error", "Error!", "Please equip the tool you want to use and run this command again")
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "aura" },
+	Description = "Set the size of the tool you're holding",
+	Arguments = {
+		{ Name = "Size", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Input)
+		local Num = SetNumber(Input)
+
+		local Tool = Local.Character:FindFirstChildOfClass("Tool")
+		local Handles = {}
+
+		if Tool then
+			for Index, Handle in next, Tool:GetChildren() do
+				if Handle:IsA("Part") then
+					table.insert(Handles, Handle)
+				end
+			end
+
+			for Index, Handle in next, Handles do
+				if Handle then
+					if Handle:FindFirstChild("OriginalSize") then
+						if Handle:FindFirstChildOfClass("Highlight") then
+							Handle:FindFirstChildOfClass("Highlight"):Destroy()
+						end
+						Handle.Size = Handle.OriginalSize.Value
+					end
+					Instance.new("Highlight", Handle)
+					local Vector3Value = Instance.new("Vector3Value", Handle)
+					Vector3Value.Name = "OriginalSize"
+					Vector3Value.Value = Handle.Size
+					Handle.Massless = true
+					Handle.Size = Vector3.new(Num, Num, Num)
+				end
+			end
+		else
+			Utils.Notify("Error", "Error!", "Please equip the tool you want to use and run this command again")
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unaura" },
+	Description = "Sets your tool's size back to the original",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Input)
+		Command.Parse("unreach")
+	end,
+})
+
+Command.Add({
+	Aliases = { "spoof" },
+	Description = "Spoof an instance's property",
+	Arguments = {
+		{ Name = "Instance", Type = "String" };
+		{ Name = "Propery", Type = "String" };
+		{ Name = "Value", Type = "String" };
+
+	},
+	Plugin = false,
+	Task = function(Parent, Property, Value)
+		local Instance = StringToInstance(Parent)
+
+		if Value == "nil" then
+			Value = nil
+		elseif Value == "false" then
+			Value = false
+		end
+
+		if Instance and Property and Value then
+			Spoof(Instance, Property, Value)
+			Utils.Notify("Success", "Success!", format("Spoofing %s and setting the value to %s", Property, tostring(Value)))
+		else
+			Utils.Notify("Error", "Error!", "One or more arguments missing when trying to spoof")
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "spoofws" },
+	Description = "Spoof your walkspeed amount",
+	Arguments = {
+		{ Name = "Spoofed Speed", Type = "Number" };
+
+	},
+	Plugin = false,
+	Task = function(Spoofed)
+		Spoofed = SetNumber(Spoofed)
+		Spoof(GetHumanoid(Local.Character), "WalkSpeed", Spoofed)
+		Utils.Notify("Success", "Success!", format("Spoofed WalkSpeed to %s", tostring(Spoofed)))
+	end,
+})
+
+Command.Add({
 	Aliases = { "fling" },
 	Description = "Fling your target, must have character collisions enabled to work [not finished]",
-	Arguments = {},
+	Arguments = {
+		{ Name = "Target", Type = "Player" }
+	},
 	Plugin = false,
 	Task = function(Player)
 		local Targets = GetPlayer(Player);
@@ -4638,30 +4905,30 @@ Command.Add({
 
 		for Index, Target in next, Targets do
 			local Success, Result = pcall(function()
-			local Timer = tick()
+				local Timer = tick()
 
-			repeat task.wait()
-				local Character = Character(Target);
-				local Root = GetRoot(Character);
-				local Humanoid = GetHumanoid(Character);
-				
-				local Position = Root.CFrame
-				local Info = TweenInfo.new(0.2)
+				repeat task.wait()
+					local Character = Character(Target);
+					local Root = GetRoot(Character);
+					local Humanoid = GetHumanoid(Character);
 
-				Services.Camera.CameraSubject = GetHumanoid(Character)
-				LocalHumanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
- 
-				Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity * 1.1)) })
-				task.wait(0.2)
-				Tween(LocalRoot, Info, { CFrame = Position * CFrame.new(0, 1, math.random(-2, 2))})
-				task.wait(0.2)
+					local Position = Root.CFrame
+					local Info = TweenInfo.new(0.2)
 
-			until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot
-		   end)
+					Services.Camera.CameraSubject = GetHumanoid(Character)
+					LocalHumanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
-		   if not Success then
-			warn(format("failed to fling player, error: %s", Result))
-		   end
+					Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity)) })
+					task.wait(0.2)
+					Tween(LocalRoot, Info, { CFrame = Position * CFrame.new(0, 1, math.random(-2, 2))})
+					task.wait(0.2)
+
+				until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot or LocalHumanoid.Health == 0 or Humanoid.Sit
+			end)
+
+			if not Success then
+				warn(format("failed to fling player, error: %s", Result))
+			end
 		end
 
 		task.wait(0.2)
@@ -4938,7 +5205,7 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		local Tools = GetTools();
-		
+
 		for i, Tool in next, GetTools() do
 			Tool.Parent = Local.Character
 			Wait()
@@ -4954,7 +5221,7 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		local CTPTool = CreateInstance("Tool", {
-			Parent = Local.Backpack,
+			Parent = Local.Player.Backpack,
 			Name = "ClickTP",
 			RequiresHandle = false
 		})
@@ -4966,7 +5233,7 @@ Command.Add({
 		end)
 
 		local TweenTool = CreateInstance("Tool", {
-			Parent = Local.Backpack,
+			Parent = Local.Player.Backpack,
 			Name = "Tween ClickTP", 
 			RequiresHandle = false
 		})
@@ -5057,7 +5324,7 @@ Command.Add({
 	Aliases = { "walkfling" },
 	Description = "Fling without spinning",
 	Arguments = {
-        { Name = "Power", Type = "Number" },
+		{ Name = "Power", Type = "Number" },
 		{ Name = "Closest Distance", Type = "Number" },
 	},
 	Plugin = false,
@@ -5527,8 +5794,17 @@ Local.Player.Chatted:Connect(function(Message)
 	end
 end)
 
+Services.Input.InputBegan:Connect(function(Key, Processed)
+	if Key.KeyCode == Enum.KeyCode.Tab and pressTab.TextTransparency ~= 1 and Recommend.Text ~= "" and Processed and Screen.Parent then
+		local Text = Recommend.Text
+		task.wait()
+		Box.Text = Text
+		Box.CursorPosition = #Text + 1
+	end
+end)
+
 Local.Mouse.KeyDown:Connect(function(Key)
-	if Key == Settings.Prefix then
+	if Key == Settings.Prefix and Screen.Parent then
 		Library.Bar(true)
 		Wait()
 		Box.Text = ""
@@ -5583,5 +5859,5 @@ if getgenv then
 end
 
 Utils.Notify("Information", "IMPORTANT", "This is the testing loadstring, if you find any bugs DM them to me on discord @qipu", 10)
-Utils.Notify("Information", "Update Log", "Added custom themes, find them in the Settings Tab and Waypoints (command name - waypoints)", 10)
+Utils.Notify("Information", "Update Log", "Added autocomplete suggestion by pressing Tab (PC only), as well as a player name shower if a command has a Player argument.", 10)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
