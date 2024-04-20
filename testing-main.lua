@@ -1,14 +1,14 @@
-		--[[
-		THIS IS A TESTING LOADSTRING, EXPECT BUGS!
-		THIS IS A TESTING LOADSTRING, EXPECT BUGS!
+--[[
+THIS IS A TESTING LOADSTRING, EXPECT BUGS!
+THIS IS A TESTING LOADSTRING, EXPECT BUGS!
+
+cmd v1.0
+github - lxte/cmd
 		
-		cmd v1.0
-		github - lxte/cmd
+todo: (so i remember lol)
 		
-		todo: (so i remember lol)
-		
-		1. re-enable the automatic fpsbooster (it lags lol)
-		]]
+1. re-enable the automatic fpsbooster (it lags lol)
+]]
 
 if not game:IsLoaded() then
 	game.Loaded:Wait()
