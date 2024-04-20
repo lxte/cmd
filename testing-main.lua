@@ -4514,7 +4514,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "vehiclegoto", "vgoto" },
+	Aliases = { "vehiclegoto", "vgoto", "vto" },
 	Description = "Teleports your vehicle to your target",
 	Arguments = {
 		{ Name = "Target", Type = "Player" }	
@@ -4558,7 +4558,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "unvehiclespeed", "vspeed" },
+	Aliases = { "unvehiclespeed", "unvspeed" },
 	Description = "Stops the vehicle speed command",
 	Arguments = {},
 	Plugin = false,
