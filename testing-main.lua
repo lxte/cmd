@@ -1231,6 +1231,7 @@ Library.Bar = function(Bool)
 					Canvas = Variable[2],
 					Speed = 0.15,
 				})
+				Box:ReleaseFocus()
 			end
 		end
 	end
@@ -3456,6 +3457,88 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "serverhop", "shop" },
+	Description = "Teleports you to the LARGEST available server",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Servers = Services.Http:JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/".. game.PlaceId .."/servers/Public?sortOrder=Asc&limit=100")).data
+		local Players = 0
+		local Jobid = nil
+
+		if Servers and #Servers > 1 then
+			for Index, Server in next, Servers do
+				local Playing, Max = Server.playing, Server.maxPlayers
+				if (Playing > Players) and (Playing < Max) then
+					Players = Playing
+					Jobid = Server.id
+				end
+			end
+		end
+
+		if Jobid then
+			Utils.Notify("Success", "Success!", format("Serverhopping, player count: %s", tostring(Players)))
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, Jobid)
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "serverhop2", "shop2" },
+	Description = "Teleports you to the SMALLEST available server",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Servers = Services.Http:JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/".. game.PlaceId .."/servers/Public?sortOrder=Asc&limit=100")).data
+		local Players = Services.Players.MaxPlayers
+		local Jobid = nil
+
+		if Servers and #Servers > 1 then
+			for Index, Server in next, Servers do
+				local Playing, Max = Server.playing, Server.maxPlayers
+				if (Playing < Players) and (Playing < Max) then
+					Players = Playing
+					Jobid = Server.id
+				end
+			end
+		end
+
+		if Jobid then
+			Utils.Notify("Success", "Success!", format("Serverhopping, player count: %s", tostring(Players)))
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, Jobid)
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "serverhop3", "shop3" },
+	Description = "Teleports you to the server with the best ping",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Servers = Services.Http:JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/".. game.PlaceId .."/servers/Public?sortOrder=Asc&limit=100")).data
+		local Ping = math.huge
+		local Jobid = nil
+
+		if Servers and #Servers > 1 then
+			for Index, Server in next, Servers do
+				local ping = Server.ping
+				if (ping < Ping) then
+					Ping = ping
+					Jobid = Server.id
+				end
+			end
+		end
+
+		if Jobid then
+			Utils.Notify("Success", "Success!", format("Serverhopping, ping: %s", tostring(Ping)))
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, Jobid)
+		end
+	end,
+})
+
+
+Command.Add({
 	Aliases = { "rejoinre", "rjre" },
 	Description = "Rejoins and teleports you to where you were before teleporting",
 	Arguments = {},
@@ -4901,7 +4984,7 @@ Command.Add({
 		local LocalHumanoid = GetHumanoid(Local.Character);
 		local Old = LocalRoot.CFrame;
 
-		Walkfling(10000, 1000, true)
+		Walkfling(20000, 1000, true)
 
 		for Index, Target in next, Targets do
 			local Success, Result = pcall(function()
@@ -5859,5 +5942,5 @@ if getgenv then
 end
 
 Utils.Notify("Information", "IMPORTANT", "This is the testing loadstring, if you find any bugs DM them to me on discord @qipu", 10)
-Utils.Notify("Information", "Update Log", "Added autocomplete suggestion by pressing Tab (PC only), as well as a player name shower if a command has a Player argument.", 10)
+Utils.Notify("Information", "Update Log", "Serverhop commands added", 10)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
