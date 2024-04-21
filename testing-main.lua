@@ -59,6 +59,7 @@ local Services = {
 	Teleport = game:GetService("TeleportService");
 	AvatarEditor = game:GetService("AvatarEditorService");
 	StarterPlayer = game:GetService("StarterPlayer");
+	GuiService = game:GetService("GuiService");
 }
 
 local Players = Services.Players
@@ -173,6 +174,13 @@ SetNumber = function(Input, Minimum, Max)
 		return Minimum
 	end
 end
+
+CheckIfNPC = function(Character)
+	if Character and Character.ClassName == "Model" and Character:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Character) then
+		return true
+	end
+end
+
 
 Character = function(Player)
 	if not Player then return end
@@ -474,6 +482,12 @@ function GetPlayer(Arg)
 			for i, Player in next, Services.Players:GetPlayers() do
 				if Player ~= Local.Player then
 					table.insert(Target, Player)
+				end
+			end
+		elseif String:lower() == "npc" then
+			for i, Npc in next, workspace:GetDescendants() do
+				if CheckIfNPC(Npc) then
+					table.insert(Target, Npc)
 				end
 			end
 		elseif String:lower() == "seated" then
@@ -1935,6 +1949,7 @@ Autofills.Recommend = function(Input)
 	local Split = lower(split(Input, ' ')[1])
 	local Found = false
 
+if #split(Input, ' ') == 1 then
 	for Index, Table in Commands do
 		for Index, Name in Table[1] do
 			if find(sub(Name, 1, #Split), lower(Split)) or Name == Split then
@@ -1944,6 +1959,7 @@ Autofills.Recommend = function(Input)
 			end
 		end
 	end
+end
 
 	-- close ur eyes theres trash code
 	if #split(Input, " ") > 1 and Screen.Parent then
@@ -1977,7 +1993,7 @@ Autofills.Recommend = function(Input)
 					end
 
 					if not PlayerFound then -- if still not found lol
-						local GetPlayerArguments = { "all", "others", "seated", "stood", "me", "closest", "farthest", "enemies", "dead", "alive", "friends", "nonfriends"}
+						local GetPlayerArguments = { "all", "random", "others", "seated", "stood", "me", "closest", "farthest", "enemies", "dead", "alive", "friends", "nonfriends"}
 						for Index, Arg in next, GetPlayerArguments do
 							if find(sub(Arg, 1, #Player), lower(Player)) then
 								local Name = format(" %s", gsub(lower(Arg), lower(Player), Player))
@@ -1997,7 +2013,6 @@ Autofills.Recommend = function(Input)
 		Recommend.Text = ""
 	end
 end
-
 
 -- Commands
 
@@ -2029,6 +2044,85 @@ Command.Add({
 		end
 	end,
 })
+
+Command.Add({
+	Aliases = { "fakechat" },
+	Description = "Sends a FAKE message in the chat",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		if not Screen:FindFirstChild("FakeChat") then
+
+			local Main = Tab.new({
+				Title = "FakeChat",
+				Drag = true
+			})
+
+			local Tabs = Main.Tabs
+			local MainTab = Tabs.Main.Scroll
+			local Disguise, User, Text = nil, nil, nil
+
+			local Send = function(Message, Player, FakeMessage)
+				local Character = " "
+	         	local Amount = 125
+
+	            Amount = Amount - #Local.Player.Name - #Message
+	         	Chat(Message .. Character:rep(Amount) .. format("[%s]: %s", Player, FakeMessage))
+			end
+
+			local Search = Library.new("Input", { 
+				Title = "Your Message",
+				Description = "The message that will be disguised",
+				Parent = MainTab,
+				Default = "",
+				Callback = function(Message)
+					Disguise = Message
+					Utils.Notify("Success", "Success!", format("Set YOUR message as %s", Message))
+				end,
+			})
+
+			local Search = Library.new("Input", { 
+				Title = "Player Name",
+				Description = "The player's name you want to chat as",
+				Parent = MainTab,
+				Default = "",
+				Callback = function(Message)
+					User = Message
+					Utils.Notify("Success", "Success!", format("Set the player's name as %s", Message))
+				end,
+			})
+
+			local Search = Library.new("Input", { 
+				Title = "Player's message",
+				Description = "The player's message you want them to say",
+				Parent = MainTab,
+				Default = "",
+				Callback = function(Message)
+					Text = Message
+					Utils.Notify("Success", "Success!", format("Set the text as %s", Message))
+				end,
+			})
+
+			local Search = Library.new("Button", { 
+				Title = "Send Message",
+				Description = "Sends the fake message",
+				Parent = MainTab,
+				Callback = function()
+					if Disguise and User and Text then
+						Send(Disguise, User, Text)
+					else
+						Utils.Notify("Error", "Error!", "One or more arguments missing")
+					end
+				end,
+			})
+
+			Tweens.Open({ Canvas = Main, Speed = 0.3 })
+		else
+			Tweens.Open({ Canvas = Screen:FindFirstChild("FakeChat"), Speed = 0.3 })
+		end
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "commands", "cmds" },
@@ -4957,6 +5051,507 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "freegamepasses", "freegp" },
+	Description = "Returns true if the UserOwnsGamePassAsync function gets used",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        local Hook
+        Hook = hookfunction(Services.Market.UserOwnsGamePassAsync, newcclosure(function(self, ...)
+	        return true
+        end))
+
+		Utils.Notify("Success", "Success!", "Free gamepasses is now enabled, to disable rejoin. Keep in mind this command won't work in every game", 10)
+	end,
+})
+
+Command.Add({
+	Aliases = { "bringunanchored", "bringua", "bua" },
+	Description = "Brings all unanchored parts to your target",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+        local Targets = GetPlayer(Player)
+
+		for Index, Target in next, Targets do
+			local Character = Character(Target)
+			local Root = GetRoot(Character)
+
+			for Index, Part in next, workspace:GetDescendants() do
+				if Part:IsA("BasePart") and not Part.Anchored and not Services.Players:GetPlayerFromCharacter(Part.Parent) and not Part:IsDescendantOf(Local.Character) then
+					local Pos = Instance.new("BodyPosition", Part)
+					Part.CFrame = CFrame.new(Root.Position)
+					Pos.MaxForce = Vector3.new(1, 1, 1) * math.huge
+					Pos.Position = Part.Position
+					Pos.P = 1e9
+				end
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "stand" },
+	Description = "Turns you into someone's stand",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+        local Targets = GetPlayer(Player)
+		Command.Toggles.Stand = true
+
+		for Index, Target in next, Targets do
+			local Anim = CreateInstance("Animation", {AnimationId = "rbxassetid://3337994105"})
+		    local Load = Local.Character.Humanoid:LoadAnimation(Anim)
+		    Services.Camera.CameraSubject = Target.Character:FindFirstChildOfClass("Humanoid")
+			Load:Play()
+			Command.Parse("airwalk")
+
+			repeat task.wait()
+		  	    Local.Character:FindFirstChild("HumanoidRootPart").CFrame = Target.Character:FindFirstChild("HumanoidRootPart").CFrame * CFrame.new(2.2, 1.2, 2.3)
+		    until not Command.Toggles.Stand or not Target or not Target.Character or not Local.Character
+
+		    Load:Stop()
+			Command.Toggles.Stand = false
+			Command.Parse("unairwalk")
+
+			break
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unstand" },
+	Description = "Stops the stand command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        Command.Toggles.Stand = false
+		Services.Camera.CameraSubject = GetHumanoid(Local.Character)
+	end,
+})
+
+Command.Add({
+	Aliases = { "stare" },
+	Description = "Stares at your target",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+        local Targets = GetPlayer(Player)
+		Command.Toggles.Stand = true
+
+		for Index, Target in next, Targets do
+			local Char = Character(Target)
+			local Root = GetRoot(Char)
+
+			if Target ~= Local.Player and Char then
+				Utils.Notify("Success", "Success!", format("Staring at %s", Target.Name))
+				Stare = Services.Run.Stepped:Connect(function()
+					if Local.Character and Character then
+						local Pos = Vector3.new(Root.Position.X, Local.Character.PrimaryPart.Position.Y, Root.Position.Z) 
+						local New = CFrame.new(Local.Character.PrimaryPart.Position, Pos)
+						Local.Character:SetPrimaryPartCFrame(New)
+					end
+				end)
+
+				break
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unstare" },
+	Description = "Stops staring",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		if Stare then
+			Stare:Disconnect()
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "savetools" },
+	Description = "Saves your tools",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Tool in next, GetTools() do
+			Tool.Parent = Local.Player
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "loadtools" },
+	Description = "Loads your saved tools",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Tool in next, Local.Player:GetChildren() do
+			if Tool:IsA("Tool") then
+				Tool.Parent = Local.Backpack
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "trip" },
+	Description = "Makes your character trip",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Humanoid = GetHumanoid(Local.Character);
+		local Root = GetRoot(Local.Character);
+
+		Humanoid:ChangeState(0)
+	    Root.Velocity = Root.CFrame.LookVector * 20
+	end,
+})
+
+Command.Add({
+	Aliases = { "lay" },
+	Description = "Lay on the floor",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Humanoid = GetHumanoid(Local.Character) 
+		local Root = GetRoot(Local.Character)
+		Humanoid.Sit = true
+		task.wait(.1)
+		Root.CFrame = Root.CFrame * CFrame.Angles(math.pi * .5, 0, 0)
+
+		for _, v in next, Humanoid:GetPlayingAnimationTracks() do
+			v:Stop()
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "autorejoin", "autorj" },
+	Description = "Automatically rejoins you if you get kicked",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Command.Toggles.AutoRejoin = true
+		Utils.Notify("Success", "Success!", "Auto rejoin enabled!")
+
+		Services.GuiService.ErrorMessageChanged:Connect(function()
+			if Command.Toggles.AutoRejoin then
+				Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+			end
+		end)
+	end,
+})
+
+Command.Add({
+	Aliases = { "unautorejoin", "unautorj" },
+	Description = "Stops the autorejoin command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Command.Toggles.AutoRejoin = false
+		Utils.Notify("Success", "Success!", "Auto rejoin disabled!")
+	end,
+})
+
+Command.Add({
+	Aliases = { "friend" },
+	Description = "Sends a friend request to your target",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player)
+
+		for Index, Target in next, Targets do
+			Local.Player:RequestFriendship(Target)
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "listen" },
+	Description = "Listen to your target's voice chat",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player)
+
+		for Index, Target in next, Targets do
+			Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, GetRoot(Character(Target)))
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unlisten" },
+	Description = "Stops listening",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Services.Sound:SetListener(Enum.ListenerType.Camera)
+	end,
+})
+
+Command.Add({
+	Aliases = { "scare" },
+	Description = "Teleports you to your target for 1 second",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player)
+
+		for Index, Target in next, Targets do
+			Command.Parse(format("tickgoto %s, 1", Target.Name))
+			task.wait(1)
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "bringnpcs" },
+	Description = "Brings all npcs in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Npc in next, GetPlayer("npc") do
+			if Npc:FindFirstChild("HumanoidRootPart") then
+			   Npc.HumanoidRootPart.CFrame = GetRoot(Local.Character).CFrame
+			elseif Npc:FindFirstChild("Torso") then
+				Npc.Torso.CFrame = GetRoot(Local.Character).CFrame
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "freezenpcs" },
+	Description = "Freezes all npcs in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Npc in next, GetPlayer("npc") do
+			if Npc:FindFirstChild("HumanoidRootPart") then
+			   Npc.HumanoidRootPart.Anchored = true
+			elseif Npc:FindFirstChild("Torso") then
+				Npc.Torso.Anchored = true
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "killnpcs" },
+	Description = "Kills all npcs in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Npc in next, GetPlayer("npc") do
+			if Npc:FindFirstChildOfClass("Humanoid") then
+			   Npc.Humanoid.Health = 0
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "errorchat" },
+	Description = "Sends an error message in the chat",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index = 1, 3 do
+		    Chat("\0")
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "flingnpcs" },
+	Description = "Flings all npcs in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Npc in next, GetPlayer("npc") do
+			if Npc:FindFirstChildOfClass("Humanoid") then
+			   Npc.Humanoid.HipHeight = 1024
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "voidnpcs" },
+	Description = "Voids all npcs in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Npc in next, GetPlayer("npc") do
+			if Npc:FindFirstChildOfClass("Humanoid") then
+			   Npc.Humanoid.HipHeight = -1024
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "follownpcs" },
+	Description = "Makes all npcs in the game follow you",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Command.Toggles.NpcFollow = true
+
+		repeat task.wait()
+		for Index, Npc in next, GetPlayer("npc") do
+			if Npc:FindFirstChildOfClass("Humanoid") then
+			   Npc.Humanoid:MoveTo(GetRoot(Local.Character).Position)
+			end
+		end
+	    until not Command.Toggles.NpcFollow
+	end,
+})
+
+Command.Add({
+	Aliases = { "unfollownpcs" },
+	Description = "Stops making all npcs in the game follow you",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Command.Toggles.NpcFollow = false
+	end,
+})
+
+Command.Add({
+	Aliases = { "equiptools" },
+	Description = "Equips all tools in your inventory",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Tool in next, GetTools() do
+			Tool.Parent = Local.Character
+		end
+	end,
+})
+
+
+Command.Add({
+	Aliases = { "clientbring", "cbring" },
+	Description = "Brings everyone to you on your client",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player)
+		Command.Toggles.ClientBring = true
+
+		repeat task.wait()
+		    for Index, Target in next, Targets do
+				local Character Character(Target);
+				local Root = GetRoot(Character);
+
+				Root.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -2)
+			end
+		until not Command.Toggles.ClientBring
+	end,
+})
+
+Command.Add({
+	Aliases = { "unclientbring", "uncbring" },
+	Description = "Stops bringing everyone on your screen",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		Command.Toggles.ClientBring = false
+	end,
+})
+
+Command.Add({
+	Aliases = { "controllock", "ctrllock" },
+	Description = "Sets your Shiftlock keybinds to the control keys",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Bound = Local.Player.PlayerScripts.PlayerModule.CameraModule.MouseLockController.BoundKeys
+		Bound.Value = "LeftControl,RightControl"
+		Utils.Notify("Success", "Success!", "Set your Shiftlock keybinds to Ctrl")
+	end,
+})
+
+Command.Add({
+	Aliases = { "autoreport" },
+	Description = "Automatically reports players to get them banned",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Report = {
+			kid = "Bullying",
+			youtube = "Offsite Links",
+			date = "Dating",
+			hack = "Cheating/Exploiting",
+			idiot = "Bullying",
+			fat = "Bullying",
+			exploit = "Cheating/Exploiting",
+			cheat = "Cheating/Exploiting",
+			noob = "Bullying",
+			clown = "Bullying",
+		}
+
+		local CheckIfReportable = function(Message)
+			local RuleBreaker, Reason = nil, nil
+			for Blocked, R in next, Report do
+				if Message:lower():find(Blocked) then
+					RuleBreaker = Blocked
+					Reason = R
+				end
+			end
+
+			return RuleBreaker, Reason
+		end
+
+		local ChattedCheck = function(Player)
+			if Player == Local.Player then return end
+
+			Player.Chatted:Connect(function(Message)
+				if CheckIfReportable(Message) then
+					local Word, RuleBreaker = CheckIfReportable(Message)
+					Utils.Notify("Information", format("Reported %s", Player.Name), format("Reason - %s", RuleBreaker))
+
+					if reportplayer then
+						reportplayer(Plr, Reason, format("Saying %s", Word))
+					else
+						Services.Players:ReportAbuse(Plr, Reason, format("Saying %s", Word))
+					end
+				end
+			end)
+		end
+
+		for Index, Player in next, Services.Players:GetPlayers() do
+			ChattedCheck(Player)
+		end
+
+		Services.Players.PlayerAdded:Connect(function(Player)
+			ChattedCheck(Player)
+		end)
+	end,
+})
+
+Command.Add({
 	Aliases = { "spoofws" },
 	Description = "Spoof your walkspeed amount",
 	Arguments = {
@@ -5942,5 +6537,5 @@ if getgenv then
 end
 
 Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15)
-Utils.Notify("Information", "Update Log", "Serverhop commands added", 5)
+Utils.Notify("Information", "Update Log", "Added a lot of commands", 5)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
