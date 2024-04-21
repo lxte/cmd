@@ -5290,7 +5290,11 @@ Command.Add({
 		local Targets = GetPlayer(Player)
 
 		for Index, Target in next, Targets do
-			Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, GetRoot(Character(Target)))
+			local Root = GetRoot(Character(Target))
+
+			if Root then
+			   Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, Root)
+			end
 		end
 	end,
 })
