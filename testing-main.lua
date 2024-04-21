@@ -717,8 +717,8 @@ Methods.Destroy = function(Part)
 				Descentdant:FireServer(Part, {Value = Part})
 			end
 		end
-	elseif Services.ReplicatedStorage:FindFirstChild("GuiHandler") then
-		Services.ReplicatedStorage.GuiHandler:FireServer(false, Part)
+	elseif Services.Replicated:FindFirstChild("GuiHandler") then
+		Services.Replicated.GuiHandler:FireServer(false, Part)
 	elseif Local.Player.Backpack:FindFirstChild("Building Tools") then
 		local ArgumentTable = {
 			[1] = "Remove",
@@ -727,9 +727,7 @@ Methods.Destroy = function(Part)
 			}
 		}
 
-		Local.Player.Backpack:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint:InvokeServer(
-		unpack(ArgumentTable)
-		)
+		Local.Player.Backpack:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint:InvokeServer(unpack(ArgumentTable))
 	end
 end
 
