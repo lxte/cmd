@@ -102,7 +102,10 @@ if not FSuccess then
 end
 
 -- ui - insert
-local Screen = game:GetObjects("rbxassetid://17078695559")[1] --script.Parent
+
+-- Screen = game:GetObjects("rbxassetid://17078695559")[1]
+local Screen = game:GetObjects("rbxassetid://17078695559")[1]
+
 local Cmd = Screen.Command
 local Lib = Screen.Library
 local Example = Screen.Example
@@ -739,7 +742,7 @@ local Modules = {
 	ColorPicker = nil,
 }
 
-spawn(function()
+pcall(function()
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))()
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))()
 	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))()
@@ -1947,17 +1950,17 @@ Autofills.Recommend = function(Input)
 	local Split = lower(split(Input, ' ')[1])
 	local Found = false
 
-if #split(Input, ' ') == 1 then
-	for Index, Table in Commands do
-		for Index, Name in Table[1] do
-			if find(sub(Name, 1, #Split), lower(Split)) or Name == Split then
-				Tween(pressTab, TweenInfo.new(0.35), { TextTransparency = 0 })
-				Recommend.Text = gsub(Name, Split, split(Input, " ")[1])
-				Found = true
+	if #split(Input, ' ') == 1 then
+		for Index, Table in Commands do
+			for Index, Name in Table[1] do
+				if find(sub(Name, 1, #Split), lower(Split)) or Name == Split then
+					Tween(pressTab, TweenInfo.new(0.35), { TextTransparency = 0 })
+					Recommend.Text = gsub(Name, Split, split(Input, " ")[1])
+					Found = true
+				end
 			end
 		end
 	end
-end
 
 	-- close ur eyes theres trash code
 	if #split(Input, " ") > 1 and Screen.Parent then
@@ -2062,10 +2065,10 @@ Command.Add({
 
 			local Send = function(Message, Player, FakeMessage)
 				local Character = " "
-	         	local Amount = 125
+				local Amount = 125
 
-	            Amount = Amount - #Local.Player.Name - #Message
-	         	Chat(Message .. Character:rep(Amount) .. format("[%s]: %s", Player, FakeMessage))
+				Amount = Amount - #Local.Player.Name - #Message
+				Chat(Message .. Character:rep(Amount) .. format("[%s]: %s", Player, FakeMessage))
 			end
 
 			local Search = Library.new("Input", { 
@@ -5054,10 +5057,10 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-        local Hook
-        Hook = hookfunction(Services.Market.UserOwnsGamePassAsync, newcclosure(function(self, ...)
-	        return true
-        end))
+		local Hook
+		Hook = hookfunction(Services.Market.UserOwnsGamePassAsync, newcclosure(function(self, ...)
+			return true
+		end))
 
 		Utils.Notify("Success", "Success!", "Free gamepasses is now enabled, to disable rejoin. Keep in mind this command won't work in every game", 10)
 	end,
@@ -5071,7 +5074,7 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Player)
-        local Targets = GetPlayer(Player)
+		local Targets = GetPlayer(Player)
 
 		for Index, Target in next, Targets do
 			local Character = Character(Target)
@@ -5098,21 +5101,21 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Player)
-        local Targets = GetPlayer(Player)
+		local Targets = GetPlayer(Player)
 		Command.Toggles.Stand = true
 
 		for Index, Target in next, Targets do
 			local Anim = CreateInstance("Animation", {AnimationId = "rbxassetid://3337994105"})
-		    local Load = Local.Character.Humanoid:LoadAnimation(Anim)
-		    Services.Camera.CameraSubject = Target.Character:FindFirstChildOfClass("Humanoid")
+			local Load = Local.Character.Humanoid:LoadAnimation(Anim)
+			Services.Camera.CameraSubject = Target.Character:FindFirstChildOfClass("Humanoid")
 			Load:Play()
 			Command.Parse("airwalk")
 
 			repeat task.wait()
-		  	    Local.Character:FindFirstChild("HumanoidRootPart").CFrame = Target.Character:FindFirstChild("HumanoidRootPart").CFrame * CFrame.new(2.2, 1.2, 2.3)
-		    until not Command.Toggles.Stand or not Target or not Target.Character or not Local.Character
+				Local.Character:FindFirstChild("HumanoidRootPart").CFrame = Target.Character:FindFirstChild("HumanoidRootPart").CFrame * CFrame.new(2.2, 1.2, 2.3)
+			until not Command.Toggles.Stand or not Target or not Target.Character or not Local.Character
 
-		    Load:Stop()
+			Load:Stop()
 			Command.Toggles.Stand = false
 			Command.Parse("unairwalk")
 
@@ -5127,7 +5130,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-        Command.Toggles.Stand = false
+		Command.Toggles.Stand = false
 		Services.Camera.CameraSubject = GetHumanoid(Local.Character)
 	end,
 })
@@ -5140,7 +5143,7 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Player)
-        local Targets = GetPlayer(Player)
+		local Targets = GetPlayer(Player)
 		Command.Toggles.Stand = true
 
 		for Index, Target in next, Targets do
@@ -5211,7 +5214,7 @@ Command.Add({
 		local Root = GetRoot(Local.Character);
 
 		Humanoid:ChangeState(0)
-	    Root.Velocity = Root.CFrame.LookVector * 20
+		Root.Velocity = Root.CFrame.LookVector * 20
 	end,
 })
 
@@ -5291,7 +5294,7 @@ Command.Add({
 			local Root = GetRoot(Character(Target))
 
 			if Root then
-			   Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, Root)
+				Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, Root)
 			end
 		end
 	end,
@@ -5332,7 +5335,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChild("HumanoidRootPart") then
-			   Npc.HumanoidRootPart.CFrame = GetRoot(Local.Character).CFrame
+				Npc.HumanoidRootPart.CFrame = GetRoot(Local.Character).CFrame
 			elseif Npc:FindFirstChild("Torso") then
 				Npc.Torso.CFrame = GetRoot(Local.Character).CFrame
 			end
@@ -5348,7 +5351,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChild("HumanoidRootPart") then
-			   Npc.HumanoidRootPart.Anchored = true
+				Npc.HumanoidRootPart.Anchored = true
 			elseif Npc:FindFirstChild("Torso") then
 				Npc.Torso.Anchored = true
 			end
@@ -5364,7 +5367,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-			   Npc.Humanoid.Health = 0
+				Npc.Humanoid.Health = 0
 			end
 		end
 	end,
@@ -5377,7 +5380,7 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		for Index = 1, 3 do
-		    Chat("\0")
+			Chat("\0")
 		end
 	end,
 })
@@ -5390,7 +5393,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-			   Npc.Humanoid.HipHeight = 1024
+				Npc.Humanoid.HipHeight = 1024
 			end
 		end
 	end,
@@ -5404,7 +5407,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-			   Npc.Humanoid.HipHeight = -1024
+				Npc.Humanoid.HipHeight = -1024
 			end
 		end
 	end,
@@ -5419,12 +5422,12 @@ Command.Add({
 		Command.Toggles.NpcFollow = true
 
 		repeat task.wait()
-		for Index, Npc in next, GetPlayer("npc") do
-			if Npc:FindFirstChildOfClass("Humanoid") then
-			   Npc.Humanoid:MoveTo(GetRoot(Local.Character).Position)
+			for Index, Npc in next, GetPlayer("npc") do
+				if Npc:FindFirstChildOfClass("Humanoid") then
+					Npc.Humanoid:MoveTo(GetRoot(Local.Character).Position)
+				end
 			end
-		end
-	    until not Command.Toggles.NpcFollow
+		until not Command.Toggles.NpcFollow
 	end,
 })
 
@@ -5463,7 +5466,7 @@ Command.Add({
 		Command.Toggles.ClientBring = true
 
 		repeat task.wait()
-		    for Index, Target in next, Targets do
+			for Index, Target in next, Targets do
 				local Character Character(Target);
 				local Root = GetRoot(Character);
 
