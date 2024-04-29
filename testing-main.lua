@@ -695,7 +695,7 @@ Methods.RemoveRightGrip = function(Tool)
 	Tool.Parent = Local.Character
 end
 
-Methods.CheckIfVulnerable = function()
+Methods.Check = function()
 	if Services.Replicated:FindFirstChild("DeleteCar") then
 		return true
 	elseif Local.Character:FindFirstChild("HandlessSegway") then
@@ -6246,7 +6246,8 @@ Command.Add({
 	end,
 })
 
-if Methods.CheckIfVulnerable() then
+pcall(function()
+if Methods.Check() then
 	Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Cmd, use the <b>vuln</b> command for more information", 15)
 
 	Command.Add({
@@ -6443,6 +6444,7 @@ if Methods.CheckIfVulnerable() then
 		end,
 	})
 end
+end)
 
 spawn(function()
 	if Checks.File then
