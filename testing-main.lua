@@ -395,7 +395,9 @@ if Local.Player:FindFirstChild("ControlModule", true) then
 		end
 	end)
 
-	local Controller = require(Local.Player:FindFirstChild("ControlModule", true))
+	local Controller;
+    
+    Controller = pcall(function() require(Local.Player:FindFirstChild("ControlModule", true)) end)
 	local TouchFrame = Local.Player:FindFirstChild("TouchControlFrame", true)
 
 	if Controller and TouchFrame then
