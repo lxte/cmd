@@ -105,7 +105,6 @@ end
 
 -- Screen = game:GetObjects("rbxassetid://17078695559")[1]
 local Screen = game:GetObjects("rbxassetid://17078695559")[1]
-
 local Cmd = Screen.Command
 local Lib = Screen.Library
 local Example = Screen.Example
@@ -751,11 +750,7 @@ pcall(function()
 end)
 
 local PromptChangeRigType = function(RigType)
-	Services.AvatarEditor:PromptSaveAvatar(
-		GetHumanoid(Local.Character).HumanoidDescription,
-		Enum.HumanoidRigType[RigType]
-	)
-
+	Services.AvatarEditor:PromptSaveAvatar(GetHumanoid(Local.Character).HumanoidDescription,Enum.HumanoidRigType[RigType])
 	Services.AvatarEditor.PromptSaveAvatarCompleted:Wait()
 	Command.Parse("respawn")
 end
@@ -797,6 +792,43 @@ local Walkfling = function(Power, Distance, Bool)
 			end
 		until not Command.Toggles.WalkFling
 	end)
+end
+
+local Fling = function(Target)
+	local LocalRoot = GetRoot(Local.Character);
+	local LocalHumanoid = GetHumanoid(Local.Character);
+	local Old = LocalRoot.CFrame;
+
+	local Success, Result = pcall(function()
+		Walkfling(20000, 1000, true)
+		local Timer = tick()
+
+		repeat task.wait()
+			local Root = GetRoot(Target.Character);
+			local Humanoid = GetHumanoid(Target.Character);
+
+			local Position = Root.CFrame
+			local Info = TweenInfo.new(0.2)
+
+			Services.Camera.CameraSubject = Humanoid
+			LocalHumanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+			Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity)) })
+			task.wait(0.2)
+			Tween(LocalRoot, Info, { CFrame = Position * CFrame.new(0, 1, math.random(-2, 2))})
+			task.wait(0.2)
+
+		until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot or LocalHumanoid.Health == 0 or Humanoid.Sit
+	end)
+
+	if not Success then
+		warn(format("failed to fling player, error: %s", Result))
+	end
+
+	task.wait(0.2)
+	workspace.CurrentCamera.CameraSubject = GetHumanoid(Local.Character)
+	LocalRoot.CFrame = Old
+	Walkfling(10000, 1000, false)
 end
 
 -- ui lib
@@ -1810,6 +1842,15 @@ Data.SetUpThemeTable = function(ThemeTable)
 	return Themes
 end
 
+Data.SaveAlias = function(Command, Alias) 
+   if Command and Alias then
+		local AliasData = Services.Http:JSONDecode(Data.get("CustomAliases.json"))
+		AliasData[Alias] = Command
+
+		Data.new("CustomAliases.json", Services.Http:JSONEncode(AliasData))
+   end
+end
+
 -- planned webhook command
 Data.Webhook.Send = function(Webhook, Message)
 	request({
@@ -1837,6 +1878,10 @@ if not Data.get("Themes.json") then
 	end
 
 	Data.new("Themes.json", Services.Http:JSONEncode(Themes))
+end
+
+if not Data.get("CustomAliases.json") then
+	Data.new("CustomAliases.json", Services.Http:JSONEncode({}))
 end
 
 if not Data.get("Scale.json") then
@@ -2560,6 +2605,7 @@ Command.Add({
 
 			-- Tabs
 			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Cmd", Parent = MainTab })
+			local Aliases = Library.new("Switch", { Title = "Aliases", Description = "Add custom aliases (nicknames) for commands!", Parent = MainTab })
 			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Cmd", Parent = MainTab })	
 			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Cmd", Parent = Themes })
 			local Custom = Library.new("Switch", { Title = "Custom", Description = "Make your own custom theme", Parent = Themes })
@@ -2599,6 +2645,60 @@ Command.Add({
 				Parent = Information 
 			})
 
+			-- Aliases
+			local CommandInputted = nil
+			local AliasInputted = nil
+
+			Library.new("Section", { Title = "Add Aliases", Parent = Aliases })
+
+			Library.new("Input", { Title = "Command Name", Description = "The name for the command you're trying to add an alias to", Default = '', Parent = Aliases, Callback = function(Input) 
+				CommandInputted = Input
+			end})
+
+			Library.new("Input", { Title = "Alias Name", Description = "The alias you want the command to be called", Default = '', Parent = Aliases, Callback = function(Input) 
+				AliasInputted = Input
+			end})
+
+			Library.new("Button", { 
+				Title = "Set Alias",
+				Description = "Set the alias for the command",
+				Parent = Aliases,
+				Callback = function()
+					if CommandInputted and AliasInputted and not Command.Find(AliasInputted) then
+						local Cmd = Command.Find(lower(CommandInputted))
+
+						if Cmd and AliasInputted then
+							local Aliases = Cmd[1]
+							Aliases[#Aliases + 1] = lower(AliasInputted)
+							Data.SaveAlias(CommandInputted, AliasInputted)
+							Utils.Notify("Success", "Success!", format("Added alias '%s' to command '%s'", lower(AliasInputted), CommandInputted), 10)
+						else
+							Utils.Notify("Error", "Error!", "Command not found, check for any spelling mistakes", 5)
+						end
+
+					else
+						print(CommandInputted, AliasInputted)
+						Utils.Notify("Error", "Error!", "One or more arguments missing OR Alias already exists", 5)
+					end
+				end,
+			})
+
+			Library.new("Section", { Title = "Delete Aliases", Parent = Aliases })
+
+			Library.new("Input", { Title = "Delete Alias", Description = "Deletes the CUSTOM Alias you put", Default = '', Parent = Aliases, Callback = function(Input) 
+				local Alias = Services.Http:JSONDecode(Data.get("CustomAliases.json"))
+
+				if Alias then
+					for Aliases, Cmd in next, Alias do
+						if Aliases == lower(Input) then
+							Alias[Input] = nil
+							Utils.Notify("Success", "Success", "Deleted alias successfully", 5)
+						end
+					end
+				end
+
+				Data.new("CustomAliases.json", Services.Http:JSONEncode(Alias))
+			end})
 
 			-- Themes
 			Library.new("Input", { Title = "Transparency", Description = "Set transparency of the UI", Default = "0.05", Parent = Themes, Callback = function(Input) 
@@ -2677,7 +2777,51 @@ local ESPSettings = {
 	Fill = 0.5,
 	Outline = 0,
 	Current = false,
+	TargetsOnly = false,
+	Holder =  Instance.new("BillboardGui", game.CoreGui)
 }
+
+ESPSettings.InfoESP = function(Target)
+	task.spawn(function()
+		local Char = Target.Character
+	 
+		if Char and not ESPSettings.Holder:FindFirstChild(Target.Name) and Target ~= Local.Player then
+			local Head = Char:FindFirstChild("Head")
+			local Billboard = Instance.new("BillboardGui", ESPSettings.Holder)
+			local InfoTag = Instance.new("TextLabel", Billboard)
+	
+			Billboard.Size = UDim2.new(0, 200, 0, 24)
+			Billboard.SizeOffset = Vector2.new(0, 1)
+			Billboard.AlwaysOnTop = true
+			Billboard.Name = Target.Name
+			Billboard.Adornee = Head
+	
+			InfoTag.BackgroundTransparency = 1
+			InfoTag.Size = UDim2.new(1, 0, 1, 0)
+			InfoTag.TextSize = 12
+			InfoTag.TextColor3 = Color3.new(255, 255, 255)
+			InfoTag.Font = Enum.Font.ArialBold
+			InfoTag.AnchorPoint = Vector2.new(0.5, 0.5)
+			InfoTag.Position = UDim2.new(0.5, 0, 0.5, 0)
+			InfoTag.TextXAlignment = "Center"
+			InfoTag.RichText = true
+			InfoTag.TextTransparency = 0.2
+			InfoTag.ZIndex = 100
+	
+			repeat task.wait() 
+				InfoTag.Text = string.format("<b>%s</b> <font color='rgb(200, 200, 200)'>(%s)</font>\n[%s] [%s / 100]", tostring(Target.DisplayName), tostring(Target.Name), tostring(math.floor((Local.Character.Head.Position - Head.Position).Magnitude)), tostring(Char.Humanoid.Health))
+			until Char.Humanoid.Health == 0 or not Billboard or not Char
+
+			Billboard:Destroy()
+		end
+	end)
+end
+
+ESPSettings.RemoveInfo = function(Target)
+	if ESPSettings.Holder:FindFirstChild(Target.Name) then
+		ESPSettings.Holder:FindFirstChild(Target.Name):Destroy()
+	end
+end
 
 Command.Add({
 	Aliases = { "esp", },
@@ -2685,6 +2829,45 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
+
+	local AddHighlight = function(Bool, Transparency, Fill, Player)
+		task.spawn(function()
+			if Player and Player.Character then
+				local Char = Player.Character
+				local Find = Char:FindFirstChildOfClass("Highlight");
+
+				if ESPSettings.TargetsOnly and Player.Team == Local.Player.Team then
+					if Find then
+						Find:Destroy()
+					end
+
+					ESPSettings.RemoveInfo(Player)
+				else
+				if Bool then
+					local Highlight = Instance.new("Highlight", Char)
+					ESPSettings.RemoveInfo(Player)
+					ESPSettings.InfoESP(Player)
+
+					if Find then
+						Find:Destroy()
+					end
+
+					Highlight.OutlineTransparency = Transparency
+					Highlight.FillTransparency = Fill
+					Highlight.FillColor = Player.TeamColor.Color
+					ESPSettings.Outline = Transparency
+					ESPSettings.Fill = Fill
+				else
+					ESPSettings.RemoveInfo(Player)
+					if Find then
+						Find:Destroy()
+					end
+				end
+				end
+			end
+		end)
+	end
+
 		local SetESP = function(Bool, Transparency, Fill)
 			ESPSettings.Outline = Transparency
 			ESPSettings.Fill = Fill
@@ -2693,27 +2876,7 @@ Command.Add({
 				local Character = Character(Player)
 
 				if Character then
-					if Bool then
-						local Find = Character:FindFirstChildOfClass("Highlight")
-
-						if not Find then
-							local Highlight = Instance.new("Highlight", Character)
-							Highlight.OutlineTransparency = Transparency
-							Highlight.FillTransparency = Fill
-							ESPSettings.Outline = Transparency
-							ESPSettings.Fill = Fill
-						else
-							Find.Enabled = true
-							Find.OutlineTransparency = Transparency
-							Find.FillTransparency = Fill
-						end
-					else
-						local Highlight = Character:FindFirstChildOfClass("Highlight")
-
-						if Highlight then
-							Highlight:Destroy()
-						end
-					end
+					AddHighlight(Bool, Transparency, Fill, Player)
 				end
 			end
 		end
@@ -2730,6 +2893,16 @@ Command.Add({
 				Callback = function(Boolean)
 					SetESP(Boolean, ESPSettings.Outline, ESPSettings.Fill)
 					ESPSettings.Current = Boolean
+				end,
+			})
+
+			Library.new("Toggle", { Title = "Targets Only",
+				Description = "Shows ESP for targets only",
+				Default = false,
+				Parent = MainTab,
+				Callback = function(Boolean)
+					ESPSettings.TargetsOnly = Boolean
+					SetESP(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill)
 				end,
 			})
 
@@ -2756,42 +2929,302 @@ Command.Add({
 			for Index, Player in next, Services.Players:GetPlayers() do
 				local Char = Character(Player)
 
-				if ESPSettings.Current and Char and not Char:FindFirstChildOfClass("Highlight") then
-					local Highlight = Instance.new("Highlight", Char)
-					Highlight.OutlineTransparency = ESPSettings.Outline
-					Highlight.FillTransparency = ESPSettings.Fill
-				end
+				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
 
 				Player.CharacterAdded:Connect(function(Char)
-					if ESPSettings.Current then
-						local Highlight = Instance.new("Highlight", Char)
-						Highlight.OutlineTransparency = ESPSettings.Outline
-						Highlight.FillTransparency = ESPSettings.Fill
-					end
+					task.wait(0.5)
+					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
 				end)
 			end
 
 			Services.Players.PlayerAdded:Connect(function(Player)
 				local Char = Character(Player)
 
-				if Char and ESPSettings.Current then
-					local Highlight = Instance.new("Highlight", Char)
-					Highlight.OutlineTransparency = ESPSettings.Outline
-					Highlight.FillTransparency = ESPSettings.Fill
-				end
+				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
 
 				Player.CharacterAdded:Connect(function(Char)
-					if ESPSettings.Current then
-						local Highlight = Instance.new("Highlight", Char)
-						Highlight.OutlineTransparency = ESPSettings.Outline
-						Highlight.FillTransparency = ESPSettings.Fill
-					end
+					task.wait(0.5)
+					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
 				end)
 			end)
 
 			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
 			Tweens.Open({ Canvas = Screen:FindFirstChild("ESP"), Speed = 0.3 })
+		end
+	end,
+})
+
+local Aimbot = {
+	Camlock = false,
+	Part = "Head",
+	TeamCheck = true,
+	Held = false,
+	Key = Enum.KeyCode.E,
+	Prediction = 0,
+	Wallcheck = false,
+	FOV = {
+		Radius = 100,
+	},
+	Target = nil,
+}
+
+Aimbot.BehindWall = function(Target) 
+    if Target and Target.Character and Target ~= Local.Player then 
+       local Walls = workspace.CurrentCamera:GetPartsObscuringTarget({Local.Character.Head.Position, Target.Character.Head.Position}, {Local.Character, Target.Character})
+       
+       if #Walls == 0 then
+           return false
+       elseif #Walls > 0 then
+           return true
+       end
+    end
+end
+
+Aimbot.Closest = function()
+    local Distance = 9e9;
+	local Target = nil;
+
+	for Index, Player in next, Services.Players:GetPlayers() do
+		if Aimbot.TeamCheck and Player.Team == Local.Player.Team then  
+		else
+			if Player ~= Local.Player and Player.Character and Player.Character:FindFirstChild(Aimbot.Part) then
+
+				local Character = Player.Character
+				local Location, Visible = workspace.CurrentCamera:WorldToViewportPoint(Character:FindFirstChild(Aimbot.Part).Position)
+
+				if Aimbot.Wallcheck and Aimbot.BehindWall(Player) then
+
+				else
+				if Visible then
+					local Magnitude = (Vector2.new(Local.Mouse.X, Local.Mouse.Y) - Vector2.new(Location.X, Location.Y)).Magnitude
+					if Magnitude < Aimbot.FOV.Radius and Magnitude < Distance then
+						Distance = Magnitude;
+						Target = Player; 
+					end
+				end
+			end
+			end
+		end
+	end
+
+	return Target
+end
+
+Command.Add({
+	Aliases = { "aimbot", },
+	Description = "Aimbot UI",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+    	if not Screen:FindFirstChild("Aimbot") then
+			local Main = Tab.new({ Title = "Aimbot", Drag = true })
+			local Tabs = Main.Tabs
+			local MainTab = Tabs.Main.Scroll
+
+			Library.new("Toggle", { Title = "Enabled",
+				Description = "Toggle to enable the Aimbot",
+				Default = false,
+				Parent = MainTab,
+				Callback = function(Boolean)
+				    Aimbot.Camlock = Boolean
+				end,
+			})
+
+			Library.new("Toggle", { Title = "Team Check",
+				Description = "If enabled, it won't lock on to people who are in the same team as you",
+				Default = true,
+				Parent = MainTab,
+				Callback = function(Boolean)
+				    Aimbot.TeamCheck = Boolean
+				end,
+			})
+
+			Library.new("Toggle", { Title = "Wall Check",
+				Description = "Checks if the person you are trying to lock onto, is / is not behind a wall",
+				Default = false,
+				Parent = MainTab,
+				Callback = function(Boolean)
+				    Aimbot.Wallcheck = Boolean
+				end,
+			})
+
+			Library.new("Input", { Title = "FOV Radius",
+				Description = "The radius how far your target has to be, to lock your camera to them",
+				Default = "100",
+				Parent = MainTab,
+				Callback = function(Value)
+					if Value and tonumber(Value) then
+						Aimbot.FOV.Radius = tonumber(Value)
+					end
+				end,
+			})
+
+			Library.new("Input", { Title = "Prediction",
+				Description = "How far away will mouse be from player, useful for games like Da Hood (Recommended: 0 - 0.5)",
+				Default = "0",
+				Parent = MainTab,
+				Callback = function(Value)
+					if Value and tonumber(Value) then
+						Aimbot.Prediction = tonumber(Value)
+					end
+				end,
+			})
+
+			Library.new("Bind", { Title = "Keybind",
+				Description = "The key to press, to lock your camera to a target",
+				Parent = MainTab,
+				Callback = function(Value)
+					Aimbot.Key = Value
+				end,
+			})
+
+			task.spawn(function()
+				Services.Input.InputBegan:Connect(function(Key, Processed)
+				    if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
+						local Closest = Aimbot.Closest()
+						print(Closest)
+
+						if Closest and Closest.Character and Closest.Character:FindFirstChildOfClass("Humanoid") and Closest.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+							local TargetPart = Closest.Character:FindFirstChild(Aimbot.Part)
+							Aimbot.Held = true
+
+							print("Hm....")
+
+							repeat task.wait()
+								local LookAt = TargetPart.CFrame + (TargetPart.Velocity * Aimbot.Prediction + Vector3.new(0, 0.1, 0))
+					            workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, LookAt.Position)
+							until not Aimbot.Held or not Closest
+						end
+					end
+				end)
+
+				Services.Input.InputEnded:Connect(function(Key, Processed)
+				    if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
+						Aimbot.Held = false
+					end
+				end)
+
+				local Circle = nil
+
+				if Drawing and Drawing.new then
+					Circle = Drawing.new("Circle")
+
+					repeat task.wait()
+						if Aimbot.Camlock then
+						   Circle.Radius = Aimbot.FOV.Radius
+						   Circle.Position = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
+						   Circle.Visible = true
+						else
+							Circle.Visible = false
+						end
+				   until not Circle
+				end
+			end)
+
+
+			Tweens.Open({ Canvas = Main, Speed = 0.3 })
+		else
+			Tweens.Open({ Canvas = Screen:FindFirstChild("Aimbot"), Speed = 0.3 })
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "gameinfo", },
+	Description = "Gives info about the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+    	if not Screen:FindFirstChild("Game Info") then
+			local Main = Tab.new({ Title = "Game Info", Drag = true })
+			local Tabs = Main.Tabs
+			local MainTab = Tabs.Main.Scroll
+
+			Library.new("Label", { Title = "Game Name",
+				Description = Services.Market:GetProductInfo(game.PlaceId).Name,
+				Parent = MainTab,
+			})
+			
+			Library.new("Label", { Title = "Place Id",
+				Description = tostring(game.PlaceId),
+				Parent = MainTab,
+			})
+
+		if game.CreatorType == Enum.CreatorType.User then
+			Library.new("Label", { Title = "Owner",
+				Description = string.format("%s (USER)", Services.Players:GetNameFromUserIdAsync(game.CreatorId)),
+				Parent = MainTab,
+			})
+		else
+			Library.new("Label", { Title = "Owner",
+			Description = string.format("%s (GROUP)", game.GroupService:GetGroupInfoAsync(game.CreatorId).Name),
+			Default = false,
+			Parent = MainTab,
+		})
+		end
+
+		local DistributedText = Library.new("Label", { Title = "Game Time",
+		Description = math.floor(workspace.DistributedGameTime),
+		Parent = MainTab,
+	})
+
+     Library.new("Label", { Title = "Respect Filtering Enabled",
+		Description = tostring(Services.Sound.RespectFilteringEnabled),
+		Parent = MainTab,
+     })
+
+	 if request and typeof(request) == 'function' then
+		local UniverseBody = request({
+			Url = string.format("https://apis.roblox.com/universes/v1/places/%s/universe", tostring(game.PlaceId)),
+			Method = "GET"
+		})
+		local UniverseId = Services.Http:JSONDecode(UniverseBody.Body)["universeId"]
+		local GameInfo = Services.Http:JSONDecode(request({
+			Url = string.format("https://games.roblox.com/v1/games?universeIds=%s", tostring(UniverseId)),
+			Method = "GET"
+		}).Body)["data"][1]
+
+		Library.new("Label", { Title = "Visits",
+		   Description = tostring(GameInfo["visits"]),
+		   Parent = MainTab,
+        })
+
+		Library.new("Label", { Title = "Playing",
+		   Description = tostring(GameInfo["playing"]),
+		   Parent = MainTab,
+        })
+
+		Library.new("Label", { Title = "Created",
+		   Description = tostring(GameInfo["created"]),
+		   Parent = MainTab,
+        })
+
+		Library.new("Label", { Title = "Updated",
+		   Description = tostring(GameInfo["updated"]),
+		   Parent = MainTab,
+        })
+
+		Library.new("Label", { Title = "Favorites",
+		   Description = tostring(GameInfo["favoritedCount"]),
+		   Parent = MainTab,
+        })
+
+		Library.new("Label", { Title = "Description",
+		   Description = tostring(GameInfo["description"]),
+		   Parent = MainTab,
+        })
+	 end
+
+	task.spawn(function()
+		repeat task.wait(1)
+			DistributedText.Content.Description.Text = math.floor(workspace.DistributedGameTime)
+		until false
+	end)
+
+			Tweens.Open({ Canvas = Main, Speed = 0.3 })
+		else
+			Tweens.Open({ Canvas = Screen:FindFirstChild("Game Info"), Speed = 0.3 })
 		end
 	end,
 })
@@ -3451,6 +3884,106 @@ Command.Add({
 		Local.Player.CameraMode = "Classic"
 	end,
 })
+
+Command.Add({
+	Aliases = { "invisible", "invis" },
+	Description = "Turns you invisible",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		if Services.Lighting:FindFirstChild(Local.Player.Name) then return end 
+		Local.Character.Archivable = true
+        Original = Local.Character
+        Invisible = Local.Character:Clone()
+        OriginalPosition = Original.HumanoidRootPart.CFrame
+
+        Original.HumanoidRootPart.CFrame = CFrame.new(0, 1000000, 0)
+        task.wait(0.1)
+        Original.HumanoidRootPart.Anchored = true
+        Invisible.HumanoidRootPart.CFrame = OriginalPosition
+        Invisible.Name = string.format("%s-ghosst", Local.Player.Name)
+
+		for Index, BodyPart in next, Invisible:GetChildren() do
+    		if BodyPart:IsA("BasePart") then
+      		  BodyPart.Transparency = 0.5
+    		end
+		end
+
+		Invisible.Parent = workspace
+		Original.Parent = game.Lighting	
+		Local.Player.Character = Invisible
+		workspace.CurrentCamera.CameraSubject = Invisible:FindFirstChildOfClass("Humanoid")
+		Invisible.Animate.Disabled = true
+		Invisible.Animate.Disabled = false
+	end,
+})
+
+Command.Add({
+	Aliases = { "visible", "vis" },
+	Description = "Turns you visible",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        local Original = Services.Lighting:FindFirstChild(Local.Player.Name)
+		local Invisible = Local.Character
+		local InvisiblePosition = Invisible.HumanoidRootPart.CFrame
+
+		if Original and Invisible then 
+			Local.Player.Character = Original
+			Local.Player.Character.Parent = workspace
+			Original.HumanoidRootPart.Anchored = false
+			Original.HumanoidRootPart.CFrame = InvisiblePosition
+			task.wait(0.1)
+			workspace.CurrentCamera.CameraSubject = Original.Humanoid
+			Invisible:Destroy()
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "dupetools", "dupe" },
+	Description = "Dupe your tools",
+	Arguments = {
+		{ Name = "Amount", Type = "Number" } 
+	},
+	Plugin = false,
+	Task = function(Amount)
+        local Amount = Amount or 1
+		local Pos = Vector3.new(0, math.random(50000, 100000), 0)
+
+		for Index = 1, Amount do
+			task.wait(0.1)
+			local Tools = GetTools();
+			local Char = Local.Player.Character;
+			local Root = GetRoot(Char);
+
+			Root.Position = Pos;
+			task.wait(0.2)
+
+			for Index, Tool in next, Tools do
+				if Tool and Tool:FindFirstChild("Handle") then
+					local Handle = Tool.Handle
+					Tool.Parent = Local.Player.Character
+					task.wait(0.01)
+					Tool.Parent = workspace
+					task.wait(0.01)
+					Handle.Anchored = true
+				end
+			end
+
+			Local.Player.Character.Humanoid.Health = 0
+			Local.Player.CharacterAdded:Wait()
+		end
+
+		for Index, Tool in next, workspace:GetChildren() do
+			if Tool and Tool:FindFirstChild("Handle") then
+				Tool.Handle.Anchored = false
+				Tool.Parent = Local.Player.Character
+			end
+		end
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "view", "spectate" },
@@ -5582,48 +6115,32 @@ Command.Add({
 	Plugin = false,
 	Task = function(Player)
 		local Targets = GetPlayer(Player);
-		local LocalRoot = GetRoot(Local.Character);
-		local LocalHumanoid = GetHumanoid(Local.Character);
-		local Old = LocalRoot.CFrame;
-
-		Walkfling(20000, 1000, true)
 
 		for Index, Target in next, Targets do
-			local Success, Result = pcall(function()
-				local Timer = tick()
-
-				repeat task.wait()
-					local Character = Character(Target);
-					local Root = GetRoot(Character);
-					local Humanoid = GetHumanoid(Character);
-
-					local Position = Root.CFrame
-					local Info = TweenInfo.new(0.2)
-
-					Services.Camera.CameraSubject = GetHumanoid(Character)
-					LocalHumanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-					Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity)) })
-					task.wait(0.2)
-					Tween(LocalRoot, Info, { CFrame = Position * CFrame.new(0, 1, math.random(-2, 2))})
-					task.wait(0.2)
-
-				until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot or LocalHumanoid.Health == 0 or Humanoid.Sit
-			end)
-
-			if not Success then
-				warn(format("failed to fling player, error: %s", Result))
-			end
+			Fling(Target)
 		end
 
-		task.wait(0.2)
-		workspace.CurrentCamera.CameraSubject = GetHumanoid(Local.Character)
-		LocalRoot.CFrame = Old
-		Walkfling(10000, 1000, false)
 		Utils.Notify("Success", "Success", "Finished flinging!")
 
 	end,
 })
+
+Command.Add({
+	Aliases = { "clickfling" },
+	Description = "Click on your target, and it will fling them",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		Local.Mouse.Button1Down:Connect(function() 
+			local Target = Local.Mouse.Target
+
+			if Target and Services.Players:GetPlayerFromCharacter(Target.Parent) then
+				Fling(Services.Players:GetPlayerFromCharacter(Target.Parent))
+			end
+		end)
+	end,
+})
+
 
 Command.Toggles.Earthquake = false
 Command.Add({
@@ -6459,6 +6976,17 @@ spawn(function()
 		if not Success then
 			warn(format("error running plugin, error : %s", Result))
 		end
+
+		local CustomAliases = Services.Http:JSONDecode(Data.get("CustomAliases.json"))
+
+		for Alias, CommandName in next, CustomAliases do
+			local Cmd = Command.Find(CommandName)
+
+			if Cmd then
+				local Aliases = Cmd[1]
+				Aliases[#Aliases + 1] = Alias
+			end
+		end
 	end
 end)
 
@@ -6546,5 +7074,4 @@ if getgenv then
 end
 
 Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15)
-Utils.Notify("Information", "Update Log", "Added a lot of commands", 5)
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
