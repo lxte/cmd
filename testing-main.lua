@@ -6141,6 +6141,36 @@ Command.Add({
 	end,
 })
 
+Command.Add({
+	Aliases = { "loopfling" },
+	Description = "Repeatedly fling your target",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+	    local Target = GetPlayer(Player)[1]
+		Command.Toggles.Loopfling = true
+
+		repeat task.wait() 
+			local Character = Target.Character
+
+			if Character and Character:FindFirstChild("HumanoidRootPart") then
+				Fling(Target)
+			end
+
+		until not Command.Toggles.Loopfling or not Target
+	end,
+})
+
+
+Command.Add({
+	Aliases = { "unloopfling" },
+	Description = "Stops flinging your target",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		Command.Toggles.Loopfling = false
+	end,
+})
 
 Command.Toggles.Earthquake = false
 Command.Add({
