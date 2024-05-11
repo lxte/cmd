@@ -2808,7 +2808,7 @@ ESPSettings.InfoESP = function(Target)
 			InfoTag.TextTransparency = 0.2
 			InfoTag.ZIndex = 100
 	
-			repeat task.wait() 
+			repeat task.wait(0.2) 
 				InfoTag.Text = string.format("<b>%s</b> <font color='rgb(200, 200, 200)'>(%s)</font>\n[%s] [%s / 100]", tostring(Target.DisplayName), tostring(Target.Name), tostring(math.floor((Local.Character.Head.Position - Head.Position).Magnitude)), tostring(Char.Humanoid.Health))
 			until Char.Humanoid.Health == 0 or not Billboard or not Char
 
@@ -4644,7 +4644,7 @@ Command.Add({
 		GetHumanoid(Local.Character):ChangeState(Enum.HumanoidStateType.Swimming)
 		GetHumanoid(Local.Character).WalkSpeed = Speed
 
-		for Index, Enum in next, Enum.HumanoidStateType.GetEnumItems(Enum.HumanoidStateType) do
+		for Index, Enum in next, Enum.HumanoidStateType:GetEnumItems(Enum.HumanoidStateType) do
 			GetHumanoid(Local.Character):SetStateEnabled(Enum, false)
 		end
 	end,
@@ -6002,7 +6002,7 @@ Command.Add({
 
 		repeat task.wait()
 			for Index, Target in next, Targets do
-				local Character Character(Target);
+				local Character = Character(Target);
 				local Root = GetRoot(Character);
 
 				Root.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -2)
