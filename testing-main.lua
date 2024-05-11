@@ -116,6 +116,7 @@ local Recommend = Bar.Recommend
 local Popup = Screen.Popup
 local ColorPopup = Screen.ColorPopup
 local pressTab = Bar.Description
+local Protection = {}
 
 local CoreSuccess = pcall(function()
 	Screen.Parent = game:GetService("CoreGui")
@@ -2188,6 +2189,8 @@ Command.Add({
 			local Tabs = Main.Tabs
 			local MainTab = Tabs.Main.Scroll
 
+			Tweens.Open({ Canvas = Main, Speed = 0.3 })
+
 			local ShowResults = function(Message)
 				Message = Message:lower()
 
@@ -2213,6 +2216,7 @@ Command.Add({
 			end)
 
 			for Index, Table in next, Commands do
+				task.wait()
 				local Aliases = Table[1]
 				local Description = Table[2]
 				local Arguments = Table[3]
@@ -2262,8 +2266,6 @@ Command.Add({
 				Library.new("Label", { Title = "Arguments", Description = Argument, Parent = Tab })
 				Library.new("Label", { Title = "Is plugin", Description = tostring(Plugin), Parent = Tab })
 			end
-
-			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
 			Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
 		end
@@ -3886,6 +3888,120 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "autorespawn" },
+	Description = "If you die you automatically get teleported to where you died",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Command.Toggles.AutoRespawn = true
+
+		local Teleport = function() 
+			task.spawn(function() 
+			local Character = Local.Player.Character
+
+			if Character and Command.Toggles.AutoRespawn then
+				local Humanoid = Character:WaitForChild("Humanoid")
+				local Pos;
+
+				Humanoid.Died:Connect(function() 
+					if Command.Toggles.AutoRespawn then
+				    Pos = GetRoot(Character).CFrame
+					end
+				end)
+
+				Local.Player.CharacterAdded:Wait()
+				local Root = Local.Player.Character:WaitForChild("HumanoidRootPart")
+				Root.CFrame = Pos or Root.CFrame
+			end
+		end)
+		end
+	   
+		Teleport()
+		Local.Player.CharacterAdded:Connect(Teleport)
+	end,
+})
+
+Command.Add({
+	Aliases = { "unautorespawn" },
+	Description = "Stops the automatic respawn command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Command.Toggles.AutoRespawn = false
+	end,
+})
+
+Command.Add({
+	Aliases = { "enableinventory", "enableinv" },
+	Description = "Enables the inventory gui if it's hidden",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Services.Starter:SetCoreGuiEnabled(2, true)
+	end,
+})
+
+Command.Add({
+	Aliases = { "controlnpc" },
+	Description = "Click on an NPC to control them (WONT WORK ON EVERY NPC)",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Local.Mouse.Button1Down:Connect(function() 
+			local Npc = Local.Mouse.Target.Parent
+			local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
+				
+				if Npc and Npc:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Npc) then
+					local Root = Npc:FindFirstChild("HumanoidRootPart");
+					local Char = Local.Character;
+					local LocalRoot = Char.HumanoidRootPart;
+				
+					if Root and LocalRoot then
+						Utils.Notify("Success", "Success!", "Controlling NPC...", 5)
+						for Index, BodyPart in next, Npc:GetDescendants() do
+							if BodyPart:IsA("BasePart") then
+							   task.wait()
+							   BodyPart.CanCollide = false
+							end
+						end
+				
+						for Index, BodyPart in next, Char:GetDescendants() do
+							if BodyPart:IsA("BasePart") then
+								if (BodyPart.Name ~= "HumanoidRootPart" and BodyPart.Name ~= "UpperTorso" and BodyPart.Name ~= "Head") then
+								   BodyPart:Destroy()
+								end
+							end
+						end
+				 
+						LocalRoot.CFrame = Root.CFrame
+						Char.Head.Anchored = true
+				
+						Attachment.Parent = Root;
+						Position.Parent = Root;
+						Orientation.Parent = Root;
+						Attachment2.Parent = LocalRoot;
+				
+						Position.Responsiveness = 200;
+						Orientation.Responsiveness = 200;
+				
+						Position.MaxForce = 9e9;
+						Orientation.MaxTorque = 9e9;
+				
+						Position.Attachment0 = Attachment
+						Position.Attachment1 = Attachment2
+						Orientation.Attachment1 = Attachment2
+						Orientation.Attachment0 = Attachment
+				
+					end
+				else
+				   warn("Following Model is not an NPC")
+				end
+			end)
+
+	end,
+})
+
+Command.Add({
 	Aliases = { "invisible", "invis" },
 	Description = "Turns you invisible",
 	Arguments = {},
@@ -3897,7 +4013,7 @@ Command.Add({
         Invisible = Local.Character:Clone()
         OriginalPosition = Original.HumanoidRootPart.CFrame
 
-        Original.HumanoidRootPart.CFrame = CFrame.new(0, 1000000, 0)
+        Original.HumanoidRootPart.CFrame = CFrame.new(1000, 1000, 1000)
         task.wait(0.1)
         Original.HumanoidRootPart.Anchored = true
         Invisible.HumanoidRootPart.CFrame = OriginalPosition
