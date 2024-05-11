@@ -4,7 +4,6 @@
 
 - Customizable
 - Documentation for making plugins, themes.
-- Fast loading speeds 
 - Support for most executors
  
 <br/> 
