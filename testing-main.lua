@@ -396,8 +396,8 @@ if Local.Player:FindFirstChild("ControlModule", true) then
 	end)
 
 	local Controller;
-    
-    Controller = pcall(function() require(Local.Player:FindFirstChild("ControlModule", true)) end)
+
+	Controller = pcall(function() require(Local.Player:FindFirstChild("ControlModule", true)) end)
 	local TouchFrame = Local.Player:FindFirstChild("TouchControlFrame", true)
 
 	if Controller and TouchFrame then
@@ -686,6 +686,9 @@ FullArgs = {}
 Command.Count = 0
 Command.Toggles = {}
 
+local Env = function() 
+	return Command.Toggles
+end
 -- command functions 
 
 Methods = {}
@@ -756,11 +759,11 @@ local PromptChangeRigType = function(RigType)
 	Command.Parse("respawn")
 end
 
-Command.Toggles.WalkFling = false
+Env().WalkFling = false
 local Walkfling = function(Power, Distance, Bool)
-	Command.Toggles.WalkFling = false
+	Env().WalkFling = false
 	Wait()
-	Command.Toggles.WalkFling = Bool
+	Env().WalkFling = Bool
 
 	Distance = tonumber(Distance) or 5
 
@@ -768,14 +771,14 @@ local Walkfling = function(Power, Distance, Bool)
 		local HumanoidRootPart, Character, Velocity, Movel = GetRoot(Local.Character), Local.Character, nil, 0.1
 		repeat
 			task.wait()
-			if Command.Toggles.WalkFling then
-				while Command.Toggles.WalkFling and
+			if Env().WalkFling then
+				while Env().WalkFling and
 					not (Character and Character.Parent and HumanoidRootPart and HumanoidRootPart.Parent) do
 					Services.Run.Heartbeat:Wait()
 					local HumanoidRootPart, Character = GetRoot(Local.Character), Local.Character
 				end
 
-				if Command.Toggles.WalkFling then
+				if Env().WalkFling then
 					if unpack(GetPlayer("closest")):DistanceFromCharacter(GetRoot(Local.Character).Position) <= Distance then
 						Velocity = HumanoidRootPart.Velocity
 						HumanoidRootPart.Velocity = Velocity * tonumber(Power) + Vector3.new(0, tonumber(Power), 0)
@@ -791,7 +794,7 @@ local Walkfling = function(Power, Distance, Bool)
 					end
 				end
 			end
-		until not Command.Toggles.WalkFling
+		until not Env().WalkFling
 	end)
 end
 
@@ -809,15 +812,15 @@ local Fling = function(Target)
 			local Humanoid = GetHumanoid(Target.Character);
 
 			local Position = Root.CFrame
-			local Info = TweenInfo.new(0.2)
+			local Info = TweenInfo.new(0.15)
 
 			Services.Camera.CameraSubject = Humanoid
 			LocalHumanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
 			Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity)) })
-			task.wait(0.2)
+			task.wait(0.15)
 			Tween(LocalRoot, Info, { CFrame = Position * CFrame.new(0, 1, math.random(-2, 2))})
-			task.wait(0.2)
+			task.wait(0.15)
 
 		until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot or LocalHumanoid.Health == 0 or Humanoid.Sit
 	end)
@@ -1844,12 +1847,12 @@ Data.SetUpThemeTable = function(ThemeTable)
 end
 
 Data.SaveAlias = function(Command, Alias) 
-   if Command and Alias then
+	if Command and Alias then
 		local AliasData = Services.Http:JSONDecode(Data.get("CustomAliases.json"))
 		AliasData[Alias] = Command
 
 		Data.new("CustomAliases.json", Services.Http:JSONEncode(AliasData))
-   end
+	end
 end
 
 -- planned webhook command
@@ -2786,18 +2789,18 @@ local ESPSettings = {
 ESPSettings.InfoESP = function(Target)
 	task.spawn(function()
 		local Char = Target.Character
-	 
+
 		if Char and not ESPSettings.Holder:FindFirstChild(Target.Name) and Target ~= Local.Player then
 			local Head = Char:FindFirstChild("Head")
 			local Billboard = Instance.new("BillboardGui", ESPSettings.Holder)
 			local InfoTag = Instance.new("TextLabel", Billboard)
-	
+
 			Billboard.Size = UDim2.new(0, 200, 0, 24)
 			Billboard.SizeOffset = Vector2.new(0, 1)
 			Billboard.AlwaysOnTop = true
 			Billboard.Name = Target.Name
 			Billboard.Adornee = Head
-	
+
 			InfoTag.BackgroundTransparency = 1
 			InfoTag.Size = UDim2.new(1, 0, 1, 0)
 			InfoTag.TextSize = 12
@@ -2809,7 +2812,7 @@ ESPSettings.InfoESP = function(Target)
 			InfoTag.RichText = true
 			InfoTag.TextTransparency = 0.2
 			InfoTag.ZIndex = 100
-	
+
 			repeat task.wait(0.2) 
 				InfoTag.Text = string.format("<b>%s</b> <font color='rgb(200, 200, 200)'>(%s)</font>\n[%s] [%s / 100]", tostring(Target.DisplayName), tostring(Target.Name), tostring(math.floor((Local.Character.Head.Position - Head.Position).Magnitude)), tostring(Char.Humanoid.Health))
 			until Char.Humanoid.Health == 0 or not Billboard or not Char
@@ -2832,43 +2835,43 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 
-	local AddHighlight = function(Bool, Transparency, Fill, Player)
-		task.spawn(function()
-			if Player and Player.Character then
-				local Char = Player.Character
-				local Find = Char:FindFirstChildOfClass("Highlight");
+		local AddHighlight = function(Bool, Transparency, Fill, Player)
+			task.spawn(function()
+				if Player and Player.Character then
+					local Char = Player.Character
+					local Find = Char:FindFirstChildOfClass("Highlight");
 
-				if ESPSettings.TargetsOnly and Player.Team == Local.Player.Team then
-					if Find then
-						Find:Destroy()
-					end
+					if ESPSettings.TargetsOnly and Player.Team == Local.Player.Team then
+						if Find then
+							Find:Destroy()
+						end
 
-					ESPSettings.RemoveInfo(Player)
-				else
-				if Bool then
-					local Highlight = Instance.new("Highlight", Char)
-					ESPSettings.RemoveInfo(Player)
-					ESPSettings.InfoESP(Player)
+						ESPSettings.RemoveInfo(Player)
+					else
+						if Bool then
+							local Highlight = Instance.new("Highlight", Char)
+							ESPSettings.RemoveInfo(Player)
+							ESPSettings.InfoESP(Player)
 
-					if Find then
-						Find:Destroy()
-					end
+							if Find then
+								Find:Destroy()
+							end
 
-					Highlight.OutlineTransparency = Transparency
-					Highlight.FillTransparency = Fill
-					Highlight.FillColor = Player.TeamColor.Color
-					ESPSettings.Outline = Transparency
-					ESPSettings.Fill = Fill
-				else
-					ESPSettings.RemoveInfo(Player)
-					if Find then
-						Find:Destroy()
+							Highlight.OutlineTransparency = Transparency
+							Highlight.FillTransparency = Fill
+							Highlight.FillColor = Player.TeamColor.Color
+							ESPSettings.Outline = Transparency
+							ESPSettings.Fill = Fill
+						else
+							ESPSettings.RemoveInfo(Player)
+							if Find then
+								Find:Destroy()
+							end
+						end
 					end
 				end
-				end
-			end
-		end)
-	end
+			end)
+		end
 
 		local SetESP = function(Bool, Transparency, Fill)
 			ESPSettings.Outline = Transparency
@@ -2972,19 +2975,19 @@ local Aimbot = {
 }
 
 Aimbot.BehindWall = function(Target) 
-    if Target and Target.Character and Target ~= Local.Player then 
-       local Walls = workspace.CurrentCamera:GetPartsObscuringTarget({Local.Character.Head.Position, Target.Character.Head.Position}, {Local.Character, Target.Character})
-       
-       if #Walls == 0 then
-           return false
-       elseif #Walls > 0 then
-           return true
-       end
-    end
+	if Target and Target.Character and Target ~= Local.Player then 
+		local Walls = workspace.CurrentCamera:GetPartsObscuringTarget({Local.Character.Head.Position, Target.Character.Head.Position}, {Local.Character, Target.Character})
+
+		if #Walls == 0 then
+			return false
+		elseif #Walls > 0 then
+			return true
+		end
+	end
 end
 
 Aimbot.Closest = function()
-    local Distance = 9e9;
+	local Distance = 9e9;
 	local Target = nil;
 
 	for Index, Player in next, Services.Players:GetPlayers() do
@@ -2998,14 +3001,14 @@ Aimbot.Closest = function()
 				if Aimbot.Wallcheck and Aimbot.BehindWall(Player) then
 
 				else
-				if Visible then
-					local Magnitude = (Vector2.new(Local.Mouse.X, Local.Mouse.Y) - Vector2.new(Location.X, Location.Y)).Magnitude
-					if Magnitude < Aimbot.FOV.Radius and Magnitude < Distance then
-						Distance = Magnitude;
-						Target = Player; 
+					if Visible then
+						local Magnitude = (Vector2.new(Local.Mouse.X, Local.Mouse.Y) - Vector2.new(Location.X, Location.Y)).Magnitude
+						if Magnitude < Aimbot.FOV.Radius and Magnitude < Distance then
+							Distance = Magnitude;
+							Target = Player; 
+						end
 					end
 				end
-			end
 			end
 		end
 	end
@@ -3019,7 +3022,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-    	if not Screen:FindFirstChild("Aimbot") then
+		if not Screen:FindFirstChild("Aimbot") then
 			local Main = Tab.new({ Title = "Aimbot", Drag = true })
 			local Tabs = Main.Tabs
 			local MainTab = Tabs.Main.Scroll
@@ -3029,7 +3032,7 @@ Command.Add({
 				Default = false,
 				Parent = MainTab,
 				Callback = function(Boolean)
-				    Aimbot.Camlock = Boolean
+					Aimbot.Camlock = Boolean
 				end,
 			})
 
@@ -3038,7 +3041,7 @@ Command.Add({
 				Default = true,
 				Parent = MainTab,
 				Callback = function(Boolean)
-				    Aimbot.TeamCheck = Boolean
+					Aimbot.TeamCheck = Boolean
 				end,
 			})
 
@@ -3047,7 +3050,7 @@ Command.Add({
 				Default = false,
 				Parent = MainTab,
 				Callback = function(Boolean)
-				    Aimbot.Wallcheck = Boolean
+					Aimbot.Wallcheck = Boolean
 				end,
 			})
 
@@ -3083,7 +3086,7 @@ Command.Add({
 
 			task.spawn(function()
 				Services.Input.InputBegan:Connect(function(Key, Processed)
-				    if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
+					if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
 						local Closest = Aimbot.Closest()
 						print(Closest)
 
@@ -3095,14 +3098,14 @@ Command.Add({
 
 							repeat task.wait()
 								local LookAt = TargetPart.CFrame + (TargetPart.Velocity * Aimbot.Prediction + Vector3.new(0, 0.1, 0))
-					            workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, LookAt.Position)
+								workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, LookAt.Position)
 							until not Aimbot.Held or not Closest
 						end
 					end
 				end)
 
 				Services.Input.InputEnded:Connect(function(Key, Processed)
-				    if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
+					if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
 						Aimbot.Held = false
 					end
 				end)
@@ -3114,13 +3117,13 @@ Command.Add({
 
 					repeat task.wait()
 						if Aimbot.Camlock then
-						   Circle.Radius = Aimbot.FOV.Radius
-						   Circle.Position = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
-						   Circle.Visible = true
+							Circle.Radius = Aimbot.FOV.Radius
+							Circle.Position = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
+							Circle.Visible = true
 						else
 							Circle.Visible = false
 						end
-				   until not Circle
+					until not Circle
 				end
 			end)
 
@@ -3138,7 +3141,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-    	if not Screen:FindFirstChild("Game Info") then
+		if not Screen:FindFirstChild("Game Info") then
 			local Main = Tab.new({ Title = "Game Info", Drag = true })
 			local Tabs = Main.Tabs
 			local MainTab = Tabs.Main.Scroll
@@ -3147,82 +3150,82 @@ Command.Add({
 				Description = Services.Market:GetProductInfo(game.PlaceId).Name,
 				Parent = MainTab,
 			})
-			
+
 			Library.new("Label", { Title = "Place Id",
 				Description = tostring(game.PlaceId),
 				Parent = MainTab,
 			})
 
-		if game.CreatorType == Enum.CreatorType.User then
-			Library.new("Label", { Title = "Owner",
-				Description = string.format("%s (USER)", Services.Players:GetNameFromUserIdAsync(game.CreatorId)),
+			if game.CreatorType == Enum.CreatorType.User then
+				Library.new("Label", { Title = "Owner",
+					Description = string.format("%s (USER)", Services.Players:GetNameFromUserIdAsync(game.CreatorId)),
+					Parent = MainTab,
+				})
+			else
+				Library.new("Label", { Title = "Owner",
+					Description = string.format("%s (GROUP)", game.GroupService:GetGroupInfoAsync(game.CreatorId).Name),
+					Default = false,
+					Parent = MainTab,
+				})
+			end
+
+			local DistributedText = Library.new("Label", { Title = "Game Time",
+				Description = math.floor(workspace.DistributedGameTime),
 				Parent = MainTab,
 			})
-		else
-			Library.new("Label", { Title = "Owner",
-			Description = string.format("%s (GROUP)", game.GroupService:GetGroupInfoAsync(game.CreatorId).Name),
-			Default = false,
-			Parent = MainTab,
-		})
-		end
 
-		local DistributedText = Library.new("Label", { Title = "Game Time",
-		Description = math.floor(workspace.DistributedGameTime),
-		Parent = MainTab,
-	})
+			Library.new("Label", { Title = "Respect Filtering Enabled",
+				Description = tostring(Services.Sound.RespectFilteringEnabled),
+				Parent = MainTab,
+			})
 
-     Library.new("Label", { Title = "Respect Filtering Enabled",
-		Description = tostring(Services.Sound.RespectFilteringEnabled),
-		Parent = MainTab,
-     })
+			if request and typeof(request) == 'function' then
+				local UniverseBody = request({
+					Url = string.format("https://apis.roblox.com/universes/v1/places/%s/universe", tostring(game.PlaceId)),
+					Method = "GET"
+				})
+				local UniverseId = Services.Http:JSONDecode(UniverseBody.Body)["universeId"]
+				local GameInfo = Services.Http:JSONDecode(request({
+					Url = string.format("https://games.roblox.com/v1/games?universeIds=%s", tostring(UniverseId)),
+					Method = "GET"
+				}).Body)["data"][1]
 
-	 if request and typeof(request) == 'function' then
-		local UniverseBody = request({
-			Url = string.format("https://apis.roblox.com/universes/v1/places/%s/universe", tostring(game.PlaceId)),
-			Method = "GET"
-		})
-		local UniverseId = Services.Http:JSONDecode(UniverseBody.Body)["universeId"]
-		local GameInfo = Services.Http:JSONDecode(request({
-			Url = string.format("https://games.roblox.com/v1/games?universeIds=%s", tostring(UniverseId)),
-			Method = "GET"
-		}).Body)["data"][1]
+				Library.new("Label", { Title = "Visits",
+					Description = tostring(GameInfo["visits"]),
+					Parent = MainTab,
+				})
 
-		Library.new("Label", { Title = "Visits",
-		   Description = tostring(GameInfo["visits"]),
-		   Parent = MainTab,
-        })
+				Library.new("Label", { Title = "Playing",
+					Description = tostring(GameInfo["playing"]),
+					Parent = MainTab,
+				})
 
-		Library.new("Label", { Title = "Playing",
-		   Description = tostring(GameInfo["playing"]),
-		   Parent = MainTab,
-        })
+				Library.new("Label", { Title = "Created",
+					Description = tostring(GameInfo["created"]),
+					Parent = MainTab,
+				})
 
-		Library.new("Label", { Title = "Created",
-		   Description = tostring(GameInfo["created"]),
-		   Parent = MainTab,
-        })
+				Library.new("Label", { Title = "Updated",
+					Description = tostring(GameInfo["updated"]),
+					Parent = MainTab,
+				})
 
-		Library.new("Label", { Title = "Updated",
-		   Description = tostring(GameInfo["updated"]),
-		   Parent = MainTab,
-        })
+				Library.new("Label", { Title = "Favorites",
+					Description = tostring(GameInfo["favoritedCount"]),
+					Parent = MainTab,
+				})
 
-		Library.new("Label", { Title = "Favorites",
-		   Description = tostring(GameInfo["favoritedCount"]),
-		   Parent = MainTab,
-        })
+				Library.new("Label", { Title = "Description",
+					Description = tostring(GameInfo["description"]),
+					Parent = MainTab,
+				})
+			end
 
-		Library.new("Label", { Title = "Description",
-		   Description = tostring(GameInfo["description"]),
-		   Parent = MainTab,
-        })
-	 end
-
-	task.spawn(function()
-		repeat task.wait(1)
-			DistributedText.Content.Description.Text = math.floor(workspace.DistributedGameTime)
-		until false
-	end)
+			task.spawn(function()
+				repeat task.wait(1)
+					DistributedText.Content.Description.Text = math.floor(workspace.DistributedGameTime)
+				until false
+			end)
 
 			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
@@ -3481,7 +3484,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.Spam = false
+Env().Spam = false
 Command.Add({
 	Aliases = { "spamchat" },
 	Description = "Repeatedly spam a message in chat",
@@ -3490,11 +3493,11 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Input)
-		Command.Toggles.Spam = true
+		Env().Spam = true
 
 		repeat task.wait(1)
 			Chat(Input)
-		until not Command.Toggles.Spam
+		until not Env().Spam
 	end,
 })
 
@@ -3506,23 +3509,23 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Input)
-		Command.Toggles.Spam = false
+		Env().Spam = false
 	end,
 })
 
-Command.Toggles.Flood = false
+Env().Flood = false
 Command.Add({
 	Aliases = { "flood" },
 	Description = "Flood the chat",
 	Arguments = { },
 	Plugin = false,
 	Task = function()
-		Command.Toggles.Flood = true
+		Env().Flood = true
 		local Character = "⸻"
 
 		repeat task.wait(1)
 			Chat(Character:rep(180))
-		until not Command.Toggles.Flood
+		until not Env().Flood
 	end,
 })
 
@@ -3532,7 +3535,7 @@ Command.Add({
 	Arguments = { },
 	Plugin = false,
 	Task = function()
-		Command.Toggles.Flood = false
+		Env().Flood = false
 	end,
 })
 
@@ -3723,7 +3726,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.LoopGoto = false
+Env().LoopGoto = false
 Command.Add({
 	Aliases = { "loopgoto", "loopto" },
 	Description = "Repeatedly teleports you to your target",
@@ -3738,11 +3741,11 @@ Command.Add({
 			local Root = GetRoot(Player.Character)
 
 			if Root then
-				Command.Toggles.LoopGoto = true
+				Env().LoopGoto = true
 
 				repeat task.wait()
 					GetRoot(Local.Character).CFrame = Root.CFrame
-				until not Command.Toggles.LoopGoto
+				until not Env().LoopGoto
 			end
 		end
 	end,
@@ -3754,7 +3757,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.LoopGoto = false
+		Env().LoopGoto = false
 	end,
 })
 
@@ -3817,7 +3820,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.Sync = false
+Env().Sync = false
 Command.Add({
 	Aliases = { "sync" },
 	Description = "Repeatedly plays all the sounds in game",
@@ -3827,10 +3830,10 @@ Command.Add({
 	Plugin = false,
 	Task = function(Time)
 		local Cooldown = SetNumber(Time, 0.1, math.huge)
-		Command.Toggles.Sync = true
+		Env().Sync = true
 
 		if not Services.Sound.RespectFilteringEnabled then
-			Command.Toggles.Sync = true
+			Env().Sync = true
 			repeat Wait(Cooldown)
 				for Index, Sound in next, workspace:GetDescendants() do
 					if Sound:IsA("Sound") then
@@ -3838,12 +3841,13 @@ Command.Add({
 						Sound:Play()
 					end
 				end
-			until not Command.Toggles.Sync
+			until not Env().Sync
 		else
 			Utils.Notify("Error", "Error!", "Respect Filtering Enabled is on, so this command wont work.", 5)
 		end
 	end,
 })
+
 
 Command.Add({
 	Aliases = { "unsync" },
@@ -3851,7 +3855,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function(Time)
-		Command.Toggles.Sync = false
+		Env().Sync = false
 	end,
 })
 
@@ -3893,29 +3897,29 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoRespawn = true
+		Env().AutoRespawn = true
 
 		local Teleport = function() 
 			task.spawn(function() 
-			local Character = Local.Player.Character
+				local Character = Local.Player.Character
 
-			if Character and Command.Toggles.AutoRespawn then
-				local Humanoid = Character:WaitForChild("Humanoid")
-				local Pos;
+				if Character and Env().AutoRespawn then
+					local Humanoid = Character:WaitForChild("Humanoid")
+					local Pos;
 
-				Humanoid.Died:Connect(function() 
-					if Command.Toggles.AutoRespawn then
-				    Pos = GetRoot(Character).CFrame
-					end
-				end)
+					Humanoid.Died:Connect(function() 
+						if Env().AutoRespawn then
+							Pos = GetRoot(Character).CFrame
+						end
+					end)
 
-				Local.Player.CharacterAdded:Wait()
-				local Root = Local.Player.Character:WaitForChild("HumanoidRootPart")
-				Root.CFrame = Pos or Root.CFrame
-			end
-		end)
+					Local.Player.CharacterAdded:Wait()
+					local Root = Local.Player.Character:WaitForChild("HumanoidRootPart")
+					Root.CFrame = Pos or Root.CFrame
+				end
+			end)
 		end
-	   
+
 		Teleport()
 		Local.Player.CharacterAdded:Connect(Teleport)
 	end,
@@ -3927,7 +3931,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoRespawn = false
+		Env().AutoRespawn = false
 	end,
 })
 
@@ -3950,53 +3954,53 @@ Command.Add({
 		Local.Mouse.Button1Down:Connect(function() 
 			local Npc = Local.Mouse.Target.Parent
 			local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
-				
-				if Npc and Npc:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Npc) then
-					local Root = Npc:FindFirstChild("HumanoidRootPart");
-					local Char = Local.Character;
-					local LocalRoot = Char.HumanoidRootPart;
-				
-					if Root and LocalRoot then
-						Utils.Notify("Success", "Success!", "Controlling NPC...", 5)
-						for Index, BodyPart in next, Npc:GetDescendants() do
-							if BodyPart:IsA("BasePart") then
-							   task.wait()
-							   BodyPart.CanCollide = false
-							end
+
+			if Npc and Npc:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Npc) then
+				local Root = Npc:FindFirstChild("HumanoidRootPart");
+				local Char = Local.Character;
+				local LocalRoot = Char.HumanoidRootPart;
+
+				if Root and LocalRoot then
+					Utils.Notify("Success", "Success!", "Controlling NPC...", 5)
+					for Index, BodyPart in next, Npc:GetDescendants() do
+						if BodyPart:IsA("BasePart") then
+							task.wait()
+							BodyPart.CanCollide = false
 						end
-				
-						for Index, BodyPart in next, Char:GetDescendants() do
-							if BodyPart:IsA("BasePart") then
-								if (BodyPart.Name ~= "HumanoidRootPart" and BodyPart.Name ~= "UpperTorso" and BodyPart.Name ~= "Head") then
-								   BodyPart:Destroy()
-								end
-							end
-						end
-				 
-						LocalRoot.CFrame = Root.CFrame
-						Char.Head.Anchored = true
-				
-						Attachment.Parent = Root;
-						Position.Parent = Root;
-						Orientation.Parent = Root;
-						Attachment2.Parent = LocalRoot;
-				
-						Position.Responsiveness = 200;
-						Orientation.Responsiveness = 200;
-				
-						Position.MaxForce = 9e9;
-						Orientation.MaxTorque = 9e9;
-				
-						Position.Attachment0 = Attachment
-						Position.Attachment1 = Attachment2
-						Orientation.Attachment1 = Attachment2
-						Orientation.Attachment0 = Attachment
-				
 					end
-				else
-				   warn("Following Model is not an NPC")
+
+					for Index, BodyPart in next, Char:GetDescendants() do
+						if BodyPart:IsA("BasePart") then
+							if (BodyPart.Name ~= "HumanoidRootPart" and BodyPart.Name ~= "UpperTorso" and BodyPart.Name ~= "Head") then
+								BodyPart:Destroy()
+							end
+						end
+					end
+
+					LocalRoot.CFrame = Root.CFrame
+					Char.Head.Anchored = true
+
+					Attachment.Parent = Root;
+					Position.Parent = Root;
+					Orientation.Parent = Root;
+					Attachment2.Parent = LocalRoot;
+
+					Position.Responsiveness = 200;
+					Orientation.Responsiveness = 200;
+
+					Position.MaxForce = 9e9;
+					Orientation.MaxTorque = 9e9;
+
+					Position.Attachment0 = Attachment
+					Position.Attachment1 = Attachment2
+					Orientation.Attachment1 = Attachment2
+					Orientation.Attachment0 = Attachment
+
 				end
-			end)
+			else
+				warn("Following Model is not an NPC")
+			end
+		end)
 
 	end,
 })
@@ -4009,20 +4013,20 @@ Command.Add({
 	Task = function()
 		if Services.Lighting:FindFirstChild(Local.Player.Name) then return end 
 		Local.Character.Archivable = true
-        Original = Local.Character
-        Invisible = Local.Character:Clone()
-        OriginalPosition = Original.HumanoidRootPart.CFrame
+		Original = Local.Character
+		Invisible = Local.Character:Clone()
+		OriginalPosition = Original.HumanoidRootPart.CFrame
 
-        Original.HumanoidRootPart.CFrame = CFrame.new(1000, 1000, 1000)
-        task.wait(0.1)
-        Original.HumanoidRootPart.Anchored = true
-        Invisible.HumanoidRootPart.CFrame = OriginalPosition
-        Invisible.Name = string.format("%s-ghosst", Local.Player.Name)
+		Original.HumanoidRootPart.CFrame = CFrame.new(1000, 1000, 1000)
+		task.wait(0.1)
+		Original.HumanoidRootPart.Anchored = true
+		Invisible.HumanoidRootPart.CFrame = OriginalPosition
+		Invisible.Name = string.format("%s-ghosst", Local.Player.Name)
 
 		for Index, BodyPart in next, Invisible:GetChildren() do
-    		if BodyPart:IsA("BasePart") then
-      		  BodyPart.Transparency = 0.5
-    		end
+			if BodyPart:IsA("BasePart") then
+				BodyPart.Transparency = 0.5
+			end
 		end
 
 		Invisible.Parent = workspace
@@ -4040,7 +4044,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-        local Original = Services.Lighting:FindFirstChild(Local.Player.Name)
+		local Original = Services.Lighting:FindFirstChild(Local.Player.Name)
 		local Invisible = Local.Character
 		local InvisiblePosition = Invisible.HumanoidRootPart.CFrame
 
@@ -4064,7 +4068,7 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Amount)
-        local Amount = Amount or 1
+		local Amount = Amount or 1
 		local Pos = Vector3.new(0, math.random(50000, 100000), 0)
 
 		for Index = 1, Amount do
@@ -4131,7 +4135,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.HiddenWalls = {}
+Env().HiddenWalls = {}
 Command.Add({
 	Aliases = { "showwalls" },
 	Description = "Shows all the invisible walls",
@@ -4140,7 +4144,7 @@ Command.Add({
 	Task = function()
 		for Index, Wall in next, workspace:GetDescendants() do
 			if Wall:IsA("BasePart") and Wall.Transparency == 1 and Wall.Name ~= "HumanoidRootPart" then
-				table.insert(Command.Toggles.HiddenWalls, Wall)
+				table.insert(Env().HiddenWalls, Wall)
 				Wall.Transparency = 0
 			end
 		end
@@ -4153,7 +4157,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		for Index, Wall in next, Command.Toggles.HiddenWalls do
+		for Index, Wall in next, Env().HiddenWalls do
 			Wall.Transparency = 1
 		end
 	end,
@@ -4173,6 +4177,16 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "f3x" },
+	Description = "F3X",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		loadstring(game:GetObjects("rbxassetid://6695644299")[1].Source)()
+	end,
+})
+
+Command.Add({
 	Aliases = { "respawn", "re" },
 	Description = "Respawns your character",
 	Arguments = {},
@@ -4184,9 +4198,7 @@ Command.Add({
 		if Humanoid then
 			Humanoid.Health = 0
 			Local.Player.CharacterAdded:Wait()
-			task.wait(0.5)
-
-			GetRoot(Local.Character).CFrame = Old
+			Local.Player.Character:WaitForChild("HumanoidRootPart").CFrame = Old
 		end
 	end,
 })
@@ -4414,14 +4426,14 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.AntiFling = false
+Env().AntiFling = false
 Command.Add({
 	Aliases = { "antifling" },
 	Description = "Makes you a harder target to fling",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AntiFling = true
+		Env().AntiFling = true
 		Utils.Notify("Success", "Success!", "Antifling is now enabled", 5)
 
 		repeat Wait()
@@ -4441,7 +4453,7 @@ Command.Add({
 					end)
 				end
 			end
-		until not Command.Toggles.AntiFling
+		until not Env().AntiFling
 	end,
 })
 
@@ -4451,7 +4463,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AntiFling = true
+		Env().AntiFling = true
 		Utils.Notify("Success", "Success!", "Antifling is now disabled", 5)
 	end,
 })
@@ -4480,25 +4492,32 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.Loop = false
+Env().Loop = false
 Command.Add({
 	Aliases = { "loop", "spam" },
 	Description = "Loop fire a specific command",
 	Arguments = { 
+		{ Name = "Delay (OPTIONAL)", Type = "Number" }, 
 		{ Name = "Command Name", Type = "String" }, 
 		{ Name = "Arguments", Type = "String" }, 
 	},
 	Plugin = false,
-	Task = function(Name, Argumemts)
-		local Arguments = minimum(FullArgs, 2)
+	Task = function(Delay, Name, Argumemts)
+		local Arguments = nil;
 
-		Command.Toggles.Loop = false
-		Wait()
-		Command.Toggles.Loop = true
+		if tonumber(Delay) then
+			Arguments = minimum(FullArgs, 3)
+		else
+			Name = Delay
+			Delay = 0.05
+			Arguments = minimum(FullArgs, 2)
+		end
 
-		repeat Wait()
+		Env().Loop = true
+
+		repeat task.wait(Delay or 0.1)
 			Command.Run(Name, Arguments)
-		until not Command.Toggles.Loop
+		until not Env().Loop
 	end,
 })
 
@@ -4508,7 +4527,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.Loop = false
+		Env().Loop = false
 		Utils.Notify("Success", "Success!", "Stopped looping the commands that are being looped!")
 	end,
 })
@@ -4661,21 +4680,21 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.Fakelag = false
+Env().Fakelag = false
 Command.Add({
 	Aliases = { "fakelag" },
 	Description = "Makes it seem like you're lagging",
 	Arguments = {},
 	Plugin = false,
 	Task = function()	
-		Command.Toggles.Fakelag = true
+		Env().Fakelag = true
 
 		repeat
 			GetRoot(Local.Character).Anchored = true
 			task.wait(.05)
 			GetRoot(Local.Character).Anchored = false
 			task.wait(.05)
-		until not Command.Toggles.Fakelag or not Local.Character
+		until not Env().Fakelag or not Local.Character
 	end,
 })
 
@@ -4685,7 +4704,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()	
-		Command.Toggles.Fakelag = false
+		Env().Fakelag = false
 	end,
 })
 
@@ -4812,7 +4831,7 @@ Command.Add({
 })
 
 
-Command.Toggles.Trigger = false
+Env().Trigger = false
 Command.Add({
 	Aliases = { "triggerbot" },
 	Description = "Clicks automatically when your mouse in on a player",
@@ -4828,14 +4847,14 @@ Command.Add({
 
 		Services.Input.InputBegan:Connect(function(Input)
 			if Input.KeyCode == Toggle then
-				Command.Toggles.Trigger = not Command.Toggles.Trigger
-				Utils.Notify("Success", "Success!", format("Trigger bot is set to %s", tostring(Command.Toggles.Trigger)))
+				Env().Trigger = not Env().Trigger
+				Utils.Notify("Success", "Success!", format("Trigger bot is set to %s", tostring(Env().Trigger)))
 			end
 		end)
 
 		while Wait() do
 			if Local.Mouse.Target then
-				if Services.Players:GetPlayerFromCharacter(Local.Mouse.Target.Parent) and Command.Toggles.Trigger then
+				if Services.Players:GetPlayerFromCharacter(Local.Mouse.Target.Parent) and Env().Trigger then
 					Wait(Delay)
 					mouse1click()
 				end
@@ -4951,7 +4970,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.HeadStand = false
+Env().HeadStand = false
 Command.Add({
 	Aliases = { "headstand" },
 	Description = "Stand on your target's head",
@@ -4963,9 +4982,9 @@ Command.Add({
 		local Target = GetPlayer(Player)
 
 		for Index, Player in next, Target do
-			Command.Toggles.HeadStand = false
+			Env().HeadStand = false
 			Wait()
-			Command.Toggles.HeadStand = true
+			Env().HeadStand = true
 
 			local Char = Character(Player)
 			Services.Camera.CameraSubject = Char.Humanoid
@@ -4974,7 +4993,7 @@ Command.Add({
 				Wait()
 				Local.Character:FindFirstChild("HumanoidRootPart").CFrame =
 					Char:FindFirstChild("HumanoidRootPart").CFrame * CFrame.new(0, 5, 0)
-			until not Command.Toggles.HeadStand or not Local.Character or not Char or not Char.HumanoidRootPart
+			until not Env().HeadStand or not Local.Character or not Char or not Char.HumanoidRootPart
 
 			break
 		end
@@ -4987,11 +5006,11 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.HeadStand = false
+		Env().HeadStand = false
 	end,
 })
 
-Command.Toggles.Follow = false
+Env().Follow = false
 Command.Add({
 	Aliases = { "follow" },
 	Description = "Follows your target",
@@ -5002,7 +5021,7 @@ Command.Add({
 	Task = function(Player)
 		local LocalHumanoid = GetHumanoid(Local.Character)
 		local Target = GetPlayer(Player)
-		Command.Toggles.Follow = true
+		Env().Follow = true
 
 		for Index, Player in next, Target do
 			local Char = Character(Player)
@@ -5011,7 +5030,7 @@ Command.Add({
 			if LocalHumanoid and Root then
 				repeat Wait()
 					LocalHumanoid:MoveTo(Root.Position)
-				until not Root or not LocalHumanoid or not Command.Toggles.Follow
+				until not Root or not LocalHumanoid or not Env().Follow
 			end
 		end
 	end,
@@ -5023,7 +5042,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.Follow = false
+		Env().Follow = false
 	end,
 })
 
@@ -5290,7 +5309,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.AnimSpeed = false
+Env().AnimSpeed = false
 Command.Add({
 	Aliases = { "animationspeed", "animspeed" },
 	Description = "Set your character's animation speed",
@@ -5299,9 +5318,9 @@ Command.Add({
 	Task = function(Amount)
 		Amount = SetNumber(Amount, 2, math.huge)
 
-		Command.Toggles.AnimSpeed = false
+		Env().AnimSpeed = false
 		Wait()
-		Command.Toggles.AnimSpeed = true
+		Env().AnimSpeed = true
 
 		Utils.Notify("Success", "Success!", format("Set your animation speed to %s", tostring(Amount)))
 
@@ -5309,7 +5328,7 @@ Command.Add({
 			for Index, Track in next, Local.Character:FindFirstChild("Humanoid"):GetPlayingAnimationTracks() do
 				Track:AdjustSpeed(Amount)
 			end
-		until not Command.Toggles.AnimSpeed
+		until not Env().AnimSpeed
 	end,
 })
 
@@ -5319,7 +5338,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AnimSpeed = false
+		Env().AnimSpeed = false
 
 		for Index, Track in next, Local.Character:FindFirstChild("Humanoid"):GetPlayingAnimationTracks() do
 			Track:AdjustSpeed(2)
@@ -5753,7 +5772,7 @@ Command.Add({
 	Plugin = false,
 	Task = function(Player)
 		local Targets = GetPlayer(Player)
-		Command.Toggles.Stand = true
+		Env().Stand = true
 
 		for Index, Target in next, Targets do
 			local Anim = CreateInstance("Animation", {AnimationId = "rbxassetid://3337994105"})
@@ -5764,10 +5783,10 @@ Command.Add({
 
 			repeat task.wait()
 				Local.Character:FindFirstChild("HumanoidRootPart").CFrame = Target.Character:FindFirstChild("HumanoidRootPart").CFrame * CFrame.new(2.2, 1.2, 2.3)
-			until not Command.Toggles.Stand or not Target or not Target.Character or not Local.Character
+			until not Env().Stand or not Target or not Target.Character or not Local.Character
 
 			Load:Stop()
-			Command.Toggles.Stand = false
+			Env().Stand = false
 			Command.Parse("unairwalk")
 
 			break
@@ -5781,7 +5800,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.Stand = false
+		Env().Stand = false
 		Services.Camera.CameraSubject = GetHumanoid(Local.Character)
 	end,
 })
@@ -5795,7 +5814,7 @@ Command.Add({
 	Plugin = false,
 	Task = function(Player)
 		local Targets = GetPlayer(Player)
-		Command.Toggles.Stand = true
+		Env().Stand = true
 
 		for Index, Target in next, Targets do
 			local Char = Character(Target)
@@ -5836,7 +5855,7 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		for Index, Tool in next, GetTools() do
-			Tool.Parent = Local.Player
+			Tool.Parent = Services.Players
 		end
 	end,
 })
@@ -5847,7 +5866,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		for Index, Tool in next, Local.Player:GetChildren() do
+		for Index, Tool in next, Services.Players:GetChildren() do
 			if Tool:IsA("Tool") then
 				Tool.Parent = Local.Backpack
 			end
@@ -5893,11 +5912,11 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoRejoin = true
+		Env().AutoRejoin = true
 		Utils.Notify("Success", "Success!", "Auto rejoin enabled!")
 
 		Services.GuiService.ErrorMessageChanged:Connect(function()
-			if Command.Toggles.AutoRejoin then
+			if Env().AutoRejoin then
 				Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId)
 			end
 		end)
@@ -5910,7 +5929,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoRejoin = false
+		Env().AutoRejoin = false
 		Utils.Notify("Success", "Success!", "Auto rejoin disabled!")
 	end,
 })
@@ -5960,6 +5979,56 @@ Command.Add({
 		Services.Sound:SetListener(Enum.ListenerType.Camera)
 	end,
 })
+
+Command.Add({
+	Aliases = { "swordkill" },
+	Description = "Kill targets using sword",
+	Arguments = {
+		{ Name = "Target", Type = "Player" };
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player);
+		local Tools = GetTools();
+		local Sword;
+
+		for Index, Tool in next, Tools do
+			if lower(Tool.Name):find("sword") and Tool:FindFirstChild("Handle") then
+				Sword = Tool
+				break
+			end
+		end
+
+		local Handle = Sword.Handle
+
+		for Index, Target in next, Targets do
+			if Target ~= Local.Player and Local.Character and not Local.Character:FindFirstChild("ForceField") then
+				Sword.Parent = Local.Character
+				local Char = Character(Target)
+
+				for Index = 1, 10 do
+					if Char and Char:FindFirstChildOfClass("Humanoid").Health == 0 then
+						break
+					end
+					Sword:Activate()
+					task.wait()
+					Sword:Activate()
+
+					if firetouchinterest then
+						firetouchinterest(GetRoot(Char), Handle, 0)
+						task.wait()
+						firetouchinterest(GetRoot(Char), Handle, 1)
+						task.wait()
+					else
+						GetRoot(Char).CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -2)
+						task.wait()
+					end
+				end
+			end
+		end
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "scare" },
@@ -6070,7 +6139,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.NpcFollow = true
+		Env().NpcFollow = true
 
 		repeat task.wait()
 			for Index, Npc in next, GetPlayer("npc") do
@@ -6078,7 +6147,7 @@ Command.Add({
 					Npc.Humanoid:MoveTo(GetRoot(Local.Character).Position)
 				end
 			end
-		until not Command.Toggles.NpcFollow
+		until not Env().NpcFollow
 	end,
 })
 
@@ -6088,7 +6157,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.NpcFollow = false
+		Env().NpcFollow = false
 	end,
 })
 
@@ -6114,16 +6183,18 @@ Command.Add({
 	Plugin = false,
 	Task = function(Player)
 		local Targets = GetPlayer(Player)
-		Command.Toggles.ClientBring = true
+		Env().ClientBring = true
 
 		repeat task.wait()
 			for Index, Target in next, Targets do
-				local Character = Character(Target);
-				local Root = GetRoot(Character);
+				pcall(function()
+					local Character = Character(Target);
+					local Root = GetRoot(Character);
 
-				Root.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -2)
+					Root.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -2)
+				end)
 			end
-		until not Command.Toggles.ClientBring
+		until not Env().ClientBring
 	end,
 })
 
@@ -6133,7 +6204,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function(Player)
-		Command.Toggles.ClientBring = false
+		Env().ClientBring = false
 	end,
 })
 
@@ -6258,13 +6329,176 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "trap" },
+	Description = "Whenever someone touches the selected tool, it will fling them",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		local Tool = GetTools()[math.random(#GetTools())]
+		Tool.Parent = Local.Character
+		Tool.GripForward = Vector3.new(0, 0, 0)
+		Tool.GripPos = Vector3.new(0, 0, 0)
+		Tool.GripRight = Vector3.new(0, 0, 0)
+		Tool.GripUp = Vector3.new(0, 0, 0)
+		Tool.Grip = CFrame.new(0, 2, 25)
+
+		local Handle = Tool:FindFirstChildOfClass("Part")
+		if Handle then
+			Handle.Touched:Connect(function(Target)
+				local Char = Target.Parent
+
+				if Char and Services.Players:GetPlayerFromCharacter(Char) then
+					Fling(Services.Players:GetPlayerFromCharacter(Char))
+				end
+			end)
+		end
+
+	end,
+})
+
+Command.Add({
+	Aliases = { "mute" },
+	Description = "Mutes your target's boombox",
+	Arguments = {
+		{ Name = "Target", Type = "Player" }
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player);
+
+		if Services.Sound.RespectFilteringEnabled then
+			Utils.Notify("Error", "Error!", "RespectFilteringEnabled is on, so this won't work")
+			return
+		end
+
+		for Index, Target in next, Targets do
+			for Index, Descendant in next, Target.Character:GetDescendants() do
+				if Descendant:IsA("Sound") and Descendant.Playing then
+					Descendant.Playing = false
+				end
+			end
+		end
+
+	end,
+})
+
+Command.Add({
+	Aliases = { "glitch" },
+	Description = "Glitches your target's boombox",
+	Arguments = {
+		{ Name = "Target", Type = "Player" }
+	},
+	Plugin = false,
+	Task = function(Player)
+		local Targets = GetPlayer(Player);
+		Env().Glitch = true
+
+		if Services.Sound.RespectFilteringEnabled then
+			Utils.Notify("Error", "Error!", "RespectFilteringEnabled is on, so this won't work")
+			return
+		end
+
+		for Index, Target in next, Targets do
+			task.spawn(function()
+				repeat task.wait()
+					for Index, Descendant in next, Target.Character:GetDescendants() do
+						if Descendant:IsA("Sound") then
+							Descendant.Playing = false
+							task.wait(0.2)
+							Descendant.Playing = true
+						end
+					end
+				until not Env().Glitch
+			end)
+		end
+
+	end,
+})
+
+Command.Add({
+	Aliases = { "unglitch" },
+	Description = "Stops glitching your target's boombox",
+	Arguments = {
+		{ Name = "Target", Type = "Player" }
+	},
+	Plugin = false,
+	Task = function(Player)
+		Env().Glitch = false
+	end,
+})
+
+Command.Add({
+	Aliases = { "noaudio" },
+	Description = "Mutes every sound in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		for Index, Sound in next, workspace:GetDescendants() do
+			if Sound:IsA("Sound") then
+				Sound.Volume = 0
+			end
+		end
+
+		Utils.Notify("Success", "Success!", "Muted every sound in the game", 5)
+	end,
+})
+
+Command.Add({
+	Aliases = { "audio" },
+	Description = "Unmutes every sound in the game",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		for Index, Sound in next, workspace:GetDescendants() do
+			if Sound:IsA("Sound") then
+				Sound.Volume = 1
+			end
+		end
+
+		Utils.Notify("Success", "Success!", "Unmuted every sound in the game", 5)
+	end,
+})
+
+Command.Add({
+	Aliases = { "setspawn" },
+	Description = "Once executed, when you die it teleports you to your old position",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		local Old = GetRoot(Local.Character).CFrame
+		Env().SetSpawn = true
+
+		pcall(function()
+			Detection = Detection:Disconnect() 
+		end)
+
+		local Detection = Local.Player.CharacterAdded:Connect(function()
+			if Env().SetSpawn then
+				Local.Player.Character:WaitForChild("HumanoidRootPart").CFrame = Old
+			end	
+		end)
+	end,
+})
+
+Command.Add({
+	Aliases = { "unsetspawn" },
+	Description = "Stops the setspawn command",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Player)
+		Env().SetSpawn = false
+		Detection = Detection:Disconnect()
+	end,
+})
+
+Command.Add({
 	Aliases = { "loopfling" },
 	Description = "Repeatedly fling your target",
 	Arguments = {},
 	Plugin = false,
 	Task = function(Player)
-	    local Target = GetPlayer(Player)[1]
-		Command.Toggles.Loopfling = true
+		local Target = GetPlayer(Player)[1]
+		Env().Loopfling = true
 
 		repeat task.wait() 
 			local Character = Target.Character
@@ -6273,7 +6507,7 @@ Command.Add({
 				Fling(Target)
 			end
 
-		until not Command.Toggles.Loopfling or not Target
+		until not Env().Loopfling or not Target
 	end,
 })
 
@@ -6284,23 +6518,23 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function(Player)
-		Command.Toggles.Loopfling = false
+		Env().Loopfling = false
 	end,
 })
 
-Command.Toggles.Earthquake = false
+Env().Earthquake = false
 Command.Add({
 	Aliases = { "earthquake" },
 	Description = "Shakes all unanchored parts in the game to give an earthquake effect",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.Earthquake = true
+		Env().Earthquake = true
 
 		Utils.Notify("Success", "Earthquake!", "Please wait...", 5)
 
 		spawn(function()
-			while Services.Run.Heartbeat:Wait() do
+			while task.wait() do
 				pcall(function()
 					Local.Player.MaximumSimulationRadius = math.pow(math.huge, math.huge) * math.huge
 					sethiddenproperty(Local.Player, "SimulationRadius", math.pow(math.huge, math.huge) * math.huge)
@@ -6319,7 +6553,7 @@ Command.Add({
 					})
 
 					spawn(function()
-						repeat Wait()
+						repeat task.wait(0.1)
 							Velocity.Velocity = Vector3.new(math.random(-20, 20), math.random(-5, 5), math.random(-20, 20))
 						until not Velocity
 					end)
@@ -6364,18 +6598,18 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.AutoGrabTools = false
+Env().AutoGrabTools = false
 Command.Add({
 	Aliases = { "autograbtools" },
 	Description = "Automatically grabs tools once they are dropped",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoGrabTools  = true
+		Env().AutoGrabTools  = true
 		Command.Parse("grabtools")
 
 		workspace.ChildAdded:Connect(function(Child)
-			if Child:IsA("Tool") and Command.Toggles.AutoGrabDeleteTools then
+			if Child:IsA("Tool") and Env().AutoGrabDeleteTools then
 				GetHumanoid(Local.Character):EquipTool(Child)
 			end
 		end)
@@ -6390,7 +6624,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoGrabTools = false
+		Env().AutoGrabTools = false
 		Utils.Notify("Success", "Success!", "Auto grab tools disabled!", 5)
 	end,
 })
@@ -6415,18 +6649,18 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.AutoGrabDeleteTools = false
+Env().AutoGrabDeleteTools = false
 Command.Add({
 	Aliases = { "autograbdeletetools", "autogdt" },
 	Description = "Automatically deletes tools once they are dropped",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoGrabDeleteTools  = true
+		Env().AutoGrabDeleteTools  = true
 		Command.Parse("grabdeletetools")
 
 		workspace.ChildAdded:Connect(function(Child)
-			if Child:IsA("Tool") and Command.Toggles.AutoGrabDeleteTools then
+			if Child:IsA("Tool") and Env().AutoGrabDeleteTools then
 				GetHumanoid(Local.Character):EquipTool(Child)
 				Child:Destroy()
 			end
@@ -6442,12 +6676,12 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Command.Toggles.AutoGrabDeleteTools  = false
+		Env().AutoGrabDeleteTools  = false
 		Utils.Notify("Success", "Success!", "Auto grab delete tools disabled!", 5)
 	end,
 })
 
-Command.Toggles.Annoy = false
+Env().Annoy = false
 Command.Add({
 	Aliases = { "annoy" },
 	Description = "Annoys your target",
@@ -6457,7 +6691,7 @@ Command.Add({
 	Plugin = false,
 	Task = function(Player)
 		local Target = GetPlayer(Player)
-		Command.Toggles.Annoy = true
+		Env().Annoy = true
 
 		for Index, Player in next, Target do
 			Services.Camera.CameraSubject = Player.Character:FindFirstChildOfClass("Humanoid")
@@ -6466,7 +6700,7 @@ Command.Add({
 				local R1, R2, R3 = math.random(-3, 3)
 				Local.Character.HumanoidRootPart.CFrame =
 					Player.Character.HumanoidRootPart.CFrame + Vector3.new(R1, R2, R3)
-			until not Command.Toggles.Annoy
+			until not Env().Annoy
 
 			break
 		end
@@ -6481,7 +6715,7 @@ Command.Add({
 	},
 	Plugin = false,
 	Task = function(Player)
-		Command.Toggles.Annoy = false
+		Env().Annoy = false
 	end,
 })
 
@@ -6738,7 +6972,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.Animations = {}
+Env().Animations = {}
 Command.Add({
 	Aliases = { "playanimation" },
 	Description = "Plays animation using its ID",
@@ -6752,7 +6986,7 @@ Command.Add({
 		local Anim = Instance.new("Animation")
 		Anim.AnimationId = format("rbxassetid://%s", Animation)
 		local Dance = GetHumanoid(Local.Character):LoadAnimation(Anim)
-		table.insert(Command.Toggles.Animations, Dance)
+		table.insert(Env().Animations, Dance)
 		Dance:Play()
 	end,
 })
@@ -6763,7 +6997,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		for Index, Animation in next, Command.Toggles.Animations do
+		for Index, Animation in next, Env().Animations do
 			if Animation then
 				Animation:Stop()
 			end
@@ -6819,7 +7053,7 @@ Command.Add({
 	end,
 })
 
-Command.Toggles.Hitbox = false
+Env().Hitbox = false
 Command.Add({
 	Aliases = { "hitbox" },
 	Description = "Set everyone's character hitbox in the server",
@@ -6829,9 +7063,9 @@ Command.Add({
 	Plugin = false,
 	Task = function(Size)
 		Size = tonumber(Size) or 10
-		Command.Toggles.Hitbox = false
+		Env().Hitbox = false
 		task.wait(0.1)
-		Command.Toggles.Hitbox = true
+		Env().Hitbox = true
 
 		repeat task.wait(0.1)
 			for Index, Player in next, Services.Players:GetPlayers() do
@@ -6844,7 +7078,7 @@ Command.Add({
 					Root.CanCollide = false
 				end
 			end
-		until not Command.Toggles.Hitbox
+		until not Env().Hitbox
 	end,
 })
 
@@ -6854,7 +7088,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function(Size)
-		Command.Toggles.Hitbox = false
+		Env().Hitbox = false
 
 		task.wait(0.2)
 
@@ -6912,203 +7146,203 @@ Command.Add({
 })
 
 pcall(function()
-if Methods.Check() then
-	Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Cmd, use the <b>vuln</b> command for more information", 15)
+	if Methods.Check() then
+		Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Cmd, use the <b>vuln</b> command for more information", 15)
 
-	Command.Add({
-		Aliases = { "vuln" },
-		Description = "Using the vulnerability feature built into Cmd, you can use bonus commands on players",
-		Arguments = {},
-		Plugin = false,
-		Task = function()
-			if not Screen:FindFirstChild("Vuln") then
+		Command.Add({
+			Aliases = { "vuln" },
+			Description = "Using the vulnerability feature built into Cmd, you can use bonus commands on players",
+			Arguments = {},
+			Plugin = false,
+			Task = function()
+				if not Screen:FindFirstChild("Vuln") then
 
-				local Main = Tab.new({
-					Title = "Vuln",
-					Drag = true
-				})
+					local Main = Tab.new({
+						Title = "Vuln",
+						Drag = true
+					})
 
-				local Tabs = Main.Tabs
-				local MainTab = Tabs.Main.Scroll
+					local Tabs = Main.Tabs
+					local MainTab = Tabs.Main.Scroll
 
-				Library.new("Input", { 
-					Title = "Kill",
-					Description = "Kill your target",
-					Parent = MainTab,
-					Default = "",
-					Callback = function(Message)
-						local Plr = GetPlayer(Message)
+					Library.new("Input", { 
+						Title = "Kill",
+						Description = "Kill your target",
+						Parent = MainTab,
+						Default = "",
+						Callback = function(Message)
+							local Plr = GetPlayer(Message)
 
-						for Index, Target in next, Plr do
-							if Character(Target) then
-								Methods.Destroy(Character(Target).Head)
+							for Index, Target in next, Plr do
+								if Character(Target) then
+									Methods.Destroy(Character(Target).Head)
+								end
 							end
-						end
-					end,
-				})
+						end,
+					})
 
-				Library.new("Input", { 
-					Title = "Sink",
-					Description = "Sink your target to the ground",
-					Parent = MainTab,
-					Default = "",
-					Callback = function(Message)
-						local Plr = GetPlayer(Message)
+					Library.new("Input", { 
+						Title = "Sink",
+						Description = "Sink your target to the ground",
+						Parent = MainTab,
+						Default = "",
+						Callback = function(Message)
+							local Plr = GetPlayer(Message)
 
-						for Index, Target in next, Plr do
-							if Character(Target) then
-								Methods.Destroy(GetRoot(Character(Target)))
+							for Index, Target in next, Plr do
+								if Character(Target) then
+									Methods.Destroy(GetRoot(Character(Target)))
+								end
 							end
-						end
-					end,
-				})
+						end,
+					})
 
-				Library.new("Input", { 
-					Title = "Bald",
-					Description = "Turns your target bald",
-					Parent = MainTab,
-					Default = "",
-					Callback = function(Message)
-						local Plr = GetPlayer(Message)
+					Library.new("Input", { 
+						Title = "Bald",
+						Description = "Turns your target bald",
+						Parent = MainTab,
+						Default = "",
+						Callback = function(Message)
+							local Plr = GetPlayer(Message)
 
-						for Index, Target in next, Plr do
-							if Character(Target) then
-								for i, v in next, Character(Target):GetChildren() do
-									if v:IsA("Accessory") then
-										Methods.Destroy(v)
+							for Index, Target in next, Plr do
+								if Character(Target) then
+									for i, v in next, Character(Target):GetChildren() do
+										if v:IsA("Accessory") then
+											Methods.Destroy(v)
+										end
 									end
 								end
 							end
-						end
-					end,
-				})
+						end,
+					})
 
-				Library.new("Input", { 
-					Title = "Fat",
-					Description = "Turns your target fat",
-					Parent = MainTab,
-					Default = "",
-					Callback = function(Message)
-						local Plr = GetPlayer(Message)
+					Library.new("Input", { 
+						Title = "Fat",
+						Description = "Turns your target fat",
+						Parent = MainTab,
+						Default = "",
+						Callback = function(Message)
+							local Plr = GetPlayer(Message)
 
-						for Index, Target in next, Plr do
-							if Character(Target) then
-								for i, v in next, Character(Target):GetChildren() do
-									if v:IsA("CharacterMesh") then
-										Methods.Destroy(v)
+							for Index, Target in next, Plr do
+								if Character(Target) then
+									for i, v in next, Character(Target):GetChildren() do
+										if v:IsA("CharacterMesh") then
+											Methods.Destroy(v)
+										end
 									end
 								end
 							end
-						end
-					end,
-				})
+						end,
+					})
 
-				Library.new("Input", { 
-					Title = "Naked",
-					Description = "Turns your target naked",
-					Parent = MainTab,
-					Default = "",
-					Callback = function(Message)
-						local Plr = GetPlayer(Message)
-						local Classes = { "Shirt", "Pants", "ShirtGraphics" }
+					Library.new("Input", { 
+						Title = "Naked",
+						Description = "Turns your target naked",
+						Parent = MainTab,
+						Default = "",
+						Callback = function(Message)
+							local Plr = GetPlayer(Message)
+							local Classes = { "Shirt", "Pants", "ShirtGraphics" }
 
-						for Index, Target in next, Plr do
-							if Character(Target) then
-								for i, v in next, Character(Target):GetChildren() do
-									if Classes[v.ClassName] then
-										Methods.Destroy(v)
+							for Index, Target in next, Plr do
+								if Character(Target) then
+									for i, v in next, Character(Target):GetChildren() do
+										if Classes[v.ClassName] then
+											Methods.Destroy(v)
+										end
 									end
 								end
 							end
-						end
-					end,
-				})
+						end,
+					})
 
-				Library.new("Input", { 
-					Title = "Punish",
-					Description = "Makes your target's character not able to reset",
-					Parent = MainTab,
-					Default = "",
-					Callback = function(Message)
-						local Plr = GetPlayer(Message)
-						local Classes = { "Shirt", "Pants", "ShirtGraphics" }
+					Library.new("Input", { 
+						Title = "Punish",
+						Description = "Makes your target's character not able to reset",
+						Parent = MainTab,
+						Default = "",
+						Callback = function(Message)
+							local Plr = GetPlayer(Message)
+							local Classes = { "Shirt", "Pants", "ShirtGraphics" }
 
-						for Index, Target in next, Plr do
-							if Character(Target) then
-								Methods.Destroy(Character(Target))
+							for Index, Target in next, Plr do
+								if Character(Target) then
+									Methods.Destroy(Character(Target))
+								end
 							end
-						end
-					end,
-				})
+						end,
+					})
 
-				Library.new("Button", { 
-					Title = "BTools",
-					Description = "Give yourself BTools",
-					Parent = MainTab,
-					Callback = function()
-						local DestroyTool = CreateInstance("Tool", {
-							Parent = Local.Backpack,
-							RequiresHandle = false,
-							Name = "Delete",
-							ToolTip = "Btools (Delete)",
-							TextureId = "https://www.roblox.com/asset/?id=12223874",
-							CanBeDropped = false
-						})
-
-						local BtoolsEquipped = false
-						DestroyTool.Equipped:Connect(function()
-							BtoolsEquipped = true
-						end)
-
-						DestroyTool.Unequipped:Connect(function()
-							BtoolsEquipped = false
-						end)
-
-						DestroyTool.Activated:Connect(function()
-							local Explosion = CreateInstance("Explosion", {
-								Parent = workspace,
-								BlastPressure = 0,
-								BlastRadius = 0,
-								DestroyJointRadiusPercent = 0,
-								ExplosionType = Enum.ExplosionType.NoCraters,
-								Position = Local.Mouse.Target.Position
+					Library.new("Button", { 
+						Title = "BTools",
+						Description = "Give yourself BTools",
+						Parent = MainTab,
+						Callback = function()
+							local DestroyTool = CreateInstance("Tool", {
+								Parent = Local.Backpack,
+								RequiresHandle = false,
+								Name = "Delete",
+								ToolTip = "Btools (Delete)",
+								TextureId = "https://www.roblox.com/asset/?id=12223874",
+								CanBeDropped = false
 							})
-							Methods.Destroy(Local.Mouse.Target)
-						end)
-					end,
-				})
 
-				Library.new("Button", { 
-					Title = "Clear Map",
-					Description = "Gets rid of the map",
-					Parent = MainTab,
-					Callback = function()
-						for i, v in next, workspace:GetChildren() do
-							Methods.Destroy(v)
-						end
-					end,
-				})
+							local BtoolsEquipped = false
+							DestroyTool.Equipped:Connect(function()
+								BtoolsEquipped = true
+							end)
 
-				Library.new("Button", { 
-					Title = "Break Game",
-					Description = "Deletes every remote and script in the game",
-					Parent = MainTab,
-					Callback = function()
-						for i, v in next, Services.Replicated:GetChildren() do
-							Methods.Destroy(v)
-						end
-					end,
-				})
+							DestroyTool.Unequipped:Connect(function()
+								BtoolsEquipped = false
+							end)
+
+							DestroyTool.Activated:Connect(function()
+								local Explosion = CreateInstance("Explosion", {
+									Parent = workspace,
+									BlastPressure = 0,
+									BlastRadius = 0,
+									DestroyJointRadiusPercent = 0,
+									ExplosionType = Enum.ExplosionType.NoCraters,
+									Position = Local.Mouse.Target.Position
+								})
+								Methods.Destroy(Local.Mouse.Target)
+							end)
+						end,
+					})
+
+					Library.new("Button", { 
+						Title = "Clear Map",
+						Description = "Gets rid of the map",
+						Parent = MainTab,
+						Callback = function()
+							for i, v in next, workspace:GetChildren() do
+								Methods.Destroy(v)
+							end
+						end,
+					})
+
+					Library.new("Button", { 
+						Title = "Break Game",
+						Description = "Deletes every remote and script in the game",
+						Parent = MainTab,
+						Callback = function()
+							for i, v in next, Services.Replicated:GetChildren() do
+								Methods.Destroy(v)
+							end
+						end,
+					})
 
 
 
-				Tweens.Open({ Canvas = Main, Speed = 0.3 })
-			else
-				Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
-			end
-		end,
-	})
-end
+					Tweens.Open({ Canvas = Main, Speed = 0.3 })
+				else
+					Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
+				end
+			end,
+		})
+	end
 end)
 
 spawn(function()
