@@ -6492,7 +6492,7 @@ Command.Add({
 			Detection = Detection:Disconnect() 
 		end)
 
-		local Detection = Local.Player.CharacterAdded:Connect(function()
+	    Detection = Local.Player.CharacterAdded:Connect(function()
 			if Env().SetSpawn then
 				Local.Player.Character:WaitForChild("HumanoidRootPart").CFrame = Old
 			end	
