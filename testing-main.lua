@@ -4187,6 +4187,26 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "reload" },
+	Description = "Reloads Cmd",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))()
+	end,
+})
+
+Command.Add({
+	Aliases = { "removecmd" },
+	Description = "Removes Cmd",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Screen.Parent = nil
+	end,
+})
+
+Command.Add({
 	Aliases = { "respawn", "re" },
 	Description = "Respawns your character",
 	Arguments = {},
