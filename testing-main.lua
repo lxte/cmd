@@ -6157,7 +6157,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-				Npc.Humanoid.Health = 0
+				Npc:FindFirstChildOfClass("Humanoid").Humanoid.Health = 0
 			end
 		end
 	end,
@@ -6183,7 +6183,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-				Npc.Humanoid.HipHeight = 1024
+				Npc:FindFirstChildOfClass("Humanoid").HipHeight = 1024
 			end
 		end
 	end,
@@ -6197,7 +6197,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-				Npc.Humanoid.HipHeight = -1024
+				Npc:FindFirstChildOfClass("Humanoid").HipHeight = -1024
 			end
 		end
 	end,
@@ -6214,7 +6214,7 @@ Command.Add({
 		repeat task.wait()
 			for Index, Npc in next, GetPlayer("npc") do
 				if Npc:FindFirstChildOfClass("Humanoid") then
-					Npc.Humanoid:MoveTo(GetRoot(Local.Character).Position)
+					Npc:FindFirstChildOfClass("Humanoid"):MoveTo(GetRoot(Local.Character).Position)
 				end
 			end
 		until not Env().NpcFollow
