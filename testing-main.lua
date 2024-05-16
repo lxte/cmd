@@ -1898,14 +1898,12 @@ if not Data.get("Waypoints.json") then
 end
 
 if Checks.File then
-	task.spawn(function()
-		Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+	Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
 
-		local Themes = Settings.Themes
-		Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
-		Settings.Themes = Themes
-		Settings.ScaleSize = Data.get("Scale.json")
-	end)
+	local Themes = Settings.Themes
+	Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
+	Settings.Themes = Themes
+	Settings.ScaleSize = Data.get("Scale.json")
 end
 
 SetUIScale = function(Scale)
@@ -2201,7 +2199,7 @@ Command.Add({
 				Message = Message:lower()
 
 				for Index, Cmd in next, MainTab:GetChildren() do
-					if Cmd.Name == "Switch" and Cmd:IsA("GuiButton") and Cmd.Name ~= "Example" then
+					if Cmd.Name == "Label" and Cmd:IsA("Frame") then
 						local Title = Cmd.Content.Title
 						Cmd.Visible = find(lower(Title.Text), Message)
 					end
@@ -7472,7 +7470,6 @@ for Index, Table in next, Commands do
 	Autofills.Add(Table)
 end
 
-Library.LoadTheme(Settings.Themes)
 Autofills.Search("")
 
 Box:GetPropertyChangedSignal("Text"):Connect(function()
@@ -7550,5 +7547,6 @@ if getgenv then
 	getgenv().CmdPath = Screen;
 end
 
+Library.LoadTheme(Settings.Themes);
 Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5);
