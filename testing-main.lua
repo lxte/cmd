@@ -1,17 +1,14 @@
 --[[
-THIS IS A TESTING LOADSTRING, EXPECT BUGS!
-THIS IS A TESTING LOADSTRING, EXPECT BUGS!
+	Cmd [V1];
+	URL: "https://github.com/lxte/cmd";
+	Main: "https://raw.githubusercontent.com/lxte/cmd/main/main.lua";
+	Testing: "https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua";
 
-cmd v1.0
-github - lxte/cmd
-		
-todo: (so i remember lol)
-		
-1. re-enable the automatic fpsbooster (it lags lol)
+	Made by late.
 ]]
 
 if not game:IsLoaded() then
-	game.Loaded:Wait()
+	game.Loaded:Wait();
 end
 
 if getgenv and getgenv().CmdLoaded then
@@ -27,14 +24,14 @@ local Settings = {
 	Version = "1.0",
 	ScaleSize = 1,
 	Themes = {
-		Primary = Color3.fromRGB(35, 35, 35),
-		Secondary = Color3.fromRGB(40, 40, 40),
-		Third = Color3.fromRGB(45, 45, 45),
-		Title = Color3.fromRGB(255, 255, 255),
-		Description = Color3.fromRGB(200, 200, 200),
-		Icon = Color3.fromRGB(255, 255, 255),
-		Shadow = Color3.fromRGB(0, 0, 0),
-		Outline = Color3.fromRGB(45, 45, 45),
+		Primary = Color3.fromRGB(35, 35, 35);
+		Secondary = Color3.fromRGB(40, 40, 40);
+		Third = Color3.fromRGB(45, 45, 45);
+		Title = Color3.fromRGB(255, 255, 255);
+		Description = Color3.fromRGB(200, 200, 200);
+		Icon = Color3.fromRGB(255, 255, 255);
+		Shadow = Color3.fromRGB(0, 0, 0);
+		Outline = Color3.fromRGB(45, 45, 45);
 		Transparency = 0.05,
 		Mode = "Dark"
 	},
@@ -66,10 +63,10 @@ local Players = Services.Players
 local LoadTime = tick()
 
 local Local = {
-	Player = Players.LocalPlayer,
-	Character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait(),
-	Mouse = Players.LocalPlayer:GetMouse(),
-	Backpack = Players.LocalPlayer.Backpack,
+	Player = Players.LocalPlayer;
+	Character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait();
+	Mouse = Players.LocalPlayer:GetMouse();
+	Backpack = Players.LocalPlayer.Backpack;
 }
 
 local Checks = {
@@ -84,26 +81,25 @@ end)
 local FSuccess, FResult = pcall(function()
 	if Checks.File then
 		if not isfolder('Cmd') then
-			makefolder('Cmd')
+			makefolder('Cmd');
 		end
 
 		if not isfolder('Cmd/Data') then
-			makefolder('Cmd/Data')
+			makefolder('Cmd/Data');
 		end
 
 		if not isfolder('Cmd/Plugins') then
-			makefolder('Cmd/Plugins')
+			makefolder('Cmd/Plugins');
 		end
 	end
 end)
 
 if not FSuccess then
-	warn(FResult)
+	warn(FResult);
 end
 
--- ui - insert
+-- inserting da ui
 
--- Screen = game:GetObjects("rbxassetid://17078695559")[1]
 local Screen = game:GetObjects("rbxassetid://17078695559")[1]
 local Cmd = Screen.Command
 local Lib = Screen.Library
@@ -119,7 +115,7 @@ local pressTab = Bar.Description
 local Protection = {}
 
 local CoreSuccess = pcall(function()
-	Screen.Parent = game:GetService("CoreGui")
+	Screen.Parent = game:GetService("CoreGui");
 end)
 
 if not CoreSuccess then
@@ -312,7 +308,7 @@ local CreateInstance = function(Name, Properties, Children)
 	return Object
 end
 
-if Local.Player:FindFirstChild("ControlModule", true) then
+if Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule") then
 	local IdleAnimation = CreateInstance("Animation", {AnimationId = "rbxassetid://616006778"})
 	local Move = CreateInstance("Animation", {AnimationId = "rbxassetid://616010382"})
 
@@ -397,7 +393,7 @@ if Local.Player:FindFirstChild("ControlModule", true) then
 
 	local Controller;
 
-	Controller = pcall(function() require(Local.Player:FindFirstChild("ControlModule", true)) end)
+	Controller = pcall(function() require(Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule", true)) end)
 	local TouchFrame = Local.Player:FindFirstChild("TouchControlFrame", true)
 
 	if Controller and TouchFrame then
@@ -637,6 +633,7 @@ end
 
 function StringToRGB(Item)
 	local Color = nil
+
 	if typeof(Item) == "string" then
 		Color = Color3.new(unpack(split(Item, ",")))
 	elseif typeof(Item) == "table" then
@@ -689,6 +686,7 @@ Command.Toggles = {}
 local Env = function() 
 	return Command.Toggles
 end
+
 -- command functions 
 
 Methods = {}
@@ -747,7 +745,7 @@ local Modules = {
 	ColorPicker = nil,
 }
 
-pcall(function()
+task.spawn(function()
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))()
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))()
 	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))()
@@ -759,7 +757,6 @@ local PromptChangeRigType = function(RigType)
 	Command.Parse("respawn")
 end
 
-Env().WalkFling = false
 local Walkfling = function(Power, Distance, Bool)
 	Env().WalkFling = false
 	Wait()
@@ -957,11 +954,11 @@ Tab.SetPage = function(Page)
 			local Opened = Tab.Opened
 
 			if Opened.Value and Tab ~= Page then
-				Tween(Tab, Info, { Position = UDim2.new(1.5, 0,0.562, 0) })
+				Tween(Tab, Info, { Position = UDim2.new(1.5, 0,0.572, 0) })
 				Opened.Value = false
 			elseif Tab == Page and not Page.Opened.Value then
-				Tab.Position = UDim2.new(-0.5, 0,0.562, 0)
-				Tween(Tab, Info, { Position = UDim2.new(0.5, 0, 0.562, 0) })
+				Tab.Position = UDim2.new(-0.5, 0,0.572, 0)
+				Tween(Tab, Info, { Position = UDim2.new(0.5, 0, 0.572, 0) })
 				Opened.Value = true
 			end
 		end
@@ -1346,6 +1343,10 @@ Library.Theming = {
 
 		["Decline"] = function(Item)
 			Item.BackgroundColor3 = Settings.Themes.Primary
+		end,
+
+		["Line"] = function(Item)
+			Item.BackgroundColor3 = Settings.Themes.Outline
 		end,
 	},
 
@@ -1897,12 +1898,14 @@ if not Data.get("Waypoints.json") then
 end
 
 if Checks.File then
-	Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+	task.spawn(function()
+		Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
 
-	local Themes = Settings.Themes
-	Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
-	Settings.Themes = Themes
-	Settings.ScaleSize = Data.get("Scale.json")
+		local Themes = Settings.Themes
+		Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
+		Settings.Themes = Themes
+		Settings.ScaleSize = Data.get("Scale.json")
+	end)
 end
 
 SetUIScale = function(Scale)
@@ -2244,6 +2247,8 @@ Command.Add({
 				end
 
 				-- Argument Description
+
+				if #Arguments > 0 then
 				for Index, Arg in Arguments do
 					if Index and Arg then
 						local Name = Arg.Name
@@ -2257,17 +2262,24 @@ Command.Add({
 						Argument = Argument .. string.format("%s%s (%s)", Seperate, Name, Type)
 						ArgAmount = ArgAmount + 1
 					end
-
-					if ArgAmount == 1 then
-						Argument = 'None'
-					end
 				end
+			end
 
 				-- UI
-				local Tab = Library.new("Switch", { Title = Title, Description = Description, Parent = MainTab })
-				Library.new("Section", { Title = "Command Info", Parent = Tab }) 
-				Library.new("Label", { Title = "Arguments", Description = Argument, Parent = Tab })
-				Library.new("Label", { Title = "Is plugin", Description = tostring(Plugin), Parent = Tab })
+
+				if Argument ~= '' then
+				Library.new("Label", { 
+					Title = Title, 
+					Description = string.format("%s\nArguments: %s", Description, Argument), 
+					Parent = MainTab 
+				})
+			else
+				Library.new("Label", { 
+					Title = Title, 
+					Description = Description, 
+					Parent = MainTab 
+				})
+			end
 			end
 		else
 			Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
@@ -2791,9 +2803,9 @@ ESPSettings.InfoESP = function(Target)
 		local Char = Target.Character
 
 		if Char and not ESPSettings.Holder:FindFirstChild(Target.Name) and Target ~= Local.Player then
-			local Head = Char:FindFirstChild("Head")
-			local Billboard = Instance.new("BillboardGui", ESPSettings.Holder)
-			local InfoTag = Instance.new("TextLabel", Billboard)
+			local Head = Char:FindFirstChild("Head");
+			local Billboard = Instance.new("BillboardGui", ESPSettings.Holder);
+			local InfoTag = Instance.new("TextLabel", Billboard);
 
 			Billboard.Size = UDim2.new(0, 200, 0, 24)
 			Billboard.SizeOffset = Vector2.new(0, 1)
@@ -2838,34 +2850,35 @@ Command.Add({
 		local AddHighlight = function(Bool, Transparency, Fill, Player)
 			task.spawn(function()
 				if Player and Player.Character then
-					local Char = Player.Character
+					local Char = Player.Character;
 					local Find = Char:FindFirstChildOfClass("Highlight");
 
 					if ESPSettings.TargetsOnly and Player.Team == Local.Player.Team then
 						if Find then
-							Find:Destroy()
+							Find:Destroy();
 						end
 
-						ESPSettings.RemoveInfo(Player)
+						ESPSettings.RemoveInfo(Player);
 					else
 						if Bool then
-							local Highlight = Instance.new("Highlight", Char)
-							ESPSettings.RemoveInfo(Player)
-							ESPSettings.InfoESP(Player)
+							local Highlight = Instance.new("Highlight", Char);
+							ESPSettings.RemoveInfo(Player);
+							ESPSettings.InfoESP(Player);
 
 							if Find then
 								Find:Destroy()
 							end
 
-							Highlight.OutlineTransparency = Transparency
-							Highlight.FillTransparency = Fill
-							Highlight.FillColor = Player.TeamColor.Color
-							ESPSettings.Outline = Transparency
-							ESPSettings.Fill = Fill
+							Highlight.OutlineTransparency = Transparency;
+							Highlight.FillTransparency = Fill;
+							Highlight.FillColor = Player.TeamColor.Color;
+							ESPSettings.Outline = Transparency;
+							ESPSettings.Fill = Fill;
 						else
-							ESPSettings.RemoveInfo(Player)
+							ESPSettings.RemoveInfo(Player);
+
 							if Find then
-								Find:Destroy()
+								Find:Destroy();
 							end
 						end
 					end
@@ -2926,30 +2939,27 @@ Command.Add({
 				Default = 0.5,
 				Parent = MainTab,
 				Callback = function(Input)
-					Fill = SetNumber(Input)
-					SetESP(ESPSettings.Current, ESPSettings.Outline, Fill)
+					Fill = SetNumber(Input);
+					SetESP(ESPSettings.Current, ESPSettings.Outline, Fill);
 				end,
 			})
 
 			for Index, Player in next, Services.Players:GetPlayers() do
-				local Char = Character(Player)
-
-				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
+				local Char = Character(Player);
+				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player);
 
 				Player.CharacterAdded:Connect(function(Char)
-					task.wait(0.5)
-					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
+					task.wait(0.5);
+					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player);
 				end)
 			end
 
 			Services.Players.PlayerAdded:Connect(function(Player)
 				local Char = Character(Player)
-
-				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
+				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player);
 
 				Player.CharacterAdded:Connect(function(Char)
-					task.wait(0.5)
-					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player)
+					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player);
 				end)
 			end)
 
@@ -2963,6 +2973,7 @@ Command.Add({
 local Aimbot = {
 	Camlock = false,
 	Part = "Head",
+    PartIsRandom = false,
 	TeamCheck = true,
 	Held = false,
 	Key = Enum.KeyCode.E,
@@ -3076,6 +3087,37 @@ Command.Add({
 				end,
 			})
 
+            Library.new("Input", { Title = "BodyPart",
+				Description = "What body part will be locked on; Head, HumanoidRootPart, Random",
+				Default = "Head",
+				Parent = MainTab,
+				Callback = function(Value)
+                    local ValidOptions = { "humanoidrootpart", "head", "random" };
+                    local Caps = { "HumanoidRootPart", "Head" }
+                    local Original = Value;
+                    local Value = string.lower(Value);
+
+					if Value and table.find(ValidOptions, Value) then
+
+                        if Value == "random" then
+                            Aimbot.PartIsRandom = true
+                        else
+                            Aimbot.PartIsRandom = false
+
+                            for Index, PartOption in next, Caps do
+                                if lower(PartOption) == Value then
+                                    Aimbot.Part = PartOption
+                                end
+                            end
+                        end
+
+                        Utils.Notify("Success", "Success!", format("Set Part to %s", Value));
+                    else
+                        Utils.Notify("Error", "Error!", format("The part '%s' does not exist!", Value));
+                    end
+				end,
+			})
+
 			Library.new("Bind", { Title = "Keybind",
 				Description = "The key to press, to lock your camera to a target",
 				Parent = MainTab,
@@ -3084,19 +3126,28 @@ Command.Add({
 				end,
 			})
 
+            task.spawn(function() 
+                repeat task.wait() 
+                    if Aimbot.PartIsRandom then
+                        local Table = { "HumanoidRootPart", "Head" }
+                        Aimbot.Part = Table[math.random(1, 2)]
+                    else
+                        Aimbot.Part = Aimbot.Part
+                    end
+                until false
+            end)
+
 			task.spawn(function()
 				Services.Input.InputBegan:Connect(function(Key, Processed)
 					if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
 						local Closest = Aimbot.Closest()
-						print(Closest)
 
 						if Closest and Closest.Character and Closest.Character:FindFirstChildOfClass("Humanoid") and Closest.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
 							local TargetPart = Closest.Character:FindFirstChild(Aimbot.Part)
 							Aimbot.Held = true
 
-							print("Hm....")
-
-							repeat task.wait()
+                            repeat task.wait()
+                                local TargetPart = Closest.Character:FindFirstChild(Aimbot.Part)
 								local LookAt = TargetPart.CFrame + (TargetPart.Velocity * Aimbot.Prediction + Vector3.new(0, 0.1, 0))
 								workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, LookAt.Position)
 							until not Aimbot.Held or not Closest
@@ -3117,11 +3168,11 @@ Command.Add({
 
 					repeat task.wait()
 						if Aimbot.Camlock then
-							Circle.Radius = Aimbot.FOV.Radius
-							Circle.Position = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
-							Circle.Visible = true
+							Circle.Radius = Aimbot.FOV.Radius;
+							Circle.Position = Vector2.new(Local.Mouse.X, Local.Mouse.Y);
+							Circle.Visible = true;
 						else
-							Circle.Visible = false
+							Circle.Visible = false;
 						end
 					until not Circle
 				end
@@ -4384,7 +4435,7 @@ Command.Add({
 
 
 -- might be patched, will look into it.
-		--[[Command.Add({
+--[[Command.Add({
 			Aliases = { "toolballs" },
 			Description = "Makes all your tools in inventory act like balls",
 			Arguments = {},
@@ -4418,7 +4469,8 @@ Command.Add({
 					end)
 				end
 			end,
-		})]]
+		})
+]]
 
 Command.Add({
 	Aliases = { "antisit", "nosit" },
@@ -7093,9 +7145,9 @@ Command.Add({
 				local Root = GetRoot(Char)
 
 				if Char and Root and Player ~= Local.Player then
-					Root.Size = Vector3.new(Size, Size, Size)
-					Root.Transparency = 0.7
-					Root.CanCollide = false
+					Root.Size = Vector3.new(Size, Size, Size);
+					Root.Transparency = 0.7;
+					Root.CanCollide = false;
 				end
 			end
 		until not Env().Hitbox
@@ -7121,6 +7173,31 @@ Command.Add({
 				Root.Transparency = 1
 			end
 		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "time" },
+	Description = "Set game's time",
+	Arguments = {
+		{ Name = "Time", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Time)
+		local Time = Time or SetNumber(Time);
+
+		Services.Lighting.ClockTime = Time
+	end,
+})
+
+Command.Add({
+	Aliases = { "nofog" },
+	Description = "Removes the ingame fog",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Time)
+		Services.Lighting.FogStart = 9e9
+		Services.Lighting.FogEnd = 9e9
 	end,
 })
 
@@ -7358,7 +7435,7 @@ pcall(function()
 
 					Tweens.Open({ Canvas = Main, Speed = 0.3 })
 				else
-					Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
+					Tweens.Open({ Canvas = Screen:FindFirstChild("Vuln"), Speed = 0.3 })
 				end
 			end,
 		})
@@ -7369,18 +7446,18 @@ spawn(function()
 	if Checks.File then
 		local Success, Result = pcall(function()
 			for Index, File in next, listfiles("Cmd/Plugins") do
-				loadstring(readfile(File))()
+				loadstring(readfile(File))();
 			end
 		end)
 
 		if not Success then
-			warn(format("error running plugin, error : %s", Result))
+			warn(format("error running plugin, error : %s", Result));
 		end
 
-		local CustomAliases = Services.Http:JSONDecode(Data.get("CustomAliases.json"))
+		local CustomAliases = Services.Http:JSONDecode(Data.get("CustomAliases.json"));
 
 		for Alias, CommandName in next, CustomAliases do
-			local Cmd = Command.Find(CommandName)
+			local Cmd = Command.Find(CommandName);
 
 			if Cmd then
 				local Aliases = Cmd[1]
@@ -7405,16 +7482,16 @@ end)
 
 Local.Player.Chatted:Connect(function(Message)
 	if sub(Message, 1, 1) == Settings.Prefix then
-		Command.Parse(Message)
+		Command.Parse(Message);
 	end
 end)
 
 Services.Input.InputBegan:Connect(function(Key, Processed)
 	if Key.KeyCode == Enum.KeyCode.Tab and pressTab.TextTransparency ~= 1 and Recommend.Text ~= "" and Processed and Screen.Parent then
-		local Text = Recommend.Text
-		task.wait()
-		Box.Text = Text
-		Box.CursorPosition = #Text + 1
+		local Text = Recommend.Text;
+		task.wait();
+		Box.Text = Text;
+		Box.CursorPosition = #Text + 1;
 	end
 end)
 
@@ -7423,7 +7500,7 @@ Local.Mouse.KeyDown:Connect(function(Key)
 		Library.Bar(true)
 		Wait()
 		Box.Text = ""
-		Box:CaptureFocus()
+		Box:CaptureFocus();
 	end
 end)
 
@@ -7432,7 +7509,7 @@ Services.Input.InputBegan:Connect(function(Key, Processed)
 	local Bind = Settings.Binds[tostring(Key.KeyCode)]
 
 	if Bind then
-		Command.Parse(Bind.Start)
+		Command.Parse(Bind.Start);
 	end
 end)
 
@@ -7441,13 +7518,13 @@ Services.Input.InputEnded:Connect(function(Key, Processed)
 	local Bind = Settings.Binds[tostring(Key.KeyCode)]
 
 	if Bind then
-		Command.Parse(Bind.End)
+		Command.Parse(Bind.End);
 	end
 end)
 
 Box.FocusLost:Connect(function(Enter)
 	if Enter then
-		Command.Parse(Box.Text)
+		Command.Parse(Box.Text);
 	end
 
 	Library.Bar(false)
@@ -7457,21 +7534,21 @@ SetUIScale(Settings.ScaleSize)
 
 if table.find({Enum.Platform.IOS, Enum.Platform.Android}, Services.Input:GetPlatform()) then 
 	Open.Visible = true
-	Library.Drag(Open)
-	Library.Hover(Open)
+	Library.Drag(Open);
+	Library.Hover(Open);
 
 	Open.Title.MouseButton1Click:Connect(function()
-		Library.Bar(true)
-		Wait()
-		Box.Text = ""
-		Box:CaptureFocus()
+		Library.Bar(true);
+		Wait();
+		Box.Text = "";
+		Box:CaptureFocus();
 	end)
 end
 
 if getgenv then
-	getgenv().CmdLoaded = true
-	getgenv().CmdPath = Screen
+	getgenv().CmdLoaded = true;
+	getgenv().CmdPath = Screen;
 end
 
-Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15)
-Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5)
+Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
+Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5);
