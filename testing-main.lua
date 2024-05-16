@@ -308,6 +308,9 @@ local CreateInstance = function(Name, Properties, Children)
 	return Object
 end
 
+local Fly = nil;
+
+pcall(function() 
 if Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule") then
 	local IdleAnimation = CreateInstance("Animation", {AnimationId = "rbxassetid://616006778"})
 	local Move = CreateInstance("Animation", {AnimationId = "rbxassetid://616010382"})
@@ -462,6 +465,7 @@ if Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule") then
 		Services.Run.RenderStepped:Connect(onUpdate)
 	end
 end
+end)
 
 function GetPlayer(Arg)
 	local Target = {}
