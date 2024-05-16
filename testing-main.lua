@@ -6157,7 +6157,7 @@ Command.Add({
 	Task = function()
 		for Index, Npc in next, GetPlayer("npc") do
 			if Npc:FindFirstChildOfClass("Humanoid") then
-				Npc:FindFirstChildOfClass("Humanoid").Humanoid.Health = 0
+				Npc:FindFirstChildOfClass("Humanoid").Health = 0
 			end
 		end
 	end,
