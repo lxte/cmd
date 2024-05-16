@@ -3,7 +3,8 @@
 # 🌟 Features
 
 - Customizable
-- Documentation for making plugins, themes.
+- Custom commands (Plugins)
+- Custom aliases
 - Support for most executors
  
 <br/> 
