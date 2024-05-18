@@ -166,7 +166,7 @@ Spoof = function(Instance, Property, Value)
 end
 
 SetNumber = function(Input, Minimum, Max)
-	Minimum = tonumber(Minimum) or 0 
+	Minimum = tonumber(Minimum) or -math.huge
 	Max = tonumber(Max) or math.huge
 
 	if Input then
