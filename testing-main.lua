@@ -983,16 +983,83 @@ Tab.SetPage = function(Page)
 			local Opened = Tab.Opened
 
 			if Opened.Value and Tab ~= Page then
-				Tween(Tab, Info, { Position = UDim2.new(1.5, 0,0.572, 0) })
+				Tween(Tab, Info, { Position = UDim2.new(1.5, 0, 0.5, 25) })
 				Opened.Value = false
 			elseif Tab == Page and not Page.Opened.Value then
-				Tab.Position = UDim2.new(-0.5, 0,0.572, 0)
-				Tween(Tab, Info, { Position = UDim2.new(0.5, 0, 0.572, 0) })
+				Tab.Position = UDim2.new(-0.5, 0, 0.5, 25)
+				Tween(Tab, Info, { Position = UDim2.new(0.5, 0, 0.5, 25) })
 				Opened.Value = true
 			end
 		end
 	end
 end
+
+Library.Resizing = { 
+    Top         = { X = Vector2.new(0, 0),    Y = Vector2.new(0, -1)},
+    Bottom      = { X = Vector2.new(0, 0),    Y = Vector2.new(0, 1)},
+    Left        = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, 0)},
+    Right       = { X = Vector2.new(1, 0),    Y = Vector2.new(0, 0)},
+    TopLeft     = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, -1)},
+    TopRight    = { X = Vector2.new(1, 0),    Y = Vector2.new(0, -1)},
+    BottomLeft  = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, 1)},
+    BottomRight = { X = Vector2.new(1, 0),    Y = Vector2.new(0, 1)},
+}
+
+Library.Resizable = function(Tab, Minimum, Maximum)
+    task.spawn(function()
+        local MousePos, Size, UIPos = nil, nil, nil
+
+        if Tab and Tab:FindFirstChild("Resizeable") then
+            local Positions = Tab:FindFirstChild("Resizeable")
+                
+            for Index, Types in next, Positions:GetChildren() do
+                Types.InputBegan:Connect(function(Input)
+                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        Type = Types
+                        MousePos = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
+                        Size = Tab.AbsoluteSize
+                        UIPos = Tab.Position
+                    end
+                end)
+
+                Types.InputEnded:Connect(function(Input)
+                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        Type = nil
+                    end
+                end)
+            end
+        end
+
+        local Resize = function(Delta)
+            if Type and MousePos and Size and UIPos and Tab:FindFirstChild("Resizeable")[Type.Name] == Type then
+                local Mode = Library.Resizing[Type.Name]
+                local NewSize = Vector2.new(Size.X + Delta.X * Mode.X.X, Size.Y + Delta.Y * Mode.Y.Y)
+                NewSize = Vector2.new(math.clamp(NewSize.X, Minimum.X, Maximum.X), math.clamp(NewSize.Y, Minimum.Y, Maximum.Y))
+                
+                local AnchorOffset = Vector2.new(Tab.AnchorPoint.X * Size.X, Tab.AnchorPoint.Y * Size.Y)
+                local NewAnchorOffset = Vector2.new(Tab.AnchorPoint.X * NewSize.X, Tab.AnchorPoint.Y * NewSize.Y)
+                local DeltaAnchorOffset = NewAnchorOffset - AnchorOffset
+                
+                Tab.Size = UDim2.new(0, NewSize.X, 0, NewSize.Y)
+                
+                local NewPosition = UDim2.new(
+                    UIPos.X.Scale, 
+                    UIPos.X.Offset + DeltaAnchorOffset.X * Mode.X.X,
+                    UIPos.Y.Scale,
+                    UIPos.Y.Offset + DeltaAnchorOffset.Y * Mode.Y.Y
+                )
+                Tab.Position = NewPosition
+            end
+        end
+
+        Local.Mouse.Move:Connect(function()
+            if Type then
+                Resize(Vector2.new(Local.Mouse.X, Local.Mouse.Y) - MousePos)
+            end
+        end)
+    end)
+end
+
 
 Library.Hover = function(Object, Speed, Color)
 	task.spawn(function()
@@ -1025,6 +1092,8 @@ Library.Hover = function(Object, Speed, Color)
 		end
 	end)
 end
+
+Type = nil;
 
 Tab.new = function(Info)
 	local Title = Info.Title
@@ -1066,6 +1135,8 @@ Tab.new = function(Info)
 
 		Minimized.Value = not Minimized.Value
 	end)
+
+	Library.Resizable(New, Vector2.new(202, 253), Vector2.new(1000, 1000))
 
 	return New
 end
@@ -1133,7 +1204,7 @@ Library.Drag = function(Canvas)
 		end
 
 		Canvas.InputBegan:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch and not Type then
 				Dragging = true
 				Start = Input.Position
 				StartPosition = Canvas.Position
@@ -1147,13 +1218,13 @@ Library.Drag = function(Canvas)
 		end)
 
 		Canvas.InputChanged:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
+			if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch and not Type then
 				DragInput = Input
 			end
 		end)
 
 		Services.Input.InputChanged:Connect(function(Input)
-			if Input == DragInput and Dragging then
+			if Input == DragInput and Dragging and not Type then
 				Update(Input)
 			end
 		end)
