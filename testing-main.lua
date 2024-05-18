@@ -101,6 +101,10 @@ local FSuccess, FResult = pcall(function()
 		if not isfolder('Cmd/Plugins') then
 			makefolder('Cmd/Plugins');
 		end
+
+		if not isfolder('Cmd/Logs') then
+			makefolder('Cmd/Logs');
+		end
 	end
 end)
 
@@ -3521,6 +3525,7 @@ Command.Add({
 			local Tabs = Main.Tabs
 			local MainTab = Tabs.Main.Scroll
 
+			Library.new("Section", { Title = "Logs", Parent = MainTab })
 			local Chat = Library.new("Switch", { Title = "Chat", Description = "Logs everytime someone chats", Parent = MainTab })
 			local Joins = Library.new("Switch", { Title = "Joins", Description = "Logs when someone joins the game", Parent = MainTab })
 			local Leaves = Library.new("Switch", { Title = "Leaves", Description = "Logs when someone leaves the game", Parent = MainTab })
@@ -3606,6 +3611,35 @@ Command.Add({
 						)
 				end
 			end)
+
+			Library.new("Section", { Title = "Save", Parent = MainTab })
+
+			Library.new("Button", { 
+				Title = "Save logs",
+				Description = "Saves everything that is logged in your exploit's workspace folder",
+				Parent = MainTab,
+				Callback = function()
+					local Logged = string.format("CMD LOGS\nPLACE ID - %s\nTIME - %s", game.PlaceId, os.date())
+
+					local Foreach = function(Tab, Name)
+						Logged = Logged .. "\n\n" .. string.upper(Name)
+					    for Index, Log in next, Tab:GetChildren() do
+							if Log.Name == "Label" and Log:IsA("Frame") then
+								local Username, Message = Log.Content.Title.Text, Log.Content.Description.Text;
+								Logged = string.format("%s\n%s: %s", Logged, Username, Message)
+							end
+						end
+					end
+
+					Foreach(Chat, "Chat");
+					Foreach(Joins, "Joins");
+					Foreach(Leaves, "Leaves");
+					Foreach(Http, "Http");
+					
+					writefile(string.format("%s-%s.txt", game.PlaceId, os.date():gsub(":", "")), Logged);
+					Utils.Notify("Success", "Success!", "Your logs should be saved into your exploit folder!", 5);
+				end,
+			})
 
 			Tweens.Open({ Canvas = Main, Speed = 0.3 })
 		else
