@@ -38,6 +38,16 @@ local Settings = {
 	Binds = {},
 }
 
+local AutoLogger = {}
+
+local Options = { -- for the settings tab
+    Notifications = true;
+    AntiInterfere =  false;
+    Recommendation = true;
+    Popups = true;
+    Logging = false;
+}
+
 local Services = {
 	Players = game:GetService("Players");
 	Lighting = game:GetService("Lighting");
@@ -243,6 +253,17 @@ GetTools = function(Player)
 	end
 
 	return Tools
+end
+
+Randomize = function(Characters)
+    local Characters = (tonumber(Characters) or 10);
+    local String = ""
+
+    for Index = 1, Characters do
+        String = String .. string.char(math.random(75, 90))
+    end
+
+    return String or "Failed for some reason"
 end
 
 R6Check = function(Player)
@@ -1641,6 +1662,8 @@ Utils.NotificationInfo = {
 }
 
 Utils.Notify = function(Type, Title, Description, Duration)
+    if not Options.Notifications then return end 
+
 	Duration = tonumber(Duration) or 5
 	local Notification = Screen.Notification.Example:Clone()
 	local Timer = Notification.Timer
@@ -1671,6 +1694,8 @@ Utils.Notify = function(Type, Title, Description, Duration)
 end
 
 Utils.Popup = function(Title, Description, Callback)
+    if not Options.Popups then Callback(); return end
+
 	local New = Popup:Clone()
 	local Content = New.Content
 	local Bottom = New.Top
@@ -1768,7 +1793,7 @@ Data.get = function(Name)
 	if Checks.File and isfile(format('Cmd/Data/%s', Name)) then
 		return readfile(format('Cmd/Data/%s', Name))
 	else
-		warn("Data not found :(")
+		warn("Data not found :(" .. " " .. Name)
 	end
 end
 
@@ -1860,6 +1885,11 @@ Data.SaveAlias = function(Command, Alias)
 	end
 end
 
+Data.SetOption = function(OptionName, Value)
+    Options[OptionName] = Value
+    Data.new("Toggles.json", Services.Http:JSONEncode(Options))
+end
+
 -- planned webhook command
 Data.Webhook.Send = function(Webhook, Message)
 	request({
@@ -1901,13 +1931,24 @@ if not Data.get("Waypoints.json") then
 	Data.new("Waypoints.json", Services.Http:JSONEncode({}))
 end
 
-if Checks.File then
-	Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+if not Data.get("Toggles.json") then
+	Data.new("Toggles.json", Services.Http:JSONEncode(Options))
+end
 
-	local Themes = Settings.Themes
-	Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
-	Settings.Themes = Themes
-	Settings.ScaleSize = Data.get("Scale.json")
+if Checks.File then
+    local Success, Result = pcall(function()
+	    Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+
+	    local Themes = Settings.Themes
+	    Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
+	    Settings.Themes = Themes
+	    Settings.ScaleSize = Data.get("Scale.json") or 1
+        Options = Services.Http:JSONDecode(Data.get("Toggles.json")) or Options
+    end)
+
+    if not Success then
+        warn(string.format("there has been an error trying to load ui settings - %s", Result))
+    end
 end
 
 SetUIScale = function(Scale)
@@ -2003,6 +2044,10 @@ Command.RemoveWhitelist = function(Player)
 end
 
 Autofills.Recommend = function(Input)
+    if not Options.Recommendation then 
+        Recommend.Text = ""; return
+    end
+
 	local Split = lower(split(Input, ' ')[1])
 	local Found = false
 
@@ -2625,6 +2670,7 @@ Command.Add({
 			-- Tabs
 			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Cmd", Parent = MainTab })
 			local Aliases = Library.new("Switch", { Title = "Aliases", Description = "Add custom aliases (nicknames) for commands!", Parent = MainTab })
+            local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Cmd options", Parent = MainTab })	
 			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Cmd", Parent = MainTab })	
 			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Cmd", Parent = Themes })
 			local Custom = Library.new("Switch", { Title = "Custom", Description = "Make your own custom theme", Parent = Themes })
@@ -2718,6 +2764,57 @@ Command.Add({
 
 				Data.new("CustomAliases.json", Services.Http:JSONEncode(Alias))
 			end})
+
+            -- Toggles
+
+            Library.new("Section", { Title = "Interface Options", Parent = Toggles })
+
+            Library.new("Toggle", { Title = "Show Notifications",
+				Description = "If disabled, it will not show you any notifications",
+				Default = Options.Notifications,
+				Parent = Toggles,
+				Callback = function(Boolean)
+					Data.SetOption("Notifications", Boolean)
+				end,
+			})
+
+            Library.new("Toggle", { Title = "Show Popups",
+				Description = "If disabled, any popups sent will be automatically accepted",
+				Default = Options.Popups,
+				Parent = Toggles,
+				Callback = function(Boolean)
+					Data.SetOption("Popups", Boolean)
+				end,
+			})
+
+            Library.new("Toggle", { Title = "Command Bar Recommend",
+				Description = "If enabled it will give you recommendations for commands if you type something in the Command Bar",
+				Default = Options.Recommendation,
+				Parent = Toggles,
+				Callback = function(Boolean)
+					Data.SetOption("Recommendation", Boolean)
+				end,
+			})
+
+            Library.new("Toggle", { Title = "Anti Interfere",
+				Description = "Any other Command Bars like Cmdr & Kohls Admin won't show",
+				Default = Options.AntiInterfere,
+				Parent = Toggles,
+				Callback = function(Boolean)
+					Data.SetOption("AntiInterfere", Boolean)
+				end,
+			})
+
+            Library.new("Section", { Title = "Automatic Options", Parent = Toggles })
+
+            Library.new("Toggle", { Title = "Automatic Logging",
+				Description = "Automatically logs CHAT messages, even before you ran the logs command",
+				Default = Options.Logging,
+				Parent = Toggles,
+				Callback = function(Boolean)
+					Data.SetOption("Logging", Boolean)
+				end,
+			})
 
 			-- Themes
 			Library.new("Input", { Title = "Transparency", Description = "Set transparency of the UI", Default = "0.05", Parent = Themes, Callback = function(Input) 
@@ -3428,6 +3525,13 @@ Command.Add({
 			local Joins = Library.new("Switch", { Title = "Joins", Description = "Logs when someone joins the game", Parent = MainTab })
 			local Leaves = Library.new("Switch", { Title = "Leaves", Description = "Logs when someone leaves the game", Parent = MainTab })
 			local Http = Library.new("Switch", { Title = "Http", Description = "Logs all Http requests made by other scripts", Parent = MainTab })
+
+            if AutoLogger then
+                for Index, Info in next, AutoLogger do
+                    local Message, Player = Info[1], Info[2]
+					SetOrder(Library.new("Label", { Title = format("%s (@%s)", Player.DisplayName, Player.Name), Description = format('said "%s"', Message), Parent = Chat }))
+                end
+            end
 
 			Services.Players.PlayerAdded:Connect(function(Player)
 				SetOrder(Library.new("Label", { Title = format("%s (@%s)", Player.DisplayName, Player.Name), Description = "has joined the game", Parent = Joins }))
@@ -7474,8 +7578,6 @@ for Index, Table in next, Commands do
 	Autofills.Add(Table)
 end
 
-Autofills.Search("")
-
 Box:GetPropertyChangedSignal("Text"):Connect(function()
 	Autofills.Recommend(Box.Text)
 	Autofills.Search(Box.Text)
@@ -7554,3 +7656,35 @@ end
 Library.LoadTheme(Settings.Themes);
 Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
 Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - LoadTime), 5);
+
+-- loading saved options
+for Index, Target in next, Services.Players:GetPlayers() do
+    Target.Chatted:Connect(function(Message) 
+        if Options.Logging then
+            AutoLogger[Randomize(25)] = { Message, Target }
+        end
+    end)
+end
+
+Services.Players.PlayerAdded:Connect(function(Target) 
+    Target.Chatted:Connect(function(Message) 
+        if Options.Logging then
+            AutoLogger[Randomize(25)] = { Message, Target }
+        end
+    end)
+end)
+
+if Options.AntiInterfere then
+    local Blacklisted = {
+        "KCoreUI",
+        "Cmdr",
+    }
+    
+    for Index, Screen in next, Local.Player.PlayerGui:GetChildren() do
+        if table.find(Blacklisted, Screen.Name) then
+            Screen:Destroy()
+        end
+    end
+end
+
+Autofills.Search("")
