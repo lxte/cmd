@@ -5961,7 +5961,7 @@ Command.Add({
 
 			repeat task.wait()
 				Local.Character:FindFirstChild("HumanoidRootPart").CFrame = Target.Character:FindFirstChild("HumanoidRootPart").CFrame * CFrame.new(2.2, 1.2, 2.3)
-			until not Env().Stand or not Target or not Target.Character or not Local.Character
+			until not Env().Stand or not Target
 
 			Load:Stop()
 			Env().Stand = false
