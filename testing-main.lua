@@ -41,11 +41,11 @@ local Settings = {
 local AutoLogger = {}
 
 local Options = { -- for the settings tab
-    Notifications = true;
-    AntiInterfere =  false;
-    Recommendation = true;
-    Popups = true;
-    Logging = false;
+	Notifications = true;
+	AntiInterfere =  false;
+	Recommendation = true;
+	Popups = true;
+	Logging = false;
 }
 
 local Services = {
@@ -260,14 +260,14 @@ GetTools = function(Player)
 end
 
 Randomize = function(Characters)
-    local Characters = (tonumber(Characters) or 10);
-    local String = ""
+	local Characters = (tonumber(Characters) or 10);
+	local String = ""
 
-    for Index = 1, Characters do
-        String = String .. string.char(math.random(75, 90))
-    end
+	for Index = 1, Characters do
+		String = String .. string.char(math.random(75, 90))
+	end
 
-    return String or "Failed for some reason"
+	return String or "Failed for some reason"
 end
 
 R6Check = function(Player)
@@ -336,160 +336,160 @@ end
 local Fly = nil;
 
 pcall(function() 
-if Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule") then
-	local IdleAnimation = CreateInstance("Animation", {AnimationId = "rbxassetid://616006778"})
-	local Move = CreateInstance("Animation", {AnimationId = "rbxassetid://616010382"})
+	if Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule") then
+		local IdleAnimation = CreateInstance("Animation", {AnimationId = "rbxassetid://616006778"})
+		local Move = CreateInstance("Animation", {AnimationId = "rbxassetid://616010382"})
 
-	local BodyGyro = Instance.new("BodyGyro")
-	BodyGyro.maxTorque = Vector3.new(1, 1, 1) * 10 ^ 6
-	BodyGyro.P = 10 ^ 6
+		local BodyGyro = Instance.new("BodyGyro")
+		BodyGyro.maxTorque = Vector3.new(1, 1, 1) * 10 ^ 6
+		BodyGyro.P = 10 ^ 6
 
-	local BodyVelocity = Instance.new("BodyVelocity")
-	BodyVelocity.maxForce = Vector3.new(1, 1, 1) * 10 ^ 6
-	BodyVelocity.P = 10 ^ 4
+		local BodyVelocity = Instance.new("BodyVelocity")
+		BodyVelocity.maxForce = Vector3.new(1, 1, 1) * 10 ^ 6
+		BodyVelocity.P = 10 ^ 4
 
-	local isFlying = false
-	local Movement = {forward = 0, backward = 0, right = 0, left = 0}
+		local isFlying = false
+		local Movement = {forward = 0, backward = 0, right = 0, left = 0}
 
-	-- functions
+		-- functions
 
-	local function SetFlying(flying)
-		isFlying = flying
-		BodyGyro.Parent = isFlying and Local.Character.HumanoidRootPart or nil
-		BodyVelocity.Parent = isFlying and Local.Character.HumanoidRootPart or nil
-		BodyVelocity.Velocity = Vector3.new()
+		local function SetFlying(flying)
+			isFlying = flying
+			BodyGyro.Parent = isFlying and Local.Character.HumanoidRootPart or nil
+			BodyVelocity.Parent = isFlying and Local.Character.HumanoidRootPart or nil
+			BodyVelocity.Velocity = Vector3.new()
 
-		Local.Character:WaitForChild("Animate").Disabled = isFlying
+			Local.Character:WaitForChild("Animate").Disabled = isFlying
 
-		if (isFlying) then
-			BodyGyro.CFrame = Local.Character.HumanoidRootPart.CFrame
+			if (isFlying) then
+				BodyGyro.CFrame = Local.Character.HumanoidRootPart.CFrame
+			end
 		end
-	end
 
-	local FlySpeed = 3
-	local function onUpdate(dt)
-		pcall(
-			function()
-				if (isFlying) then
-					local cf = Services.Camera.CFrame
-					local direction =
-						cf.rightVector * (Movement.right - Movement.left) +
-						cf.lookVector * (Movement.forward - Movement.backward)
+		local FlySpeed = 3
+		local function onUpdate(dt)
+			pcall(
+				function()
+					if (isFlying) then
+						local cf = Services.Camera.CFrame
+						local direction =
+							cf.rightVector * (Movement.right - Movement.left) +
+							cf.lookVector * (Movement.forward - Movement.backward)
 
-					if (direction:Dot(direction) > 0) then
-						direction = direction.unit
+						if (direction:Dot(direction) > 0) then
+							direction = direction.unit
+						end
+
+						BodyGyro.CFrame = cf
+						BodyVelocity.Velocity = direction * Local.Character.Humanoid.WalkSpeed * FlySpeed
 					end
-
-					BodyGyro.CFrame = cf
-					BodyVelocity.Velocity = direction * Local.Character.Humanoid.WalkSpeed * FlySpeed
 				end
-			end
-		)
-	end
-
-	local function ModifyMovement(newMovement)
-		Movement = newMovement or Movement
-		if (isFlying) then
-			local isMoving = Movement.right + Movement.left + Movement.forward + Movement.backward > 0
-		end
-	end
-
-	local function MovementBind(actionName, InputState, inputObject)
-		if (InputState == Enum.UserInputState.Begin) then
-			Movement[actionName] = 1
-
-			ModifyMovement()
-		elseif (InputState == Enum.UserInputState.End) then
-			Movement[actionName] = 0
-
-			ModifyMovement()
+			)
 		end
 
-		return Enum.ContextActionResult.Pass
-	end
-
-	Services.ContextActionService:BindAction("forward", MovementBind, false, Enum.PlayerActions.CharacterForward)
-	Services.ContextActionService:BindAction("backward", MovementBind, false, Enum.PlayerActions.CharacterBackward)
-	Services.ContextActionService:BindAction("left", MovementBind, false, Enum.PlayerActions.CharacterLeft)
-	Services.ContextActionService:BindAction("right", MovementBind, false, Enum.PlayerActions.CharacterRight)
-
-	pcall(function()
-		if (not Local.Character.Humanoid or Local.Character.Humanoid:GetState() == Enum.HumanoidStateType.Dead) then
-			return
-		end
-	end)
-
-	local Controller;
-
-	Controller = pcall(function() require(Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule", true)) end)
-	local TouchFrame = Local.Player:FindFirstChild("TouchControlFrame", true)
-
-	if Controller and TouchFrame then
-		local IsMovingThumbstick = false
-		local DeadZone = 0.15
-		local DeadZoneNormalized = 1 - DeadZone
-
-		local function isTouchOnThumbstick(Position)
-			if not TouchFrame then
-				return false
+		local function ModifyMovement(newMovement)
+			Movement = newMovement or Movement
+			if (isFlying) then
+				local isMoving = Movement.right + Movement.left + Movement.forward + Movement.backward > 0
 			end
-			local ClassicFrame = TouchFrame:FindFirstChild("ThumbstickFrame")
-			local DynamicFrame = TouchFrame:FindFirstChild("DynamicThumbstickFrame")
-
-			local StickFrame = (ClassicFrame and ClassicFrame.Visible) and ClassicFrame or DynamicFrame
-			if (StickFrame) then
-				local StickPosition = StickFrame.AbsolutePosition
-				local StickSize = StickFrame.AbsoluteSize
-				return Position.X >= StickPosition.X and Position.X <= (StickPosition.X + StickSize.X) and
-					Position.Y >= StickPosition.Y and
-					Position.Y <= (StickPosition.Y + StickSize.Y)
-			end
-			return false
 		end
 
-		Services.Input.TouchStarted:Connect(
-			function(touch, gameProcessedEvent)
-				isMovingThumbstick = isTouchOnThumbstick(touch.Position)
-			end
-		)
+		local function MovementBind(actionName, InputState, inputObject)
+			if (InputState == Enum.UserInputState.Begin) then
+				Movement[actionName] = 1
 
-		Services.Input.TouchEnded:Connect(
-			function(touch, gameProcessedEvent)
-				if not isMovingThumbstick then
-					return
-				end
-				isMovingThumbstick = false
-				ModifyMovement({forward = 0, backward = 0, right = 0, left = 0})
-			end
-		)
+				ModifyMovement()
+			elseif (InputState == Enum.UserInputState.End) then
+				Movement[actionName] = 0
 
-		Services.Input.TouchMoved:Connect(
-			function(touch, gameProcessedEvent)
-				if not isMovingThumbstick then
-					return
-				end
-				local MouseVector = Controller:GetMoveVector()
-				local LeftRight = MouseVector.X
-				local ForeBack = MouseVector.Z
-
-				-- change the range from [0.15-1] to [0-1] if it is outside the deadzone
-				Movement.left = LeftRight < -DeadZone and -(LeftRight - DeadZone) / DeadZoneNormalized or 0
-				Movement.right = LeftRight > DeadZone and (LeftRight - DeadZone) / DeadZoneNormalized or 0
-
-				Movement.forward = ForeBack < -DeadZone and -(ForeBack - DeadZone) / DeadZoneNormalized or 0
-				Movement.backward = ForeBack > DeadZone and (ForeBack - DeadZone) / DeadZoneNormalized or 0
 				ModifyMovement()
 			end
-		)
-	end
 
-	function Fly(Boolean, SpeedValue)
-		FlySpeed = SpeedValue or 1
-		SetFlying(Boolean)
+			return Enum.ContextActionResult.Pass
+		end
 
-		Services.Run.RenderStepped:Connect(onUpdate)
+		Services.ContextActionService:BindAction("forward", MovementBind, false, Enum.PlayerActions.CharacterForward)
+		Services.ContextActionService:BindAction("backward", MovementBind, false, Enum.PlayerActions.CharacterBackward)
+		Services.ContextActionService:BindAction("left", MovementBind, false, Enum.PlayerActions.CharacterLeft)
+		Services.ContextActionService:BindAction("right", MovementBind, false, Enum.PlayerActions.CharacterRight)
+
+		pcall(function()
+			if (not Local.Character.Humanoid or Local.Character.Humanoid:GetState() == Enum.HumanoidStateType.Dead) then
+				return
+			end
+		end)
+
+		local Controller;
+
+		Controller = pcall(function() require(Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule", true)) end)
+		local TouchFrame = Local.Player:FindFirstChild("TouchControlFrame", true)
+
+		if Controller and TouchFrame then
+			local IsMovingThumbstick = false
+			local DeadZone = 0.15
+			local DeadZoneNormalized = 1 - DeadZone
+
+			local function isTouchOnThumbstick(Position)
+				if not TouchFrame then
+					return false
+				end
+				local ClassicFrame = TouchFrame:FindFirstChild("ThumbstickFrame")
+				local DynamicFrame = TouchFrame:FindFirstChild("DynamicThumbstickFrame")
+
+				local StickFrame = (ClassicFrame and ClassicFrame.Visible) and ClassicFrame or DynamicFrame
+				if (StickFrame) then
+					local StickPosition = StickFrame.AbsolutePosition
+					local StickSize = StickFrame.AbsoluteSize
+					return Position.X >= StickPosition.X and Position.X <= (StickPosition.X + StickSize.X) and
+						Position.Y >= StickPosition.Y and
+						Position.Y <= (StickPosition.Y + StickSize.Y)
+				end
+				return false
+			end
+
+			Services.Input.TouchStarted:Connect(
+				function(touch, gameProcessedEvent)
+					isMovingThumbstick = isTouchOnThumbstick(touch.Position)
+				end
+			)
+
+			Services.Input.TouchEnded:Connect(
+				function(touch, gameProcessedEvent)
+					if not isMovingThumbstick then
+						return
+					end
+					isMovingThumbstick = false
+					ModifyMovement({forward = 0, backward = 0, right = 0, left = 0})
+				end
+			)
+
+			Services.Input.TouchMoved:Connect(
+				function(touch, gameProcessedEvent)
+					if not isMovingThumbstick then
+						return
+					end
+					local MouseVector = Controller:GetMoveVector()
+					local LeftRight = MouseVector.X
+					local ForeBack = MouseVector.Z
+
+					-- change the range from [0.15-1] to [0-1] if it is outside the deadzone
+					Movement.left = LeftRight < -DeadZone and -(LeftRight - DeadZone) / DeadZoneNormalized or 0
+					Movement.right = LeftRight > DeadZone and (LeftRight - DeadZone) / DeadZoneNormalized or 0
+
+					Movement.forward = ForeBack < -DeadZone and -(ForeBack - DeadZone) / DeadZoneNormalized or 0
+					Movement.backward = ForeBack > DeadZone and (ForeBack - DeadZone) / DeadZoneNormalized or 0
+					ModifyMovement()
+				end
+			)
+		end
+
+		function Fly(Boolean, SpeedValue)
+			FlySpeed = SpeedValue or 1
+			SetFlying(Boolean)
+
+			Services.Run.RenderStepped:Connect(onUpdate)
+		end
 	end
-end
 end)
 
 function GetPlayer(Arg)
@@ -995,69 +995,69 @@ Tab.SetPage = function(Page)
 end
 
 Library.Resizing = { 
-    Top         = { X = Vector2.new(0, 0),    Y = Vector2.new(0, -1)},
-    Bottom      = { X = Vector2.new(0, 0),    Y = Vector2.new(0, 1)},
-    Left        = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, 0)},
-    Right       = { X = Vector2.new(1, 0),    Y = Vector2.new(0, 0)},
-    TopLeft     = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, -1)},
-    TopRight    = { X = Vector2.new(1, 0),    Y = Vector2.new(0, -1)},
-    BottomLeft  = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, 1)},
-    BottomRight = { X = Vector2.new(1, 0),    Y = Vector2.new(0, 1)},
+	Top         = { X = Vector2.new(0, 0),    Y = Vector2.new(0, -1)},
+	Bottom      = { X = Vector2.new(0, 0),    Y = Vector2.new(0, 1)},
+	Left        = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, 0)},
+	Right       = { X = Vector2.new(1, 0),    Y = Vector2.new(0, 0)},
+	TopLeft     = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, -1)},
+	TopRight    = { X = Vector2.new(1, 0),    Y = Vector2.new(0, -1)},
+	BottomLeft  = { X = Vector2.new(-1, 0),   Y = Vector2.new(0, 1)},
+	BottomRight = { X = Vector2.new(1, 0),    Y = Vector2.new(0, 1)},
 }
 
 Library.Resizable = function(Tab, Minimum, Maximum)
-    task.spawn(function()
-        local MousePos, Size, UIPos = nil, nil, nil
+	task.spawn(function()
+		local MousePos, Size, UIPos = nil, nil, nil
 
-        if Tab and Tab:FindFirstChild("Resizeable") then
-            local Positions = Tab:FindFirstChild("Resizeable")
-                
-            for Index, Types in next, Positions:GetChildren() do
-                Types.InputBegan:Connect(function(Input)
-                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        Type = Types
-                        MousePos = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
-                        Size = Tab.AbsoluteSize
-                        UIPos = Tab.Position
-                    end
-                end)
+		if Tab and Tab:FindFirstChild("Resizeable") then
+			local Positions = Tab:FindFirstChild("Resizeable")
 
-                Types.InputEnded:Connect(function(Input)
-                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        Type = nil
-                    end
-                end)
-            end
-        end
+			for Index, Types in next, Positions:GetChildren() do
+				Types.InputBegan:Connect(function(Input)
+					if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+						Type = Types
+						MousePos = Vector2.new(Local.Mouse.X, Local.Mouse.Y)
+						Size = Tab.AbsoluteSize
+						UIPos = Tab.Position
+					end
+				end)
 
-        local Resize = function(Delta)
-            if Type and MousePos and Size and UIPos and Tab:FindFirstChild("Resizeable")[Type.Name] == Type then
-                local Mode = Library.Resizing[Type.Name]
-                local NewSize = Vector2.new(Size.X + Delta.X * Mode.X.X, Size.Y + Delta.Y * Mode.Y.Y)
-                NewSize = Vector2.new(math.clamp(NewSize.X, Minimum.X, Maximum.X), math.clamp(NewSize.Y, Minimum.Y, Maximum.Y))
-                
-                local AnchorOffset = Vector2.new(Tab.AnchorPoint.X * Size.X, Tab.AnchorPoint.Y * Size.Y)
-                local NewAnchorOffset = Vector2.new(Tab.AnchorPoint.X * NewSize.X, Tab.AnchorPoint.Y * NewSize.Y)
-                local DeltaAnchorOffset = NewAnchorOffset - AnchorOffset
-                
-                Tab.Size = UDim2.new(0, NewSize.X, 0, NewSize.Y)
-                
-                local NewPosition = UDim2.new(
-                    UIPos.X.Scale, 
-                    UIPos.X.Offset + DeltaAnchorOffset.X * Mode.X.X,
-                    UIPos.Y.Scale,
-                    UIPos.Y.Offset + DeltaAnchorOffset.Y * Mode.Y.Y
-                )
-                Tab.Position = NewPosition
-            end
-        end
+				Types.InputEnded:Connect(function(Input)
+					if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+						Type = nil
+					end
+				end)
+			end
+		end
 
-        Local.Mouse.Move:Connect(function()
-            if Type then
-                Resize(Vector2.new(Local.Mouse.X, Local.Mouse.Y) - MousePos)
-            end
-        end)
-    end)
+		local Resize = function(Delta)
+			if Type and MousePos and Size and UIPos and Tab:FindFirstChild("Resizeable")[Type.Name] == Type then
+				local Mode = Library.Resizing[Type.Name]
+				local NewSize = Vector2.new(Size.X + Delta.X * Mode.X.X, Size.Y + Delta.Y * Mode.Y.Y)
+				NewSize = Vector2.new(math.clamp(NewSize.X, Minimum.X, Maximum.X), math.clamp(NewSize.Y, Minimum.Y, Maximum.Y))
+
+				local AnchorOffset = Vector2.new(Tab.AnchorPoint.X * Size.X, Tab.AnchorPoint.Y * Size.Y)
+				local NewAnchorOffset = Vector2.new(Tab.AnchorPoint.X * NewSize.X, Tab.AnchorPoint.Y * NewSize.Y)
+				local DeltaAnchorOffset = NewAnchorOffset - AnchorOffset
+
+				Tab.Size = UDim2.new(0, NewSize.X, 0, NewSize.Y)
+
+				local NewPosition = UDim2.new(
+					UIPos.X.Scale, 
+					UIPos.X.Offset + DeltaAnchorOffset.X * Mode.X.X,
+					UIPos.Y.Scale,
+					UIPos.Y.Offset + DeltaAnchorOffset.Y * Mode.Y.Y
+				)
+				Tab.Position = NewPosition
+			end
+		end
+
+		Local.Mouse.Move:Connect(function()
+			if Type then
+				Resize(Vector2.new(Local.Mouse.X, Local.Mouse.Y) - MousePos)
+			end
+		end)
+	end)
 end
 
 
@@ -1737,7 +1737,7 @@ Utils.NotificationInfo = {
 }
 
 Utils.Notify = function(Type, Title, Description, Duration)
-    if not Options.Notifications then return end 
+	if not Options.Notifications then return end 
 
 	Duration = tonumber(Duration) or 5
 	local Notification = Screen.Notification.Example:Clone()
@@ -1769,7 +1769,7 @@ Utils.Notify = function(Type, Title, Description, Duration)
 end
 
 Utils.Popup = function(Title, Description, Callback)
-    if not Options.Popups then Callback(); return end
+	if not Options.Popups then Callback(); return end
 
 	local New = Popup:Clone()
 	local Content = New.Content
@@ -1961,8 +1961,8 @@ Data.SaveAlias = function(Command, Alias)
 end
 
 Data.SetOption = function(OptionName, Value)
-    Options[OptionName] = Value
-    Data.new("Toggles.json", Services.Http:JSONEncode(Options))
+	Options[OptionName] = Value
+	Data.new("Toggles.json", Services.Http:JSONEncode(Options))
 end
 
 -- planned webhook command
@@ -2011,19 +2011,19 @@ if not Data.get("Toggles.json") then
 end
 
 if Checks.File then
-    local Success, Result = pcall(function()
-	    Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
+	local Success, Result = pcall(function()
+		Settings.Themes = Data.SetUpThemeTable(Services.Http:JSONDecode(Data.get("Themes.json")))
 
-	    local Themes = Settings.Themes
-	    Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
-	    Settings.Themes = Themes
-	    Settings.ScaleSize = Data.get("Scale.json") or 1
-        Options = Services.Http:JSONDecode(Data.get("Toggles.json")) or Options
-    end)
+		local Themes = Settings.Themes
+		Settings = Services.Http:JSONDecode(Data.get("Settings.json"))
+		Settings.Themes = Themes
+		Settings.ScaleSize = Data.get("Scale.json") or 1
+		Options = Services.Http:JSONDecode(Data.get("Toggles.json")) or Options
+	end)
 
-    if not Success then
-        warn(string.format("there has been an error trying to load ui settings - %s", Result))
-    end
+	if not Success then
+		warn(string.format("there has been an error trying to load ui settings - %s", Result))
+	end
 end
 
 SetUIScale = function(Scale)
@@ -2119,9 +2119,9 @@ Command.RemoveWhitelist = function(Player)
 end
 
 Autofills.Recommend = function(Input)
-    if not Options.Recommendation then 
-        Recommend.Text = ""; return
-    end
+	if not Options.Recommendation then 
+		Recommend.Text = ""; return
+	end
 
 	local Split = lower(split(Input, ' ')[1])
 	local Found = false
@@ -2371,37 +2371,37 @@ Command.Add({
 				-- Argument Description
 
 				if #Arguments > 0 then
-				for Index, Arg in Arguments do
-					if Index and Arg then
-						local Name = Arg.Name
-						local Type = Arg.Type
-						local Seperate = ""
+					for Index, Arg in Arguments do
+						if Index and Arg then
+							local Name = Arg.Name
+							local Type = Arg.Type
+							local Seperate = ""
 
-						if ArgAmount > 1 then
-							Seperate = ", "
+							if ArgAmount > 1 then
+								Seperate = ", "
+							end
+
+							Argument = Argument .. string.format("%s%s (%s)", Seperate, Name, Type)
+							ArgAmount = ArgAmount + 1
 						end
-
-						Argument = Argument .. string.format("%s%s (%s)", Seperate, Name, Type)
-						ArgAmount = ArgAmount + 1
 					end
 				end
-			end
 
 				-- UI
 
 				if Argument ~= '' then
-				Library.new("Label", { 
-					Title = Title, 
-					Description = string.format("%s\nArguments: %s", Description, Argument), 
-					Parent = MainTab 
-				})
-			else
-				Library.new("Label", { 
-					Title = Title, 
-					Description = Description, 
-					Parent = MainTab 
-				})
-			end
+					Library.new("Label", { 
+						Title = Title, 
+						Description = string.format("%s\nArguments: %s", Description, Argument), 
+						Parent = MainTab 
+					})
+				else
+					Library.new("Label", { 
+						Title = Title, 
+						Description = Description, 
+						Parent = MainTab 
+					})
+				end
 			end
 		else
 			Tweens.Open({ Canvas = Screen:FindFirstChild("Commands"), Speed = 0.3 })
@@ -2745,7 +2745,7 @@ Command.Add({
 			-- Tabs
 			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Cmd", Parent = MainTab })
 			local Aliases = Library.new("Switch", { Title = "Aliases", Description = "Add custom aliases (nicknames) for commands!", Parent = MainTab })
-            local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Cmd options", Parent = MainTab })	
+			local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Cmd options", Parent = MainTab })	
 			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Cmd", Parent = MainTab })	
 			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Cmd", Parent = Themes })
 			local Custom = Library.new("Switch", { Title = "Custom", Description = "Make your own custom theme", Parent = Themes })
@@ -2840,11 +2840,11 @@ Command.Add({
 				Data.new("CustomAliases.json", Services.Http:JSONEncode(Alias))
 			end})
 
-            -- Toggles
+			-- Toggles
 
-            Library.new("Section", { Title = "Interface Options", Parent = Toggles })
+			Library.new("Section", { Title = "Interface Options", Parent = Toggles })
 
-            Library.new("Toggle", { Title = "Show Notifications",
+			Library.new("Toggle", { Title = "Show Notifications",
 				Description = "If disabled, it will not show you any notifications",
 				Default = Options.Notifications,
 				Parent = Toggles,
@@ -2853,7 +2853,7 @@ Command.Add({
 				end,
 			})
 
-            Library.new("Toggle", { Title = "Show Popups",
+			Library.new("Toggle", { Title = "Show Popups",
 				Description = "If disabled, any popups sent will be automatically accepted",
 				Default = Options.Popups,
 				Parent = Toggles,
@@ -2862,7 +2862,7 @@ Command.Add({
 				end,
 			})
 
-            Library.new("Toggle", { Title = "Command Bar Recommend",
+			Library.new("Toggle", { Title = "Command Bar Recommend",
 				Description = "If enabled it will give you recommendations for commands if you type something in the Command Bar",
 				Default = Options.Recommendation,
 				Parent = Toggles,
@@ -2871,7 +2871,7 @@ Command.Add({
 				end,
 			})
 
-            Library.new("Toggle", { Title = "Anti Interfere",
+			Library.new("Toggle", { Title = "Anti Interfere",
 				Description = "Any other Command Bars like Cmdr & Kohls Admin won't show",
 				Default = Options.AntiInterfere,
 				Parent = Toggles,
@@ -2880,9 +2880,9 @@ Command.Add({
 				end,
 			})
 
-            Library.new("Section", { Title = "Automatic Options", Parent = Toggles })
+			Library.new("Section", { Title = "Automatic Options", Parent = Toggles })
 
-            Library.new("Toggle", { Title = "Automatic Logging",
+			Library.new("Toggle", { Title = "Automatic Logging",
 				Description = "Automatically logs CHAT messages, even before you ran the logs command",
 				Default = Options.Logging,
 				Parent = Toggles,
@@ -2969,8 +2969,15 @@ local ESPSettings = {
 	Outline = 0,
 	Current = false,
 	TargetsOnly = false,
-	Holder =  Instance.new("BillboardGui", game.CoreGui)
 }
+
+local Success, Result = pcall(function() 
+	ESPSettings.Holder =  Instance.new("BillboardGui", game.CoreGui);
+end)
+
+if not Success then
+	ESPSettings.Holder = Instance.new("BillboardGui", Local.Player.PlayerGui);
+end
 
 ESPSettings.InfoESP = function(Target)
 	task.spawn(function()
@@ -3147,7 +3154,7 @@ Command.Add({
 local Aimbot = {
 	Camlock = false,
 	Part = "Head",
-    PartIsRandom = false,
+	PartIsRandom = false,
 	TeamCheck = true,
 	Held = false,
 	Key = Enum.KeyCode.E,
@@ -3261,34 +3268,34 @@ Command.Add({
 				end,
 			})
 
-            Library.new("Input", { Title = "BodyPart",
+			Library.new("Input", { Title = "BodyPart",
 				Description = "What body part will be locked on; Head, HumanoidRootPart, Random",
 				Default = "Head",
 				Parent = MainTab,
 				Callback = function(Value)
-                    local ValidOptions = { "humanoidrootpart", "head", "random" };
-                    local Caps = { "HumanoidRootPart", "Head" }
-                    local Original = Value;
-                    local Value = string.lower(Value);
+					local ValidOptions = { "humanoidrootpart", "head", "random" };
+					local Caps = { "HumanoidRootPart", "Head" }
+					local Original = Value;
+					local Value = string.lower(Value);
 
 					if Value and table.find(ValidOptions, Value) then
 
-                        if Value == "random" then
-                            Aimbot.PartIsRandom = true
-                        else
-                            Aimbot.PartIsRandom = false
+						if Value == "random" then
+							Aimbot.PartIsRandom = true
+						else
+							Aimbot.PartIsRandom = false
 
-                            for Index, PartOption in next, Caps do
-                                if lower(PartOption) == Value then
-                                    Aimbot.Part = PartOption
-                                end
-                            end
-                        end
+							for Index, PartOption in next, Caps do
+								if lower(PartOption) == Value then
+									Aimbot.Part = PartOption
+								end
+							end
+						end
 
-                        Utils.Notify("Success", "Success!", format("Set Part to %s", Value));
-                    else
-                        Utils.Notify("Error", "Error!", format("The part '%s' does not exist!", Value));
-                    end
+						Utils.Notify("Success", "Success!", format("Set Part to %s", Value));
+					else
+						Utils.Notify("Error", "Error!", format("The part '%s' does not exist!", Value));
+					end
 				end,
 			})
 
@@ -3300,16 +3307,16 @@ Command.Add({
 				end,
 			})
 
-            task.spawn(function() 
-                repeat task.wait() 
-                    if Aimbot.PartIsRandom then
-                        local Table = { "HumanoidRootPart", "Head" }
-                        Aimbot.Part = Table[math.random(1, 2)]
-                    else
-                        Aimbot.Part = Aimbot.Part
-                    end
-                until false
-            end)
+			task.spawn(function() 
+				repeat task.wait() 
+					if Aimbot.PartIsRandom then
+						local Table = { "HumanoidRootPart", "Head" }
+						Aimbot.Part = Table[math.random(1, 2)]
+					else
+						Aimbot.Part = Aimbot.Part
+					end
+				until false
+			end)
 
 			task.spawn(function()
 				Services.Input.InputBegan:Connect(function(Key, Processed)
@@ -3320,8 +3327,8 @@ Command.Add({
 							local TargetPart = Closest.Character:FindFirstChild(Aimbot.Part)
 							Aimbot.Held = true
 
-                            repeat task.wait()
-                                local TargetPart = Closest.Character:FindFirstChild(Aimbot.Part)
+							repeat task.wait()
+								local TargetPart = Closest.Character:FindFirstChild(Aimbot.Part)
 								local LookAt = TargetPart.CFrame + (TargetPart.Velocity * Aimbot.Prediction + Vector3.new(0, 0.1, 0))
 								workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, LookAt.Position)
 							until not Aimbot.Held or not Closest
@@ -3602,12 +3609,12 @@ Command.Add({
 			local Leaves = Library.new("Switch", { Title = "Leaves", Description = "Logs when someone leaves the game", Parent = MainTab })
 			local Http = Library.new("Switch", { Title = "Http", Description = "Logs all Http requests made by other scripts", Parent = MainTab })
 
-            if AutoLogger then
-                for Index, Info in next, AutoLogger do
-                    local Message, Player = Info[1], Info[2]
+			if AutoLogger then
+				for Index, Info in next, AutoLogger do
+					local Message, Player = Info[1], Info[2]
 					SetOrder(Library.new("Label", { Title = format("%s (@%s)", Player.DisplayName, Player.Name), Description = format('said "%s"', Message), Parent = Chat }))
-                end
-            end
+				end
+			end
 
 			Services.Players.PlayerAdded:Connect(function(Player)
 				SetOrder(Library.new("Label", { Title = format("%s (@%s)", Player.DisplayName, Player.Name), Description = "has joined the game", Parent = Joins }))
@@ -3694,7 +3701,7 @@ Command.Add({
 
 					local Foreach = function(Tab, Name)
 						Logged = Logged .. "\n\n" .. string.upper(Name)
-					    for Index, Log in next, Tab:GetChildren() do
+						for Index, Log in next, Tab:GetChildren() do
 							if Log.Name == "Label" and Log:IsA("Frame") then
 								local Username, Message = Log.Content.Title.Text, Log.Content.Description.Text;
 								Logged = string.format("%s\n%s: %s", Logged, Username, Message)
@@ -3706,7 +3713,7 @@ Command.Add({
 					Foreach(Joins, "Joins");
 					Foreach(Leaves, "Leaves");
 					Foreach(Http, "Http");
-					
+
 					writefile(string.format("%s-%s.txt", game.PlaceId, os.date():gsub(":", "")), Logged);
 					Utils.Notify("Success", "Success!", "Your logs should be saved into your exploit folder!", 5);
 				end,
@@ -6755,7 +6762,7 @@ Command.Add({
 			Detection = Detection:Disconnect() 
 		end)
 
-	    Detection = Local.Player.CharacterAdded:Connect(function()
+		Detection = Local.Player.CharacterAdded:Connect(function()
 			if Env().SetSpawn then
 				Local.Player.Character:WaitForChild("HumanoidRootPart").CFrame = Old
 			end	
@@ -7764,32 +7771,32 @@ Utils.Notify("Success", "Loaded!", format("Loaded in %.2f seconds", tick() - Loa
 
 -- loading saved options
 for Index, Target in next, Services.Players:GetPlayers() do
-    Target.Chatted:Connect(function(Message) 
-        if Options.Logging then
-            AutoLogger[Randomize(25)] = { Message, Target }
-        end
-    end)
+	Target.Chatted:Connect(function(Message) 
+		if Options.Logging then
+			AutoLogger[Randomize(25)] = { Message, Target }
+		end
+	end)
 end
 
 Services.Players.PlayerAdded:Connect(function(Target) 
-    Target.Chatted:Connect(function(Message) 
-        if Options.Logging then
-            AutoLogger[Randomize(25)] = { Message, Target }
-        end
-    end)
+	Target.Chatted:Connect(function(Message) 
+		if Options.Logging then
+			AutoLogger[Randomize(25)] = { Message, Target }
+		end
+	end)
 end)
 
 if Options.AntiInterfere then
-    local Blacklisted = {
-        "KCoreUI",
-        "Cmdr",
-    }
-    
-    for Index, Screen in next, Local.Player.PlayerGui:GetChildren() do
-        if table.find(Blacklisted, Screen.Name) then
-            Screen:Destroy()
-        end
-    end
+	local Blacklisted = {
+		"KCoreUI",
+		"Cmdr",
+	}
+
+	for Index, Screen in next, Local.Player.PlayerGui:GetChildren() do
+		if table.find(Blacklisted, Screen.Name) then
+			Screen:Destroy()
+		end
+	end
 end
 
 Autofills.Search("")
