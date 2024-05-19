@@ -775,9 +775,9 @@ local Modules = {
 }
 
 task.spawn(function()
+	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))()
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))()
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))()
-	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))()
 end)
 
 local PromptChangeRigType = function(RigType)
@@ -1820,36 +1820,29 @@ Utils.ColorPopup = function(Callback)
 			Speed = 0.25,
 		})
 	end
-
-	local Success, Result = pcall(function()
-		Modules.ColorPicker.SetColorPicker(New)
+	
+	Tweens.Open({
+		Canvas = New,
+		Speed = 0.25,
+	})
+	
+	local Color = nil
+	
+	task.spawn(function()
+		Color = Modules.ColorPicker:Setup(New, Callback)
 	end)
-
-	if not Success then
-		warn(format("Failed to run the ColorPicker module, error - %s", Result))
-	end
-
 
 	for Index, Button in next, New.Buttons:GetChildren() do
 		if Button:IsA("GuiButton") then
 			Library.Hover(Button, 0.2, Settings.Themes.Secondary)
 
 			Button.MouseButton1Click:Connect(function()
-				if Button.Name == "Done" then
-					Callback(New.ColourDisplay.ImageColor3)
-				end
-
 				Close()
 				task.wait(0.5)
 				New:Destroy()
 			end)
 		end
 	end
-
-	Tweens.Open({
-		Canvas = New,
-		Speed = 0.25,
-	})
 end
 
 -- data functions
