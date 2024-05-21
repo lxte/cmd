@@ -132,17 +132,17 @@ end
 
 local Cmd, Bar = Screen.Command, Screen.Command.Bar;
 local Blurred, Lib, Example, Open, Autofill, Box, Recommend, Popup, ColorPopup, pressTab, Protection =
-	{},
-		Screen.Library,
-		Screen.Example,
-		Screen.Open,
-		Cmd.Autofill,
-		Bar.Box,
-		Bar.Recommend,
-		Screen.Popup,
-		Screen.ColorPopup,
-		Bar.Description,
-	{};
+{},
+	Screen.Library,
+	Screen.Example,
+	Screen.Open,	
+	Cmd.Autofill,
+	Bar.Box,
+	Bar.Recommend,
+	Screen.Popup,
+	Screen.ColorPopup,
+	Bar.Description,
+{};
 
 xpcall(function()
 	Screen.Parent = game:GetService("CoreGui");
@@ -994,7 +994,9 @@ Tab.new = function(Info)
 
 
 	if Settings.BlurEnabled then
-		Blurred[Title] = Modules.Blur.new(New, 5)
+		pcall(function() 
+			Blurred[Title] = Modules.Blur.new(New, 5)
+		end)
 	end
 
 	for Index, Button in next, Buttons:GetChildren() do
@@ -1005,21 +1007,20 @@ Tab.new = function(Info)
 		Library.Drag(New)
 	end
 
-	Connect(PropertyChanged(New, "Visible"), function() 
+	Connect(PropertyChanged(New, "Visible"), pcall(function() 
 		Wait(0.2)
 		if Blurred[Title] and Settings.BlurEnabled and New.Visible then
 			Blurred[Title].root.Parent = workspace.CurrentCamera
 		end
-	end)
+	end))
 
-
-	Connect(Buttons.Close.MouseButton1Click, function()
+	Connect(Buttons.Close.MouseButton1Click, pcall(function()
 		Tweens.Close({ Canvas = New, Speed = 0.25 })
 
 		if Blurred[Title] then
 			Blurred[Title].root.Parent = nil
 		end
-	end)
+	end))
 
 	Connect(Buttons.Back.MouseButton1Click, function()
 		Tab.SetPage(New.Tabs.Main)
@@ -1257,13 +1258,7 @@ Library.new = function(Object, Info)
 end
 
 pcall(function()
-	Blurred["Bar"] = Modules.Blur.new(Bar, 5)
-	Blurred["Autofill"] = Modules.Blur.new(Autofill, 5)
-
-	Blurred["Bar"].root.Parent = nil
-	Blurred["Autofill"].root.Parent = nil
-
-	Connect(PropertyChanged(Bar, "Visible"), function() 
+	Connect(PropertyChanged(Bar, "Visible"), pcall(function() 
 		if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
 			if Bar.Visible then
 				Wait(.1)
@@ -1272,9 +1267,9 @@ pcall(function()
 				Blurred["Bar"].root.Parent = nil
 			end
 		end
-	end)
+	end))
 
-	Connect(PropertyChanged(Autofill, "Visible"), function() 
+	Connect(PropertyChanged(Autofill, "Visible"), pcall(function() 
 		if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
 			if Autofill.Visible then
 				Wait(.1)
@@ -1283,7 +1278,13 @@ pcall(function()
 				Blurred["Autofill"].root.Parent = nil
 			end
 		end
-	end)
+	end))
+	
+	Blurred["Bar"] = Modules.Blur.new(Bar, 5)
+	Blurred["Autofill"] = Modules.Blur.new(Autofill, 5)
+
+	Blurred["Bar"].root.Parent = nil
+	Blurred["Autofill"].root.Parent = nil
 end)
 
 Library.Bar = function(Bool)
@@ -1308,9 +1309,11 @@ Library.Bar = function(Bool)
 				})
 
 				for Index = 1, 10 do
-					Box:ReleaseFocus()
-					Blurred["Bar"].root.Parent = nil
-					Blurred["Autofill"].root.Parent = nil
+					pcall(function()
+						Box:ReleaseFocus()
+						Blurred["Bar"].root.Parent = nil
+						Blurred["Autofill"].root.Parent = nil
+					end)
 				end
 			end
 		end
@@ -1950,7 +1953,7 @@ if Checks.File then
 		Settings.Themes = Themes;
 		Settings.ScaleSize = Data.get("Scale.json") or 1;
 		Options = JSONDecode(Services.Http, Data.get("Toggles.json")) or Options;
-		
+
 		if Settings.Version ~= OriginalSettings.Version then
 			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
 
@@ -2847,15 +2850,15 @@ Command.Add({
 					Settings.BlurEnabled = Boolean
 
 					if Boolean then
-						Foreach(Blurred, function(Index, Self) 
+						Foreach(Blurred, pcall(function(Index, Self) 
 							if Self and type(Self) == 'table' and Self.root and Self.owner.Visible then
 								Self.root.Parent = workspace.CurrentCamera
 							end
-						end)
+						end))
 
 						local Ignore = { "Command", "Library", "Notification", "Open", "Popup", "ColorPopup", "Source" }
 
-						Foreach(Screen:GetChildren(), function(Index, Child) 
+						Foreach(Screen:GetChildren(), pcall(function(Index, Child) 
 							if not Discover(Ignore, Child.Name)  and not Blurred[Child.Name] then
 								Blurred[Child.Name] = Modules.Blur.new(Child, 5)
 
@@ -2863,13 +2866,13 @@ Command.Add({
 									Blurred[Child.Name].root.Parent = nil
 								end
 							end
-						end)
+						end))
 					else
-						Foreach(Blurred, function(Index, Self) 
+						Foreach(Blurred, pcall(function(Index, Self) 
 							if Self and type(Self) == 'table' and Self.root and Self.root.Parent then
 								Self.root.Parent = nil
 							end
-						end)
+						end))
 					end
 				end,
 			})
@@ -4424,9 +4427,9 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Foreach(Blurred, function(Index, Self) 
+		Foreach(Blurred, pcall(function(Index, Self) 
 			Self.root.Parent = nil
-		end)
+		end))
 
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))()
 	end,
@@ -4440,9 +4443,9 @@ Command.Add({
 	Task = function()
 		Screen.Parent = nil
 
-		Foreach(Blurred, function(Index, Self) 
+		Foreach(Blurred, pcall(function(Index, Self) 
 			Self.root.Parent = nil
-		end)
+		end))
 	end,
 })
 
