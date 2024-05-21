@@ -30,4 +30,5 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing
 # 🔨 Credits
 
 - [7kayoh](https://github.com/7kayoh) - UI Inspiration
-- [boatbomber](https://github.com/boatbomber) - GlassmorphicUI module
+- [ImSnox](https://devforum.roblox.com/u/imsnox/summary) - UI Blurring Module
+- [cocos pov](https://youtube.com)
