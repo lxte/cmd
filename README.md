@@ -31,4 +31,4 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing
 
 - [7kayoh](https://github.com/7kayoh) - UI Inspiration
 - [ImSnox](https://devforum.roblox.com/u/imsnox/summary) - UI Blurring Module
-- [cocos pov](https://youtube.com)
+- [cocos pov](https://youtube.com) - cocos pov
