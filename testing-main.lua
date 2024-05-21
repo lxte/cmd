@@ -110,7 +110,7 @@ xpcall(function()
 	if Checks.File then
 		local Folders = { "Cmd", "Cmd/Data", "Cmd/Plugins", "Cmd/Logs" }
 
-		for Index, Check in next, Checks do
+		for Index, Check in next, Folders do
 			if not isfolder(Check) then
 				makefolder(Check);
 			end
@@ -1007,20 +1007,25 @@ Tab.new = function(Info)
 		Library.Drag(New)
 	end
 
-	Connect(PropertyChanged(New, "Visible"), pcall(function() 
-		Wait(0.2)
-		if Blurred[Title] and Settings.BlurEnabled and New.Visible then
-			Blurred[Title].root.Parent = workspace.CurrentCamera
-		end
-	end))
+	Connect(New:GetPropertyChangedSignal("Visible"), function() 
+		pcall(function()
+			Wait(0.2);
 
-	Connect(Buttons.Close.MouseButton1Click, pcall(function()
-		Tweens.Close({ Canvas = New, Speed = 0.25 })
+			if Blurred[Title] and Settings.BlurEnabled and New.Visible then
+				Blurred[Title].root.Parent = workspace.CurrentCamera
+			end
+		end)
+	end)
 
-		if Blurred[Title] then
-			Blurred[Title].root.Parent = nil
-		end
-	end))
+	Connect(Buttons.Close.MouseButton1Click, function()
+		pcall(function()
+			Tweens.Close({ Canvas = New, Speed = 0.25 })
+
+			if Blurred[Title] then
+				Blurred[Title].root.Parent = nil
+			end
+		end)
+	end)
 
 	Connect(Buttons.Back.MouseButton1Click, function()
 		Tab.SetPage(New.Tabs.Main)
@@ -1258,27 +1263,31 @@ Library.new = function(Object, Info)
 end
 
 pcall(function()
-	Connect(PropertyChanged(Bar, "Visible"), pcall(function() 
-		if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
-			if Bar.Visible then
-				Wait(.1)
-				Blurred["Bar"].root.Parent = workspace.CurrentCamera
-			else
-				Blurred["Bar"].root.Parent = nil
+	Connect(Bar:GetPropertyChangedSignal("Visible"), function() 
+		pcall(function()
+			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
+				if Bar.Visible then
+					Wait(.1)
+					Blurred["Bar"].root.Parent = workspace.CurrentCamera
+				else
+					Blurred["Bar"].root.Parent = nil
+				end
 			end
-		end
-	end))
+		end)
+	end)
 
-	Connect(PropertyChanged(Autofill, "Visible"), pcall(function() 
-		if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
-			if Autofill.Visible then
-				Wait(.1)
-				Blurred["Autofill"].root.Parent = workspace.CurrentCamera
-			else
-				Blurred["Autofill"].root.Parent = nil
+	Connect(Bar:GetPropertyChangedSignal("Visible"), function() 
+		pcall(function()
+			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
+				if Autofill.Visible then
+					Wait(.1)
+					Blurred["Autofill"].root.Parent = workspace.CurrentCamera
+				else
+					Blurred["Autofill"].root.Parent = nil
+				end
 			end
-		end
-	end))
+		end)
+	end)
 	
 	Blurred["Bar"] = Modules.Blur.new(Bar, 5)
 	Blurred["Autofill"] = Modules.Blur.new(Autofill, 5)
@@ -7665,7 +7674,7 @@ Spawn(function()
 			warn(Format("[PLUGIN ERROR] : Error running plugin\nERROR: %s", Reason));
 		end)
 
-		local CustomAliases = JSONDecode(Services.Http, Data.get("CustomAliases.json"));
+		local CustomAliases = JSONDecode(Services.Http, Data.get("CustomAliases.json") or "[]");
 
 		for Alias, CommandName in next, CustomAliases do
 			local Cmd = Command.Find(CommandName);
