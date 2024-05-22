@@ -74,7 +74,6 @@ local Services = {
 }
 
 local Player = Services.Players.LocalPlayer;
-local LoadTime = tick();
 
 local Local = {
 	Player = Player,
@@ -92,6 +91,7 @@ local Checks = {
 local JSONEncode, JSONDecode = Services.Http.JSONEncode, Services.Http.JSONDecode
 local Connect = game.Loaded.Connect
 local PropertyChanged = game.GetPropertyChangedSignal
+local LoadTime = tick();
 
 local Genv = function() 
 	return ((getgenv and getgenv()) or shared or _G);
@@ -344,7 +344,148 @@ CreateInstance = function(Name, Properties, Children)
 	return Object
 end
 
--- fly script here
+local Fly = nil;
+
+Spawn(function()
+	if Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule") then
+		local BodyGyro = Instance.new("BodyGyro")
+		BodyGyro.maxTorque = Vector3.new(1, 1, 1) * 10 ^ 6
+		BodyGyro.P = 10 ^ 6
+
+		local BodyVelocity = Instance.new("BodyVelocity")
+		BodyVelocity.maxForce = Vector3.new(1, 1, 1) * 10 ^ 6
+		BodyVelocity.P = 10 ^ 4
+
+		local isFlying = false
+		local Movement = {forward = 0, backward = 0, right = 0, left = 0}
+
+		local function SetFlying(flying)
+			isFlying = flying
+			BodyGyro.Parent = isFlying and Local.Character.HumanoidRootPart or nil
+			BodyVelocity.Parent = isFlying and Local.Character.HumanoidRootPart or nil
+			BodyVelocity.Velocity = Vector3.new()
+
+			Local.Character:FindFirstChild("Animate").Disabled = isFlying
+
+			if (isFlying) then
+				BodyGyro.CFrame = Local.Character.HumanoidRootPart.CFrame
+			end
+		end
+
+		local FlySpeed = 3
+
+		local function ModifyMovement(newMovement)
+			Movement = newMovement or Movement
+			if (isFlying) then
+				local isMoving = Movement.right + Movement.left + Movement.forward + Movement.backward > 0
+			end
+		end
+
+		local function MovementBind(actionName, InputState, inputObject)
+			if (InputState == Enum.UserInputState.Begin) then
+				Movement[actionName] = 1
+
+				ModifyMovement()
+			elseif (InputState == Enum.UserInputState.End) then
+				Movement[actionName] = 0
+
+				ModifyMovement()
+			end
+
+			return Enum.ContextActionResult.Pass
+		end
+
+		Services.ContextActionService:BindAction("forward", MovementBind, false, Enum.PlayerActions.CharacterForward)
+		Services.ContextActionService:BindAction("backward", MovementBind, false, Enum.PlayerActions.CharacterBackward)
+		Services.ContextActionService:BindAction("left", MovementBind, false, Enum.PlayerActions.CharacterLeft)
+		Services.ContextActionService:BindAction("right", MovementBind, false, Enum.PlayerActions.CharacterRight)
+
+		if (not Local.Character.Humanoid or Local.Character.Humanoid:GetState() == Enum.HumanoidStateType.Dead) then
+			return
+		end
+
+		local Controller, TouchFrame = require(Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule")), nil
+
+		if Local.Player.PlayerGui:FindFirstChild("TouchGui") then
+			TouchFrame = Local.Player.PlayerGui.TouchGui:FindFirstChild("TouchControlFrame")
+		end
+
+		local IsMovingThumbstick = false
+		local DeadZone = 0.15
+		local DeadZoneNormalized = 1 - DeadZone
+
+		local function isTouchOnThumbstick(Position)
+			if not TouchFrame then
+				return false
+			end
+			local ClassicFrame = TouchFrame:FindFirstChild("ThumbstickFrame")
+			local DynamicFrame = TouchFrame:FindFirstChild("DynamicThumbstickFrame")
+			local StickFrame = (ClassicFrame and ClassicFrame.Visible) and ClassicFrame or DynamicFrame
+
+			if (StickFrame) then
+				local StickPosition = StickFrame.AbsolutePosition
+				local StickSize = StickFrame.AbsoluteSize
+				return Position.X >= StickPosition.X and Position.X <= (StickPosition.X + StickSize.X) and
+					Position.Y >= StickPosition.Y and
+					Position.Y <= (StickPosition.Y + StickSize.Y)
+			end
+			return false
+		end
+
+		Services.Input.TouchStarted:Connect(function(touch, gameProcessedEvent)
+			isMovingThumbstick = isTouchOnThumbstick(touch.Position)
+		end)
+
+		Services.Input.TouchEnded:Connect(function(touch, gameProcessedEvent)
+			if not isMovingThumbstick then
+				return
+			end
+			isMovingThumbstick = false
+			ModifyMovement({forward = 0, backward = 0, right = 0, left = 0})
+		end)
+
+		Services.Input.TouchMoved:Connect(function(touch, gameProcessedEvent)
+			if not isMovingThumbstick then
+				return
+			end
+
+			local MouseVector = Controller:GetMoveVector()
+			local LeftRight = MouseVector.X
+			local ForeBack = MouseVector.Z
+
+			Movement.left = LeftRight < -DeadZone and -(LeftRight - DeadZone) / DeadZoneNormalized or 0
+			Movement.right = LeftRight > DeadZone and (LeftRight - DeadZone) / DeadZoneNormalized or 0
+
+			Movement.forward = ForeBack < -DeadZone and -(ForeBack - DeadZone) / DeadZoneNormalized or 0
+			Movement.backward = ForeBack > DeadZone and (ForeBack - DeadZone) / DeadZoneNormalized or 0
+			ModifyMovement()
+		end)
+
+		local function onUpdate(dt)
+			if (isFlying) then
+				local cf = workspace.CurrentCamera.CFrame
+				local direction =
+					cf.rightVector * (Movement.right - Movement.left) +
+					cf.lookVector * (Movement.forward - Movement.backward)
+				if (direction:Dot(direction) > 0) then
+					direction = direction.unit
+				end
+
+				BodyGyro.CFrame = cf
+				BodyVelocity.Velocity = direction * Local.Character.Humanoid.WalkSpeed * FlySpeed
+			end
+
+		end
+
+		function Fly(Boolean, SpeedValue)
+			FlySpeed = SpeedValue or 1
+			SetFlying(Boolean)
+
+			Services.Run.RenderStepped:Connect(onUpdate)
+		end
+	end
+end)
+
 
 local PlayerArgs = {
 	["all"] = function() 
@@ -658,11 +799,16 @@ local Modules = {
 	ColorPicker = nil,
 }
 
-Spawn(function()
-	Modules.Blur = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/blur"))();
+Spawn(function() -- Command modules
 	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))();
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))();
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))();
+end)
+
+xpcall(function() -- Feature modules
+    Modules.Blur = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/blur"))();
+end, function(Reason)
+	warn(Format("Error occured trying to load a FEATURE module - %s", Reason))
 end)
 
 local PromptChangeRigType = function(RigType)
@@ -993,7 +1139,7 @@ Tab.new = function(Info)
 	New.Name = Title
 
 
-	if Settings.BlurEnabled then
+	if Settings.Blur then
 		pcall(function() 
 			Blurred[Title] = Modules.Blur.new(New, 5)
 		end)
@@ -1011,7 +1157,7 @@ Tab.new = function(Info)
 		pcall(function()
 			Wait(0.2);
 
-			if Blurred[Title] and Settings.BlurEnabled and New.Visible then
+			if Blurred[Title] and Settings.Blur and New.Visible then
 				Blurred[Title].root.Parent = workspace.CurrentCamera
 			end
 		end)
@@ -1262,10 +1408,10 @@ Library.new = function(Object, Info)
 	end
 end
 
-pcall(function()
+xpcall(function()
 	Connect(Bar:GetPropertyChangedSignal("Visible"), function() 
 		pcall(function()
-			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
+			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
 				if Bar.Visible then
 					Wait(.1)
 					Blurred["Bar"].root.Parent = workspace.CurrentCamera
@@ -1278,7 +1424,7 @@ pcall(function()
 
 	Connect(Bar:GetPropertyChangedSignal("Visible"), function() 
 		pcall(function()
-			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.BlurEnabled then
+			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
 				if Autofill.Visible then
 					Wait(.1)
 					Blurred["Autofill"].root.Parent = workspace.CurrentCamera
@@ -1288,12 +1434,14 @@ pcall(function()
 			end
 		end)
 	end)
-	
+
 	Blurred["Bar"] = Modules.Blur.new(Bar, 5)
 	Blurred["Autofill"] = Modules.Blur.new(Autofill, 5)
 
 	Blurred["Bar"].root.Parent = nil
 	Blurred["Autofill"].root.Parent = nil
+end, function(Result)
+	warn(Result)
 end)
 
 Library.Bar = function(Bool)
@@ -1436,7 +1584,6 @@ do
 						Toggle.BackgroundColor3 = Settings.Themes.Outline
 						Circle.BackgroundColor3 = Settings.Themes.Primary
 					else
-						print("Hmmm....")
 						Toggle.BackgroundColor3 = Color3.fromRGB(99, 218, 92)
 						Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					end
@@ -1810,13 +1957,13 @@ end
 Data.get = function(Name)
 	if Checks.File and isfile(Format('Cmd/Data/%s', Name)) then
 		return readfile(Format('Cmd/Data/%s', Name))
-	else
-		warn("Data not found :(" .. " " .. Name)
+	elseif Checks.File then
+		warn(Format("Couldn't find the data called %s", Name))
 	end
 end
 
 Data.GetSetting = function(Info)
-	local Settings = JSONDecode(Services.Http, Data.get("Settings.json")) or Settings
+	local Settings = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings))
 
 	if Settings[Info] then
 		return Settings[Info]
@@ -1827,12 +1974,13 @@ Data.GetSetting = function(Info)
 end
 
 Data.SetSetting = function(Setting, Info)
-	local Decoded = JSONDecode(Services.Http, Data.get("Settings.json")) or Settings
+	local Decoded = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings))
 
 	if Decoded[Setting] then
 		Decoded[Setting] = Info
-		Settings[Setting] = Info
 	end
+
+	Settings[Setting] = Info
 
 	Data.new("Settings.json", JSONEncode(Services.Http, Decoded));
 end
@@ -1958,19 +2106,19 @@ if Checks.File then
 		Settings.Themes = Data.SetUpThemeTable(JSONDecode(Services.Http, Data.get("Themes.json")));
 
 		local Themes = Settings.Themes;
-		Settings = JSONDecode(Services.Http, Data.get("Settings.json"));
-		Settings.Themes = Themes;
-		Settings.ScaleSize = Data.get("Scale.json") or 1;
-		Options = JSONDecode(Services.Http, Data.get("Toggles.json")) or Options;
+		Settings = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings));
+		Settings.Themes = (Themes or Settings.Themes);
+		Settings.ScaleSize = (Data.get("Scale.json") or 1);
+		Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
 
-		if Settings.Version ~= OriginalSettings.Version then
+		if Settings and Settings.Version ~= OriginalSettings.Version then
 			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
 
 			for Index, Setting in next, Settings do
 				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" then
-					Index = OriginalSettings[Index]
+					Settings[Index] = OriginalSettings[Index]
 				elseif Index == "Blur" and Settings.Blur == nil then
-					Index = false
+					Settings[Index] = false
 				end
 			end
 
@@ -2853,36 +3001,40 @@ Command.Add({
 
 			Library.new("Toggle", { Title = "UI Blurring",
 				Description = "Blurs the background of the UI (Graphics need to be set to 8+), recommended transparency - 0.1",
-				Default = Options.Logging,
+				Default = Settings.Blur,
 				Parent = Themes,
 				Callback = function(Boolean)
-					Settings.BlurEnabled = Boolean
+					Settings.Blur = Boolean
 
 					if Boolean then
-						Foreach(Blurred, pcall(function(Index, Self) 
-							if Self and type(Self) == 'table' and Self.root and Self.owner.Visible then
-								Self.root.Parent = workspace.CurrentCamera
-							end
-						end))
-
 						local Ignore = { "Command", "Library", "Notification", "Open", "Popup", "ColorPopup", "Source" }
 
-						Foreach(Screen:GetChildren(), pcall(function(Index, Child) 
-							if not Discover(Ignore, Child.Name)  and not Blurred[Child.Name] then
-								Blurred[Child.Name] = Modules.Blur.new(Child, 5)
+						Foreach(Blurred, function(Index, Self) 
+							if Self.owner.Visible then
+								Self.root.Parent = workspace.CurrentCamera
+							end
+						end)
 
-								if not Child.Visible then
+						Foreach(Screen:GetChildren(), function(Index, Child) 
+							if not Discover(Ignore, Child.Name) then
+								if not Blurred[Child.Name] then
+									Blurred[Child.Name] = Modules.Blur.new(Child, 5)
+								end
+
+								if Child.Visible then
+									Blurred[Child.Name].root.Parent = workspace.CurrentCamera
+								else
 									Blurred[Child.Name].root.Parent = nil
 								end
 							end
-						end))
+						end)
 					else
-						Foreach(Blurred, pcall(function(Index, Self) 
-							if Self and type(Self) == 'table' and Self.root and Self.root.Parent then
-								Self.root.Parent = nil
-							end
-						end))
+						Foreach(Blurred, function(Index, Self) 
+							Self.root.Parent = nil
+						end)
 					end
+
+					Data.new("Settings.json", JSONEncode(Services.Http, Settings))
 				end,
 			})
 
@@ -4436,9 +4588,9 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		Foreach(Blurred, pcall(function(Index, Self) 
+		Foreach(Blurred, function(Index, Self) 
 			Self.root.Parent = nil
-		end))
+		end)
 
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))()
 	end,
@@ -4452,9 +4604,9 @@ Command.Add({
 	Task = function()
 		Screen.Parent = nil
 
-		Foreach(Blurred, pcall(function(Index, Self) 
+		Foreach(Blurred, function(Index, Self) 
 			Self.root.Parent = nil
-		end))
+		end)
 	end,
 })
 
@@ -7751,6 +7903,14 @@ end)
 SetUIScale(Settings.ScaleSize)
 
 
+Connect(PropertyChanged(Screen, "Parent"), function() 
+	if not Screen.Parent then
+		Foreach(Blurred, function(Index, Self) 
+			Self.root.Parent = nil
+		end)
+	end
+end)
+
 do
 	local Functional = function() 
 		Open.Visible = true
@@ -7797,10 +7957,7 @@ do
 	end)
 
 	if Options.AntiInterfere then
-		local Blacklisted = {
-			"KCoreUI";
-			"Cmdr";
-		}
+		local Blacklisted = { "KCoreUI", "Cmdr" };
 
 		for Index, Screen in next, Local.Player.PlayerGui:GetChildren() do
 			if Discover(Blacklisted, Screen.Name) then
@@ -7816,11 +7973,3 @@ Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://disc
 Utils.Notify("Success", "Loaded!", Format("Loaded in %.2f seconds", tick() - LoadTime), 5);
 
 return Command
-
---[[
-	---------------
-	| c	    d |
-	|	 m    |
-	| c	    d |
-	---------------
-]]
