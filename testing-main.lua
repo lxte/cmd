@@ -132,16 +132,16 @@ end
 
 local Cmd, Bar = Screen.Command, Screen.Command.Bar;
 local Blurred, Lib, Example, Open, Autofill, Box, Recommend, Popup, ColorPopup, pressTab, Protection =
-{},
-	Screen.Library,
-	Screen.Example,
-	Screen.Open,	
-	Cmd.Autofill,
-	Bar.Box,
-	Bar.Recommend,
-	Screen.Popup,
-	Screen.ColorPopup,
-	Bar.Description,
+	{},
+Screen.Library,
+Screen.Example,
+Screen.Open,	
+Cmd.Autofill,
+Bar.Box,
+Bar.Recommend,
+Screen.Popup,
+Screen.ColorPopup,
+Bar.Description,
 {};
 
 xpcall(function()
@@ -404,7 +404,7 @@ Spawn(function()
 			return
 		end
 
-		local Controller, TouchFrame = require(Local.Player.PlayerScripts.PlayerModule:FindFirstChild("ControlModule")), nil
+		local TouchFrame = nil
 
 		if Local.Player.PlayerGui:FindFirstChild("TouchGui") then
 			TouchFrame = Local.Player.PlayerGui.TouchGui:FindFirstChild("TouchControlFrame")
@@ -449,7 +449,7 @@ Spawn(function()
 				return
 			end
 
-			local MouseVector = Controller:GetMoveVector()
+			local MouseVector = Local.Player.Character.Humanoid.MoveDirection
 			local LeftRight = MouseVector.X
 			local ForeBack = MouseVector.Z
 
@@ -489,7 +489,7 @@ end)
 
 local PlayerArgs = {
 	["all"] = function() 
-		return { Services.Players:GetPlayers() }
+		return Services.Players:GetPlayers()
 	end,
 
 	["others"] = function()
@@ -649,7 +649,7 @@ function GetPlayer(Target)
 	local Check = PlayerArgs[Target];
 
 	if Check then
-		return Check(Target)
+		return Check()
 	else
 		local Specific = {}
 
@@ -657,10 +657,10 @@ function GetPlayer(Target)
 			local Name, Display = Lower(Player.Name), Lower(Player.DisplayName)
 
 			if Sub(Name, 1, #Target) == Target then
-				Specific = { Specific }
+				Insert(Specific, Player)
 
 			elseif Sub(Display, 1, #Target) == Target then
-				Specific = { Player } 
+				Insert(Specific, Player)
 			end
 		end)
 
@@ -668,8 +668,10 @@ function GetPlayer(Target)
 	end
 end
 
-function RGB(Color, Factor)
-	if Settings.Themes.Mode == "Light" then
+function RGB(Color, Factor, Mode)
+	Mode = Mode or Settings.Themes.Mode
+	
+	if Mode == "Light" then
 		return Color3.fromRGB((Color.R * 255) - Factor, (Color.G * 255) - Factor, (Color.B * 255) - Factor)
 	else
 		return Color3.fromRGB((Color.R * 255) + Factor, (Color.G * 255) + Factor, (Color.B * 255) + Factor)
@@ -806,7 +808,7 @@ Spawn(function() -- Command modules
 end)
 
 xpcall(function() -- Feature modules
-    Modules.Blur = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/blur"))();
+	Modules.Blur = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/blur"))();
 end, function(Reason)
 	warn(Format("Error occured trying to load a FEATURE module - %s", Reason))
 end)
@@ -858,8 +860,8 @@ local Fling = function(Target)
 	local LocalHumanoid = GetHumanoid(Local.Character);
 	local Old = LocalRoot.CFrame;
 
-	xpcall(function()
-		Walkfling(20000, 1000, true)
+	pcall(function()
+		Walkfling(10000, 100, true)
 		local Timer = tick()
 
 		repeat Wait()
@@ -879,14 +881,12 @@ local Fling = function(Target)
 
 		until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot or LocalHumanoid.Health == 0 or Humanoid.Sit
 
-	end, function(Result)
-		warn(Format("failed to fling player, error: %s", Result))
+		Wait(0.2)
+		workspace.CurrentCamera.CameraSubject = GetHumanoid(Local.Character)
+		LocalRoot.CFrame = Old
+		Walkfling(10000, 1000, false)
 	end)
-	Wait(0.2)
-	workspace.CurrentCamera.CameraSubject = GetHumanoid(Local.Character)
-	LocalRoot.CFrame = Old
-	Walkfling(10000, 1000, false)
-end
+end	
 
 -- ui lib
 local Utils = {}
@@ -1153,7 +1153,7 @@ Tab.new = function(Info)
 		Library.Drag(New)
 	end
 
-	Connect(New:GetPropertyChangedSignal("Visible"), function() 
+	Connect(PropertyChanged(New, "Visible"), function() 
 		pcall(function()
 			Wait(0.2);
 
@@ -1342,6 +1342,61 @@ Library.new = function(Object, Info)
 				end
 			end)
 
+		elseif Object == "Dropdown" then
+			local Options = New.Options
+			local Drop = New.Drop
+			local Scroll = Options.Scroll
+			local DropdownOptions = Info.Options
+			local Opened = Drop.Opened
+			local Arrow = Drop.Arrow
+			New.ZIndex = 2
+
+			local Info = TweenInfo.new(0.25);
+			Library.Hover(New);
+
+			local Show = function() 
+				local TweenSize, ArrowRotation = nil, nil
+				
+				if Opened.Value then
+					TweenSize = UDim2.fromOffset(88, 0)
+					ArrowRotation = 0
+
+					Delay(0.1, function() 
+						Options.Visible = false
+					end)
+				else
+					TweenSize = UDim2.fromOffset(88, 137)
+					ArrowRotation = 180
+
+					Options.Visible = true
+				end
+				
+				Tween(Options, Info, { Size = TweenSize });
+				Tween(Arrow, Info, { Rotation = ArrowRotation });
+				
+				Opened.Value = not Opened.Value
+			end
+
+			Foreach(DropdownOptions, function(Index, Option)
+				local Button = Lib.DropdownButton
+				local Clone = Button:Clone()
+				
+				Clone.Parent = Scroll 
+				Clone.Text = Index or "no name!"
+				Clone.Visible = true
+				Library.Hover(Clone)
+				
+				Connect(Clone.MouseButton1Click, function() 
+					Drop.Text = Index
+
+					Tween(Options, Info, { Size = UDim2.fromOffset(88, 0) });
+					Tween(Arrow, Info, { Rotation = 0 });
+					Callback(Option);
+				end)
+			end)
+			
+			Connect(Drop.MouseButton1Click, Show)
+			Connect(New.MouseButton1Click, Show)
 		elseif Object == "Input" then
 			local TextBox = New.Box
 			TextBox.Text = tostring(Default)
@@ -1409,7 +1464,7 @@ Library.new = function(Object, Info)
 end
 
 xpcall(function()
-	Connect(Bar:GetPropertyChangedSignal("Visible"), function() 
+	Connect(PropertyChanged(Bar, "Visible"), function() 
 		pcall(function()
 			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
 				if Bar.Visible then
@@ -1422,7 +1477,7 @@ xpcall(function()
 		end)
 	end)
 
-	Connect(Bar:GetPropertyChangedSignal("Visible"), function() 
+	Connect(PropertyChanged(Autofill, "Visible"), function() 
 		pcall(function()
 			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
 				if Autofill.Visible then
@@ -1483,6 +1538,31 @@ Library.Theming = {
 			if Item:IsA("BoolValue") then
 				local Tab = Item.Parent
 				Tab.BackgroundColor3 = RGB(Settings.Themes.Primary, 3)
+			end
+		end,
+		
+		["Dropdown"] = function(Item)
+			if Item:IsA("Frame") then
+				Item.BackgroundColor3 = Settings.Themes.Secondary
+			end
+		end,
+		
+		["Drop"] = function(Item)
+			if Item:IsA("GuiButton") and Item.Parent.Name == "Dropdown" then
+				Item.BackgroundColor3 = Settings.Themes.Primary
+				Item.TextColor3 = Settings.Themes.Description
+			end
+		end,
+		
+		["DropdownButton"] = function(Item)
+			if Item:IsA("GuiButton") then
+				Item.BackgroundColor3 = Settings.Themes.Primary
+			end
+		end,
+		
+		["Options"] = function(Item)
+			if Item:IsA("Frame") and Item.Parent.Name == "Dropdown" then
+				Item.BackgroundColor3 = RGB(Settings.Themes.Primary, 3)
 			end
 		end,
 
@@ -1602,7 +1682,7 @@ Library.LoadTheme = function(Table)
 		if Library.Theming.Names[Object.Name] then
 			local Function = Library.Theming.Names[Object.Name]
 			Function(Object)
-
+	
 		elseif Library.Theming.Classes[Object.ClassName] then
 			local Function = Library.Theming.Classes[Object.ClassName]
 			Function(Object)
@@ -3391,34 +3471,16 @@ Command.Add({
 				end,
 			})
 
-			Library.new("Input", { Title = "BodyPart",
-				Description = "What body part will be locked on; Head, HumanoidRootPart, Random",
-				Default = "Head",
+			local Search = Library.new("Dropdown", { 
+				Title = "Part",
+				Description = "The part that the aimbot will lock onto",
 				Parent = MainTab,
-				Callback = function(Value)
-					local ValidOptions = { "humanoidrootpart", "head", "random" };
-					local Caps = { "HumanoidRootPart", "Head" }
-					local Original = Value;
-					local Value = Lower(Value);
-
-					if Value and Discover(ValidOptions, Value) then
-
-						if Value == "random" then
-							Aimbot.PartIsRandom = true
-						else
-							Aimbot.PartIsRandom = false
-
-							for Index, PartOption in next, Caps do
-								if Lower(PartOption) == Value then
-									Aimbot.Part = PartOption
-								end
-							end
-						end
-
-						Utils.Notify("Success", "Success!", Format("Set Part to %s", Value));
-					else
-						Utils.Notify("Error", "Error!", Format("The part '%s' does not exist!", Value));
-					end
+				Options = { 
+					["Root"] = "HumanoidRootPart", 
+					["Head"] = "Head",
+				},
+				Callback = function(Option)
+					Aimbot.Part = Option
 				end,
 			})
 
@@ -5379,6 +5441,54 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "anticframeteleport", "acframetp", "acftp" },
+	Description = "If a script tries to teleport you somewhere, it shouldn't work",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Allowed, Old = nil, nil 
+		Utils.Notify("Success", "Success!", "Now no scripts should be able to teleport you!")
+		local Root = GetRoot(Local.Character)
+
+		Connect(Root:GetPropertyChangedSignal("CFrame"), function() 
+		    Allowed = true
+		    Root.CFrame = Old
+		    Wait();
+   			Allowed = false
+		end)
+
+		repeat Wait();
+   			Old = Root.CFrame
+		until not Root
+	end,
+})
+
+Command.Add({
+	Aliases = { "antivoid" },
+	Description = "Sets the void's height to a low value",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		workspace.FallenPartsDestroyHeight = -9e9
+		Utils.Notify("Success", "Success!", "Anti Void enabled")
+	end,
+})
+
+Command.Add({
+	Aliases = { "nodelay", "nod" },
+	Description = "Removes the delay from proximity prompts (the time taken to fire one)",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		for Index, Proximity in next, workspace:GetDescendants() do
+			if Proximity:IsA("ProximityPrompt") then
+				Proximity.HoldDuration = 0
+			end
+		end
+	end,
+})
+
+Command.Add({
 	Aliases = { "checkgrabber" },
 	Description = "If someones using a tool grabber, it will tell you which one is doing that",
 	Arguments = {},
@@ -5697,9 +5807,11 @@ Command.Add({
 
 		if fireproximityprompt then
 			for i, Prox in next, workspace:GetDescendants() do
-				if Prox:IsA("Part") and Prox.Name == "BanditClick" then
+				if Prox:IsA("ProximityPrompt") then
 					Amount = Amount + 1
-					fireproximityprompt(Prox.Parent)
+					fireproximityprompt(Prox, 0)
+					task.wait()
+					fireproximityprompt(Prox, 1)
 				end
 			end
 			Utils.Notify("Information", "Proximity Prompts", Format("Fired %s proximity prompts", tostring(Amount)), 5)
