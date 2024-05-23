@@ -1405,10 +1405,8 @@ Library.new = function(Object, Info)
 				TextBox:CaptureFocus()
 			end)
 
-			Connect(TextBox.FocusLost, function(Enter)
-				if Enter then
-					Callback(TextBox.Text)
-				end
+			Connect(TextBox.FocusLost, function()
+				Callback(TextBox.Text)
 			end)
 
 			return TextBox
