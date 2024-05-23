@@ -1,4 +1,4 @@
-# Cmd
+# Commando
 
 # 🌟 Features
 
