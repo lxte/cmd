@@ -1,5 +1,5 @@
 --[[
-	Cmd [V1]
+	Commando [V1]
 	URL: "https://github.com/lxte/cmd";
 	Main: "https://raw.githubusercontent.com/lxte/cmd/main/main.lua";
 	Testing: "https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua";
@@ -7,9 +7,9 @@
 	Made by late.
 	
 	TODO - [
-		Remake the flight system;
-		Test if the UI Blur saving works on an executor [Rn using studio so it can't save settings];
-		More commands ofc;
+		Remake the flight system - done
+		Test if the UI Blur saving works on an executor [Rn using studio so it can't save settings] - done
+		More commands ofc
 	]
 ]]
 
@@ -2192,7 +2192,7 @@ if Checks.File then
 		Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
 
 		if Settings and Settings.Version ~= OriginalSettings.Version then
-			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
+			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Commando has reset them. Do not worry, your prefix & themes are still the same", 15)
 
 			for Index, Setting in next, Settings do
 				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" then
@@ -2377,7 +2377,7 @@ end
 
 Command.Add({
 	Aliases = { "tutorial" },
-	Description = "Explanation on how to use Cmd",
+	Description = "Explanation on how to use Commando",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -2900,7 +2900,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "settings", "options" },
-	Description = "Modify all the Settings of Cmd",
+	Description = "Modify all the Settings of Commando",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -2910,11 +2910,11 @@ Command.Add({
 			local MainTab = Tabs.Main.Scroll
 
 			-- Tabs
-			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Cmd", Parent = MainTab })
+			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Commando", Parent = MainTab })
 			local Aliases = Library.new("Switch", { Title = "Aliases", Description = "Add custom aliases (nicknames) for commands!", Parent = MainTab })
-			local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Cmd options", Parent = MainTab })	
-			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Cmd", Parent = MainTab })	
-			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Cmd", Parent = Themes })
+			local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Commando options", Parent = MainTab })	
+			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Commando", Parent = MainTab })	
+			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Commando", Parent = Themes })
 			local Custom = Library.new("Switch", { Title = "Custom", Description = "Make your own custom theme", Parent = Themes })
 
 			-- Information
@@ -2925,7 +2925,7 @@ Command.Add({
 				Parent = Information 
 			})
 
-			Library.new("Section", { Title = "Cmd", Parent = Information })
+			Library.new("Section", { Title = "Commando", Parent = Information })
 
 			Library.new("Label", { Title = "Commands loaded",
 				Description = tostring(Command.Count),
@@ -3129,7 +3129,7 @@ Command.Add({
 			})
 
 			local ThemeDescriptions = {
-				["Primary"] = "Changes the background color of Cmd", ["Secondary"] = "Changes the secondary color of Cmd (buttons, topbar, etc.)", ["Title"] = "Changes the Text Color of the Titles", ["Description"] = "Changes the Text Color of descriptions", ["Icon"] = "Changes the color of all icons", ["Shadow"] = "Changes the color of the outlines around Tabs, etc.", ["Outline"] = "Changes the color of outlines inside of Tabs, etc."
+				["Primary"] = "Changes the background color of Commando", ["Secondary"] = "Changes the secondary color of Commando (buttons, topbar, etc.)", ["Title"] = "Changes the Text Color of the Titles", ["Description"] = "Changes the Text Color of descriptions", ["Icon"] = "Changes the color of all icons", ["Shadow"] = "Changes the color of the outlines around Tabs, etc.", ["Outline"] = "Changes the color of outlines inside of Tabs, etc."
 			}
 
 			for Index, Theme in next, Settings.Themes do
@@ -3759,7 +3759,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "logs" },
-	Description = "Shows all the stuff Cmd has logged (Http, Joins, Leaves, etc.)",
+	Description = "Shows all the stuff Commando has logged (Http, Joins, Leaves, etc.)",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -3874,7 +3874,7 @@ Command.Add({
 				Description = "Saves everything that is logged in your exploit's workspace folder",
 				Parent = MainTab,
 				Callback = function()
-					local Logged = Format("CMD LOGS\nPLACE ID - %s\nTIME - %s", game.PlaceId, os.date())
+					local Logged = Format("COMMANDO LOGS\nPLACE ID - %s\nTIME - %s", game.PlaceId, os.date())
 
 					local Each = function(Tab, Name)
 						Logged = Logged .. "\n\n" .. string.upper(Name)
@@ -3905,7 +3905,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "notify", "send", "notification" },
-	Description = "Send a notification using Cmd's Utility System",
+	Description = "Send a notification using Commando's Utility System",
 	Arguments = { 
 		{ Name = "Mode", Type = "String" },
 		{ Name = "Title", Type = "String" },
@@ -4132,7 +4132,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "admin" },
-	Description = "Give the target access to use Cmd's commands",
+	Description = "Give the target access to use Commando's commands",
 	Arguments = {
 		{ Name = "Target", Type = "Player" }
 	},
@@ -4646,7 +4646,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "reload" },
-	Description = "Reloads Cmd",
+	Description = "Reloads Commando",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -4660,7 +4660,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "removecmd" },
-	Description = "Removes Cmd",
+	Description = "Removes Commando",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -4805,7 +4805,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "rejoinreload" },
-	Description = "Rejoins and reloads Cmd",
+	Description = "Rejoins and reruns Commando",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -7729,11 +7729,11 @@ Command.Add({
 
 pcall(function()
 	if Methods.Check() then
-		Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Cmd, use the <b>vuln</b> command for more information", 15)
+		Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Commando, use the <b>vuln</b> command for more information", 15)
 
 		Command.Add({
 			Aliases = { "vuln" },
-			Description = "Using the vulnerability feature built into Cmd, you can use bonus commands on players",
+			Description = "Using the vulnerability feature built into Commando, you can use bonus commands on players",
 			Arguments = {},
 			Plugin = false,
 			Task = function()
