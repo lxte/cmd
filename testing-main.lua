@@ -1,5 +1,5 @@
 --[[
-	Commando [V1]
+	Cmd [V1]
 	URL: "https://github.com/lxte/cmd";
 	Main: "https://raw.githubusercontent.com/lxte/cmd/main/main.lua";
 	Testing: "https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua";
@@ -21,7 +21,7 @@ local Settings = {
 	Prefix = ";",
 	Seperator = ",",
 	Player = "/",
-	Version = "1.1",
+	Version = "1.1", -- this only gets changed if i add something NEW in the settings
 	ScaleSize = 1,
 	Blur = false,
 	Themes = {
@@ -71,6 +71,7 @@ local Services = {
 	AvatarEditor = Ref(game:GetService("AvatarEditorService"));
 	StarterPlayer = Ref(game:GetService("StarterPlayer"));
 	GuiService = Ref(game:GetService("GuiService"));
+	InsertService = Ref(game:GetService("InsertService"));
 }
 
 local Player = Services.Players.LocalPlayer;
@@ -106,6 +107,7 @@ Connect(Player.CharacterAdded, function(Character)
 	Local.Backpack = Local.Player.Backpack;
 end)
 
+warn(string.format("[LOADING INFORMATION] - Before file checks & ui (%s)", tostring(tick() - LoadTime)))
 xpcall(function()
 	if Checks.File then
 		local Folders = { "Cmd", "Cmd/Data", "Cmd/Plugins", "Cmd/Logs" }
@@ -127,7 +129,7 @@ local Screen = nil
 if Services.Run:IsStudio() then
 	Screen = Local.Player.PlayerGui:WaitForChild("Screen");
 else
-	Screen = game:GetObjects("rbxassetid://17078695559")[1];
+	Screen = Services.InsertService:LoadLocalAsset("rbxassetid://17078695559");
 end
 
 local Cmd, Bar = Screen.Command, Screen.Command.Bar;
@@ -149,6 +151,8 @@ xpcall(function()
 end, function()
 	Screen.Parent = (Local.Player.PlayerGui);
 end)
+
+warn(string.format("[LOADING INFORMATION] - After & before loading functions (%s)", tostring(tick() - LoadTime)))
 
 -- functions & stuff like that lol
 local Lower = string.lower;
@@ -344,6 +348,9 @@ CreateInstance = function(Name, Properties, Children)
 	return Object
 end
 
+warn(string.format("[LOADING INFORMATION] - After & before fly (%s)", tostring(tick() - LoadTime)))
+
+
 local Fly = nil;
 
 Spawn(function()
@@ -485,6 +492,8 @@ Spawn(function()
 		end
 	end
 end)
+
+warn(string.format("[LOADING INFORMATION] - After fly (%s)", tostring(tick() - LoadTime)))
 
 
 local PlayerArgs = {
@@ -727,6 +736,9 @@ Foreach({ Cmd:GetChildren(), Screen:GetChildren() }, function(Index, Canva)
 	end
 end, true)
 
+warn(string.format("[LOADING INFORMATION] - Finished functions & before command functions (%s)", tostring(tick() - LoadTime)))
+
+
 -- command lib
 Command = {}
 Commands = {}
@@ -793,6 +805,7 @@ Methods.Destroy = function(Part)
 	end
 end
 
+warn(string.format("[LOADING INFORMATION] - After command functions & before Module loading (%s)", tostring(tick() - LoadTime)))
 
 local Modules = {
 	Freecam = nil,
@@ -805,12 +818,7 @@ Spawn(function() -- Command modules
 	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))();
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))();
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))();
-end)
-
-xpcall(function() -- Feature modules
 	Modules.Blur = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/blur"))();
-end, function(Reason)
-	warn(Format("Error occured trying to load a FEATURE module - %s", Reason))
 end)
 
 local PromptChangeRigType = function(RigType)
@@ -887,6 +895,8 @@ local Fling = function(Target)
 		Walkfling(10000, 1000, false)
 	end)
 end	
+
+warn(string.format("[LOADING INFORMATION] - After module loading & before ui lib loading (%s)", tostring(tick() - LoadTime)))
 
 -- ui lib
 local Utils = {}
@@ -1397,6 +1407,7 @@ Library.new = function(Object, Info)
 			
 			Connect(Drop.MouseButton1Click, Show)
 			Connect(New.MouseButton1Click, Show)
+
 		elseif Object == "Input" then
 			local TextBox = New.Box
 			TextBox.Text = tostring(Default)
@@ -1460,42 +1471,6 @@ Library.new = function(Object, Info)
 		end
 	end
 end
-
-xpcall(function()
-	Connect(PropertyChanged(Bar, "Visible"), function() 
-		pcall(function()
-			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
-				if Bar.Visible then
-					Wait(.1)
-					Blurred["Bar"].root.Parent = workspace.CurrentCamera
-				else
-					Blurred["Bar"].root.Parent = nil
-				end
-			end
-		end)
-	end)
-
-	Connect(PropertyChanged(Autofill, "Visible"), function() 
-		pcall(function()
-			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
-				if Autofill.Visible then
-					Wait(.1)
-					Blurred["Autofill"].root.Parent = workspace.CurrentCamera
-				else
-					Blurred["Autofill"].root.Parent = nil
-				end
-			end
-		end)
-	end)
-
-	Blurred["Bar"] = Modules.Blur.new(Bar, 5)
-	Blurred["Autofill"] = Modules.Blur.new(Autofill, 5)
-
-	Blurred["Bar"].root.Parent = nil
-	Blurred["Autofill"].root.Parent = nil
-end, function(Result)
-	warn(Result)
-end)
 
 Library.Bar = function(Bool)
 	local UI = { b = { UDim2.new(0.5, 0, 0, 0), Bar }, a = { UDim2.new(0.5, 0, 0, 80), Autofill }}
@@ -2020,6 +1995,8 @@ Utils.ColorPopup = function(Callback)
 	end
 end
 
+warn(string.format("[LOADING INFORMATION] - After ui lib & before data functions (%s)", tostring(tick() - LoadTime)))
+
 -- data functions
 local Data = {}
 Data.Webhook = {}
@@ -2082,6 +2059,7 @@ Data.AddWaypoint = function(Name, Position)
 			Table[Name] = Position
 			Data.new("Waypoints.json", JSONEncode(Services.Http, Table));
 			Utils.Notify("Success", "Success!", Format("Added the Waypoint '%s'", Name))
+			Env().Waypoints = Table
 		else
 			Utils.Notify("Error", "Error trying to save waypoint", Format("There's already a waypoint with the name '%s'", Name))
 		end
@@ -2149,6 +2127,7 @@ Data.Webhook.Send = function(Webhook, Message)
 	})
 end
 
+Spawn(function()
 if not Data.get("Settings.json") then
 	Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 end
@@ -2189,16 +2168,20 @@ if Checks.File then
 		Settings.ScaleSize = (Data.get("Scale.json") or 1);
 		Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
 
-		if Settings and Settings.Version ~= OriginalSettings.Version then
-			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Commando has reset them. Do not worry, your prefix & themes are still the same", 15)
+		if Settings and (not Settings.Version or Settings.Version ~= OriginalSettings.Version) then
+			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
 
-			for Index, Setting in next, Settings do
-				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" then
-					Settings[Index] = OriginalSettings[Index]
-				elseif Index == "Blur" and Settings.Blur == nil then
-					Settings[Index] = false
+			for Index, Setting in next, OriginalSettings do
+				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" and Index ~= "Blur" then
+					Settings[Index] = Setting
 				end
 			end
+
+			if Settings.Blur == nil then
+				Settings.Blur = false
+			end
+
+			Foreach(Settings, print)
 
 			Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 		end
@@ -2207,6 +2190,7 @@ if Checks.File then
 		warn(Format("there has been an error trying to load ui settings OR checking if you're using an outdated version - %s", Result))
 	end)
 end
+end)
 
 SetUIScale = function(Scale)
 	if not tonumber(Scale) then return end
@@ -2222,6 +2206,9 @@ SetUIScale = function(Scale)
 		Data.new("Scale.json", tostring(Scale))
 	end
 end
+
+warn(string.format("[LOADING INFORMATION] - After data functions & before command lib (%s)", tostring(tick() - LoadTime)))
+
 
 -- command lib
 Command.Add = function(Information)
@@ -2371,11 +2358,14 @@ Autofills.Recommend = function(Input)
 	end
 end
 
+warn(string.format("[LOADING INFORMATION] - After command lib & before commands (%s)", tostring(tick() - LoadTime)))
+
+
 -- Commands
 
 Command.Add({
 	Aliases = { "tutorial" },
-	Description = "Explanation on how to use Commando",
+	Description = "Explanation on how to use Cmd",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -2898,7 +2888,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "settings", "options" },
-	Description = "Modify all the Settings of Commando",
+	Description = "Modify all the Settings of Cmd",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -2908,11 +2898,11 @@ Command.Add({
 			local MainTab = Tabs.Main.Scroll
 
 			-- Tabs
-			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Commando", Parent = MainTab })
+			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Cmd", Parent = MainTab })
 			local Aliases = Library.new("Switch", { Title = "Aliases", Description = "Add custom aliases (nicknames) for commands!", Parent = MainTab })
-			local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Commando options", Parent = MainTab })	
-			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Commando", Parent = MainTab })	
-			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Commando", Parent = Themes })
+			local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Cmd options", Parent = MainTab })	
+			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Cmd", Parent = MainTab })	
+			local Default = Library.new("Switch", { Title = "Default Themes", Description = "Default Themes on Cmd", Parent = Themes })
 			local Custom = Library.new("Switch", { Title = "Custom", Description = "Make your own custom theme", Parent = Themes })
 
 			-- Information
@@ -2923,7 +2913,7 @@ Command.Add({
 				Parent = Information 
 			})
 
-			Library.new("Section", { Title = "Commando", Parent = Information })
+			Library.new("Section", { Title = "Cmd", Parent = Information })
 
 			Library.new("Label", { Title = "Commands loaded",
 				Description = tostring(Command.Count),
@@ -3127,7 +3117,7 @@ Command.Add({
 			})
 
 			local ThemeDescriptions = {
-				["Primary"] = "Changes the background color of Commando", ["Secondary"] = "Changes the secondary color of Commando (buttons, topbar, etc.)", ["Title"] = "Changes the Text Color of the Titles", ["Description"] = "Changes the Text Color of descriptions", ["Icon"] = "Changes the color of all icons", ["Shadow"] = "Changes the color of the outlines around Tabs, etc.", ["Outline"] = "Changes the color of outlines inside of Tabs, etc."
+				["Primary"] = "Changes the background color of Cmd", ["Secondary"] = "Changes the secondary color of Cmd (buttons, topbar, etc.)", ["Title"] = "Changes the Text Color of the Titles", ["Description"] = "Changes the Text Color of descriptions", ["Icon"] = "Changes the color of all icons", ["Shadow"] = "Changes the color of the outlines around Tabs, etc.", ["Outline"] = "Changes the color of outlines inside of Tabs, etc."
 			}
 
 			for Index, Theme in next, Settings.Themes do
@@ -3757,7 +3747,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "logs" },
-	Description = "Shows all the stuff Commando has logged (Http, Joins, Leaves, etc.)",
+	Description = "Shows all the stuff Cmd has logged (Http, Joins, Leaves, etc.)",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -3872,7 +3862,7 @@ Command.Add({
 				Description = "Saves everything that is logged in your exploit's workspace folder",
 				Parent = MainTab,
 				Callback = function()
-					local Logged = Format("COMMANDO LOGS\nPLACE ID - %s\nTIME - %s", game.PlaceId, os.date())
+					local Logged = Format("Cmd LOGS\nPLACE ID - %s\nTIME - %s", game.PlaceId, os.date())
 
 					local Each = function(Tab, Name)
 						Logged = Logged .. "\n\n" .. string.upper(Name)
@@ -3903,7 +3893,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "notify", "send", "notification" },
-	Description = "Send a notification using Commando's Utility System",
+	Description = "Send a notification using Cmd's Utility System",
 	Arguments = { 
 		{ Name = "Mode", Type = "String" },
 		{ Name = "Title", Type = "String" },
@@ -4130,7 +4120,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "admin" },
-	Description = "Give the target access to use Commando's commands",
+	Description = "Give the target access to use Cmd's commands",
 	Arguments = {
 		{ Name = "Target", Type = "Player" }
 	},
@@ -4177,6 +4167,22 @@ Command.Add({
 
 			if Root then
 				GetRoot(Local.Character).CFrame = Root.CFrame
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "gotopart", "topart" },
+	Description = "Teleports you to your target",
+	Arguments = {
+		{ Name = "Part Name", Type = "String" }
+	},
+	Plugin = false,
+	Task = function(Name)
+		for Index, Part in next, workspace:GetChildren() do
+			if Part.Name == Name and Part:IsA("BasePart") then
+				GetRoot(Local.Character).CFrame = Part.CFrame
 			end
 		end
 	end,
@@ -4348,6 +4354,40 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "thirdperson", "third" },
+	Description = "Lets you view in third person mode",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Local.Player.CameraMode = "LockFirstPerson"
+	end,
+})
+
+Command.Add({
+	Aliases = { "maxzoom", "camzoom" },
+	Description = "Set the maximum distance your camera can zoom into",
+	Arguments = {
+		{ Name = "Amount", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Amount)
+		Local.Player.CameraMaxZoomDistance = SetNumber(Amount)
+	end,
+})
+
+Command.Add({
+	Aliases = { "minimumzoom", "minzoom" },
+	Description = "Set the MINIMUM distance your camera can zoom into",
+	Arguments = {
+		{ Name = "Amount", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Amount)
+		Local.Player.CameraMinZoomDistance = SetNumber(Amount)
+	end,
+})
+
+Command.Add({
 	Aliases = { "autorespawn" },
 	Description = "If you die you automatically get teleported to where you died",
 	Arguments = {},
@@ -4398,6 +4438,16 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		Services.Starter:SetCoreGuiEnabled(2, true)
+	end,
+})
+
+Command.Add({
+	Aliases = { "disableinventory", "disableinv" },
+	Description = "Disables the inventory gui if it's shown",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Services.Starter:SetCoreGuiEnabled(2, false)
 	end,
 })
 
@@ -4644,7 +4694,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "reload" },
-	Description = "Reloads Commando",
+	Description = "Reloads Cmd",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -4658,7 +4708,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "removecmd" },
-	Description = "Removes Commando",
+	Description = "Removes Cmd",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -4803,7 +4853,7 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "rejoinreload" },
-	Description = "Rejoins and reruns Commando",
+	Description = "Rejoins and reruns Cmd",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
@@ -5444,20 +5494,36 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
+		Env().AntiCFrame = true
+
 		local Allowed, Old = nil, nil 
 		Utils.Notify("Success", "Success!", "Now no scripts should be able to teleport you!")
 		local Root = GetRoot(Local.Character)
 
 		Connect(Root:GetPropertyChangedSignal("CFrame"), function() 
-		    Allowed = true
-		    Root.CFrame = Old
-		    Wait();
-   			Allowed = false
+			if Env().AntiCFrame then
+		    	Allowed = true
+		   		Root.CFrame = Old
+		    	Wait();
+   				Allowed = false
+			end
 		end)
 
 		repeat Wait();
    			Old = Root.CFrame
 		until not Root
+	end,
+})
+
+Command.Add({
+	Aliases = { "unanticframeteleport", "unacframetp", "unacftp" },
+	Description = "Stops the Anti CFrame Teleport Command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Env().AntiCFrame = false
+
+		Utils.Notify("Success", "Success!", "Anti CFrame Teleport disabled")
 	end,
 })
 
@@ -6586,6 +6652,8 @@ Command.Add({
 	end,
 })
 
+warn(string.format("[LOADING INFORMATION] - Mid-way through commands (%s)", tostring(tick() - LoadTime)))
+
 
 Command.Add({
 	Aliases = { "scare" },
@@ -6748,7 +6816,7 @@ Command.Add({
 					local Character = Character(Target);
 					local Root = GetRoot(Character);
 
-					Root.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -2)
+					Root.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 0, -3)
 				end)
 			end
 		until not Env().ClientBring
@@ -7460,7 +7528,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "walkfling" },
+	Aliases = { "walkfling", "wfling" },
 	Description = "Fling without spinning",
 	Arguments = {
 		{ Name = "Power", Type = "Number" },
@@ -7474,7 +7542,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "unwalkfling" },
+	Aliases = { "unwalkfling", "unwfling" },
 	Description = "Stops the walk fling command",
 	Arguments = {},
 	Plugin = false,
@@ -7725,13 +7793,180 @@ Command.Add({
 	end,
 })
 
-pcall(function()
+warn(string.format("[LOADING INFORMATION] - After loading commands & checking vuln & before plugins (%s)", tostring(tick() - LoadTime)))
+
+Spawn(function()
+	if Checks.File then
+
+		xpcall(function()
+			for Index, File in next, listfiles("Cmd/Plugins") do
+				loadstring(readfile(File))();
+			end
+		end, function(Reason)
+			warn(Format("[PLUGIN ERROR] : Error running plugin\nERROR: %s", Reason));
+		end)
+
+		local CustomAliases = JSONDecode(Services.Http, Data.get("CustomAliases.json") or "[]");
+
+		for Alias, CommandName in next, CustomAliases do
+			local Cmd = Command.Find(CommandName);
+
+			if Cmd then
+				local Aliases = Cmd[1]
+				Aliases[#Aliases + 1] = Alias
+			end
+		end
+	end
+end)
+
+warn(string.format("[LOADING INFORMATION] - After plugins & before the rest (%s)", tostring(tick() - LoadTime)))
+
+-- Rest
+
+Spawn(function()
+	SetUIScale(Settings.ScaleSize)
+
+	for Index, Table in next, Commands do
+		Autofills.Add(Table)
+	end
+end)
+
+Connect(PropertyChanged(Box, "Text"), function()
+	Autofills.Recommend(Box.Text)
+	Autofills.Search(Box.Text)
+end)
+
+Connect(Local.Player.Chatted, function(Message)
+	if Sub(Message, 1, 1) == Settings.Prefix and Screen.Parent then
+		Command.Parse(Message);
+	end
+end)
+
+Connect(Services.Input.InputBegan, function(Key, Processed)
+	if Key.KeyCode == Enum.KeyCode.Tab and pressTab.TextTransparency ~= 1 and Recommend.Text ~= Blank and Processed and Screen.Parent then
+		local Text = Recommend.Text;
+		Wait();
+		Box.Text = Text;
+		Box.CursorPosition = #Text + 1;
+	end
+end)
+
+Connect(Local.Mouse.KeyDown, function(Key)
+	if Key == Settings.Prefix and Screen.Parent and Box.Focused then
+		Library.Bar(true)
+		Wait()
+		Box.Text = Blank
+		Box:CaptureFocus();
+	end
+end)
+
+Connect(Services.Input.InputBegan, function(Key, Processed)
+	if Processed or not Screen.Parent then return end
+	local Bind = Settings.Binds[tostring(Key.KeyCode)]
+
+	if Bind then
+		Command.Parse(Bind.Start);
+	end
+end)
+
+Connect(Services.Input.InputEnded, function(Key, Processed)
+	if Processed or not Screen.Parent then return end
+	local Bind = Settings.Binds[tostring(Key.KeyCode)]
+
+	if Bind then
+		Command.Parse(Bind.End);
+	end
+end)
+
+Connect(Box.FocusLost, function(Enter)
+	if Enter then
+		Command.Parse(Box.Text);
+	end
+
+	Library.Bar(false)
+end)
+
+Connect(PropertyChanged(Screen, "Parent"), function() 
+	if not Screen.Parent then
+		Foreach(Blurred, function(Index, Self) 
+			Self.root.Parent = nil
+		end)
+	end
+end)
+
+do
+	local Functional = function() 
+		Open.Visible = true
+		Library.Drag(Open);
+		Library.Hover(Open);
+
+		Connect(Open.Title.MouseButton1Click, function()
+			Library.Bar(true);
+			Wait();
+			Box.Text = Blank;
+			Box:CaptureFocus();
+		end)
+	end
+
+	xpcall(function()
+		if Discover( { Enum.Platform.Android, Enum.Platform.Android }, Services.Input:GetPlatform()) then
+			Functional()
+		end
+
+	end, function() 
+		if Services.Run:IsStudio() then
+			Functional()
+		end
+	end)
+
+	Genv().CmdLoaded = true;
+	Genv().CmdPath = Screen;
+
+	-- loading saved options
+	for Index, Target in next, Services.Players:GetPlayers() do
+		Connect(Target.Chatted, function(Message) 
+			if Options.Logging then
+				AutoLogger[Randomize(25)] = { Message, Target };
+			end
+		end)
+	end
+
+	Connect(Services.Players.PlayerAdded, function(Target) 
+		Connect(Target.Chatted, function(Message) 
+			if Options.Logging then
+				AutoLogger[Randomize(25)] = { Message, Target };
+			end
+		end)
+	end)
+
+	if Options.AntiInterfere then
+		local Blacklisted = { "KCoreUI", "Cmdr" };
+
+		for Index, Screen in next, Local.Player.PlayerGui:GetChildren() do
+			if Discover(Blacklisted, Screen.Name) then
+				Screen:Destroy();
+			end
+		end
+	end
+end
+
+warn(string.format("[LOADING INFORMATION] - After rest of stuff & before loading themes (%s)", tostring(tick() - LoadTime)))
+
+Autofills.Search(Blank);
+Library.LoadTheme(Settings.Themes);
+
+warn(string.format("[LOADING INFORMATION] - Done! (%s)", tostring(tick() - LoadTime)))
+
+Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
+Utils.Notify("Success", "Loaded!", Format("Loaded in %.2f seconds", tick() - LoadTime), 5);
+
+Spawn(function()
 	if Methods.Check() then
-		Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Commando, use the <b>vuln</b> command for more information", 15)
+		Utils.Notify("Information", "Vulnerability found!", "This game has a vulnerability that can be exploited using Cmd, use the <b>vuln</b> command for more information", 15)
 
 		Command.Add({
 			Aliases = { "vuln" },
-			Description = "Using the vulnerability feature built into Commando, you can use bonus commands on players",
+			Description = "Using the vulnerability feature built into Cmd, you can use bonus commands on players",
 			Arguments = {},
 			Plugin = false,
 			Task = function()
@@ -7914,8 +8149,6 @@ pcall(function()
 						end,
 					})
 
-
-
 					Tweens.Open({ Canvas = Main, Speed = 0.3 })
 				else
 					Tweens.Open({ Canvas = Screen:FindFirstChild("Vuln"), Speed = 0.3 })
@@ -7925,161 +8158,41 @@ pcall(function()
 	end
 end)
 
-Spawn(function()
-	if Checks.File then
+xpcall(function()
+	repeat task.wait()
+	until Modules.Blur
 
-		xpcall(function()
-			for Index, File in next, listfiles("Cmd/Plugins") do
-				loadstring(readfile(File))();
-			end
-		end, function(Reason)
-			warn(Format("[PLUGIN ERROR] : Error running plugin\nERROR: %s", Reason));
-		end)
-
-		local CustomAliases = JSONDecode(Services.Http, Data.get("CustomAliases.json") or "[]");
-
-		for Alias, CommandName in next, CustomAliases do
-			local Cmd = Command.Find(CommandName);
-
-			if Cmd then
-				local Aliases = Cmd[1]
-				Aliases[#Aliases + 1] = Alias
-			end
-		end
-	end
-end)
-
--- Rest
-
-for Index, Table in next, Commands do
-	Autofills.Add(Table)
-end
-
-Connect(PropertyChanged(Box, "Text"), function()
-	Autofills.Recommend(Box.Text)
-	Autofills.Search(Box.Text)
-end)
-
-Connect(Local.Player.Chatted, function(Message)
-	if Sub(Message, 1, 1) == Settings.Prefix then
-		Command.Parse(Message);
-	end
-end)
-
-Connect(Services.Input.InputBegan, function(Key, Processed)
-	if Key.KeyCode == Enum.KeyCode.Tab and pressTab.TextTransparency ~= 1 and Recommend.Text ~= Blank and Processed and Screen.Parent then
-		local Text = Recommend.Text;
-		Wait();
-		Box.Text = Text;
-		Box.CursorPosition = #Text + 1;
-	end
-end)
-
-Connect(Local.Mouse.KeyDown, function(Key)
-	if Key == Settings.Prefix and Screen.Parent and Box.Focused then
-		Library.Bar(true)
-		Wait()
-		Box.Text = Blank
-		Box:CaptureFocus();
-	end
-end)
-
-Connect(Services.Input.InputBegan, function(Key, Processed)
-	if Processed then return end
-	local Bind = Settings.Binds[tostring(Key.KeyCode)]
-
-	if Bind then
-		Command.Parse(Bind.Start);
-	end
-end)
-
-Connect(Services.Input.InputEnded, function(Key, Processed)
-	if Processed then return end
-	local Bind = Settings.Binds[tostring(Key.KeyCode)]
-
-	if Bind then
-		Command.Parse(Bind.End);
-	end
-end)
-
-Connect(Box.FocusLost, function(Enter)
-	if Enter then
-		Command.Parse(Box.Text);
-	end
-
-	Library.Bar(false)
-end)
-
-SetUIScale(Settings.ScaleSize)
-
-
-Connect(PropertyChanged(Screen, "Parent"), function() 
-	if not Screen.Parent then
-		Foreach(Blurred, function(Index, Self) 
-			Self.root.Parent = nil
-		end)
-	end
-end)
-
-do
-	local Functional = function() 
-		Open.Visible = true
-		Library.Drag(Open);
-		Library.Hover(Open);
-
-		Connect(Open.Title.MouseButton1Click, function()
-			Library.Bar(true);
-			Wait();
-			Box.Text = Blank;
-			Box:CaptureFocus();
-		end)
-	end
-
-	xpcall(function()
-		if Discover( { Enum.Platform.Android, Enum.Platform.Android }, Services.Input:GetPlatform()) then
-			Functional()
-		end
-
-	end, function() 
-		if Services.Run:IsStudio() then
-			Functional()
-		end
-	end)
-
-	Genv().CmdLoaded = true;
-	Genv().CmdPath = Screen;
-
-	-- loading saved options
-	for Index, Target in next, Services.Players:GetPlayers() do
-		Connect(Target.Chatted, function(Message) 
-			if Options.Logging then
-				AutoLogger[Randomize(25)] = { Message, Target };
-			end
-		end)
-	end
-
-	Connect(Services.Players.PlayerAdded, function(Target) 
-		Connect(Target.Chatted, function(Message) 
-			if Options.Logging then
-				AutoLogger[Randomize(25)] = { Message, Target };
+	Connect(PropertyChanged(Bar, "Visible"), function() 
+		pcall(function()
+			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
+				if Bar.Visible then
+					Wait(.1)
+					Blurred["Bar"].root.Parent = workspace.CurrentCamera
+				else
+					Blurred["Bar"].root.Parent = nil
+				end
 			end
 		end)
 	end)
 
-	if Options.AntiInterfere then
-		local Blacklisted = { "KCoreUI", "Cmdr" };
-
-		for Index, Screen in next, Local.Player.PlayerGui:GetChildren() do
-			if Discover(Blacklisted, Screen.Name) then
-				Screen:Destroy();
+	Connect(PropertyChanged(Autofill, "Visible"), function() 
+		pcall(function()
+			if Blurred["Bar"] and Blurred["Autofill"] and Blurred["Bar"].root and Settings.Blur then
+				if Autofill.Visible then
+					Wait(.1)
+					Blurred["Autofill"].root.Parent = workspace.CurrentCamera
+				else
+					Blurred["Autofill"].root.Parent = nil
+				end
 			end
-		end
-	end
-end
+		end)
+	end)
 
-Autofills.Search(Blank);
-Library.LoadTheme(Settings.Themes);
-Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
-Utils.Notify("Success", "Loaded!", Format("Loaded in %.2f seconds", tick() - LoadTime), 5);
+	Blurred["Bar"] = Modules.Blur.new(Bar, 5)
+	Blurred["Autofill"] = Modules.Blur.new(Autofill, 5)
 
-return Command
+	Blurred["Bar"].root.Parent = nil
+	Blurred["Autofill"].root.Parent = nil
+end, function(Result)
+	warn(Format("Error occured trying to load the UI Blur Module (%s)", Result))
+end)
