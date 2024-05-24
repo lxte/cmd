@@ -2173,7 +2173,7 @@ if Checks.File then
 
 			for Index, Setting in next, OriginalSettings do
 				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" and Index ~= "Blur" then
-					Settings[Index] = Setting
+                    Settings[Index] = Setting
 				end
 			end
 
@@ -2181,10 +2181,10 @@ if Checks.File then
 				Settings.Blur = false
 			end
 
-			Foreach(Settings, print)
-
 			Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 		end
+
+        Library.LoadTheme()
 
 	end, function(Result) 
 		warn(Format("there has been an error trying to load ui settings OR checking if you're using an outdated version - %s", Result))
