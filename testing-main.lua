@@ -1330,17 +1330,24 @@ Library.new = function(Object, Info)
 			local Keybind = New.Title
 			local Done, Time = false, tick()
 			local Detect = nil
+            local InputType = Enum.UserInputType;
+            local MouseInputs = { InputType.MouseButton1, InputType.MouseButton2, InputType.MouseButton3 };
 
 			Connect(New.MouseButton1Click, function()
 				Done = false
 				Keybind.Text = "..."
 
 				Detect = Connect(Services.Input.InputBegan, function(Key)
-					if not Done then
-						Callback(Key.KeyCode)
-						Done = true
-						Keybind.Text = tostring(Key.KeyCode):gsub("Enum.KeyCode.", Blank)
-					end
+                    if table.find(MouseInputs, Key.UserInputType) and not Done then
+                        Callback(Key)
+                        Done = true
+                        Keybind.Text = tostring(Key.UserInputType):gsub("Enum.UserInputType.", Blank):gsub("MouseButton", "MB")
+                    elseif not Done then
+                        Done = true
+                        Callback(Key)
+                        Done = true
+                        Keybind.Text = tostring(Key.KeyCode):gsub("Enum.KeyCode.", Blank)
+                    end
 				end)
 			end)
 
@@ -2751,8 +2758,8 @@ Command.Add({
 				local End = Table.End
 				local KeyCode = Table.KeyCode
 
-				if not Settings.Binds[tostring(KeyCode)] then
-					Settings.Binds[tostring(KeyCode)] = {
+				if not Settings.Binds[KeyCode] then
+					Settings.Binds[KeyCode] = {
 						Start = Start,
 						End = End,
 						Nickname = Name,
@@ -2788,7 +2795,7 @@ Command.Add({
 						Parent = NewSwitch,
 						Callback = function()
 							Utils.Popup("Confirmation", Format("Are you sure you want to remove the '%s' bind?", Name), function()
-								Settings.Binds[tostring(KeyCode)] = nil
+								Settings.Binds[KeyCode] = nil
 								Utils.Notify("Success", "Success!", "Bind has been removed")
 							end)
 						end,
@@ -3493,7 +3500,8 @@ Command.Add({
 
 			Spawn(function()
 				Connect(Services.Input.InputBegan, function(Key, Processed)
-					if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
+                    print(Key, Aimbot.Key)
+					if Key == Aimbot.Key and Aimbot.Camlock and not Processed then
 						local Closest = Aimbot.Closest()
 
 						if Closest and Closest.Character and Closest.Character:FindFirstChildOfClass("Humanoid") and Closest.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
@@ -3510,7 +3518,7 @@ Command.Add({
 				end)
 
 				Connect(Services.Input.InputEnded, function(Key, Processed)
-					if Key.KeyCode == Aimbot.Key and Aimbot.Camlock and not Processed then
+					if Key == Aimbot.Key and Aimbot.Camlock and not Processed then
 						Aimbot.Held = false
 					end
 				end)
@@ -7881,7 +7889,7 @@ end)
 
 Connect(Services.Input.InputBegan, function(Key, Processed)
 	if Processed or not Screen.Parent then return end
-	local Bind = Settings.Binds[tostring(Key.KeyCode)]
+	local Bind = Settings.Binds[Key]
 
 	if Bind then
 		Command.Parse(Bind.Start);
@@ -7890,7 +7898,7 @@ end)
 
 Connect(Services.Input.InputEnded, function(Key, Processed)
 	if Processed or not Screen.Parent then return end
-	local Bind = Settings.Binds[tostring(Key.KeyCode)]
+	local Bind = Settings.Binds[Key]
 
 	if Bind then
 		Command.Parse(Bind.End);
