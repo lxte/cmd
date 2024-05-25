@@ -7678,6 +7678,26 @@ Command.Add({
 	end,
 })
 
+Command.Add({
+	Aliases = { "lockmouse", "lockm" },
+	Description = "Locks your mouse in the center",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
+	end,
+})
+
+Command.Add({
+	Aliases = { "unlockmouse", "unlockm" },
+	Description = "Unlocks your mouse",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        Services.Input.MouseBehavior = Enum.MouseBehavior.Default
+	end,
+})
+
 Env().Hitbox = false
 Command.Add({
 	Aliases = { "hitbox" },
@@ -7797,7 +7817,6 @@ warn(string.format("[LOADING INFORMATION] - After loading commands & checking vu
 
 Spawn(function()
 	if Checks.File then
-
 		xpcall(function()
 			for Index, File in next, listfiles("Cmd/Plugins") do
 				loadstring(readfile(File))();
