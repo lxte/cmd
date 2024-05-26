@@ -14,6 +14,7 @@
 ]]
 
 if not game:IsLoaded() then
+	warn("Waiting for the game to load..")
 	game.Loaded:Wait();
 end
 
@@ -78,7 +79,7 @@ local Player = Services.Players.LocalPlayer;
 
 local Local = {
 	Player = Player,
-	Character = Player.Character or Player.CharacterAdded:Wait(),
+	Character = Player.Character,
 	Mouse = Player:GetMouse(),
 	Backpack = Player.Backpack,
 	Camera = workspace.CurrentCamera,
@@ -108,6 +109,7 @@ Connect(Player.CharacterAdded, function(Character)
 end)
 
 warn(string.format("[LOADING INFORMATION] - Before file checks & ui (%s)", tostring(tick() - LoadTime)))
+
 xpcall(function()
 	if Checks.File then
 		local Folders = { "Cmd", "Cmd/Data", "Cmd/Plugins", "Cmd/Logs" }
@@ -877,15 +879,15 @@ local Fling = function(Target)
 			local Humanoid = GetHumanoid(Target.Character);
 
 			local Position = Root.CFrame
-			local Info = TweenInfo.new(0.15)
+			local Info = TweenInfo.new(0.12)
 
 			Local.Camera.CameraSubject = Humanoid
 			LocalHumanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
-			Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity)) })
-			Wait(0.15)
+			Tween(LocalRoot, Info, { CFrame = (Root.CFrame + (Root.Velocity * math.random(1, 2.5))) }) 
+			Wait(0.12)
 			Tween(LocalRoot, Info, { CFrame = Position * CFrame.new(0, 1, math.random(-2, 2))})
-			Wait(0.15)
+			Wait(0.12)
 
 		until (tick() - Timer > 3) or not Root or Root.Velocity.Magnitude > 200 or not LocalRoot or LocalHumanoid.Health == 0 or Humanoid.Sit
 
@@ -2175,6 +2177,8 @@ if Checks.File then
 		Settings.ScaleSize = (Data.get("Scale.json") or 1);
 		Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
 
+		Library.LoadTheme()
+
 		if Settings and (not Settings.Version or Settings.Version ~= OriginalSettings.Version) then
 			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
 
@@ -2190,8 +2194,6 @@ if Checks.File then
 
 			Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 		end
-
-        Library.LoadTheme()
 
 	end, function(Result) 
 		warn(Format("there has been an error trying to load ui settings OR checking if you're using an outdated version - %s", Result))
