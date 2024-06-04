@@ -681,7 +681,7 @@ end
 
 function RGB(Color, Factor, Mode)
 	Mode = Mode or Settings.Themes.Mode
-	
+
 	if Mode == "Light" then
 		return Color3.fromRGB((Color.R * 255) - Factor, (Color.G * 255) - Factor, (Color.B * 255) - Factor)
 	else
@@ -1332,24 +1332,24 @@ Library.new = function(Object, Info)
 			local Keybind = New.Title
 			local Done, Time = false, tick()
 			local Detect = nil
-            local InputType = Enum.UserInputType;
-            local MouseInputs = { InputType.MouseButton1, InputType.MouseButton2, InputType.MouseButton3 };
+			local InputType = Enum.UserInputType;
+			local MouseInputs = { InputType.MouseButton1, InputType.MouseButton2, InputType.MouseButton3 };
 
 			Connect(New.MouseButton1Click, function()
 				Done = false
 				Keybind.Text = "..."
 
 				Detect = Connect(Services.Input.InputBegan, function(Key)
-                    if table.find(MouseInputs, Key.UserInputType) and not Done then
-                        Callback(Key)
-                        Done = true
-                        Keybind.Text = tostring(Key.UserInputType):gsub("Enum.UserInputType.", Blank):gsub("MouseButton", "MB")
-                    elseif not Done then
-                        Done = true
-                        Callback(Key)
-                        Done = true
-                        Keybind.Text = tostring(Key.KeyCode):gsub("Enum.KeyCode.", Blank)
-                    end
+					if table.find(MouseInputs, Key.UserInputType) and not Done then
+						Callback(Key)
+						Done = true
+						Keybind.Text = tostring(Key.UserInputType):gsub("Enum.UserInputType.", Blank):gsub("MouseButton", "MB")
+					elseif not Done then
+						Done = true
+						Callback(Key)
+						Done = true
+						Keybind.Text = tostring(Key.KeyCode):gsub("Enum.KeyCode.", Blank)
+					end
 				end)
 			end)
 
@@ -1375,7 +1375,7 @@ Library.new = function(Object, Info)
 
 			local Show = function() 
 				local TweenSize, ArrowRotation = nil, nil
-				
+
 				if Opened.Value then
 					TweenSize = UDim2.fromOffset(88, 0)
 					ArrowRotation = 0
@@ -1389,22 +1389,22 @@ Library.new = function(Object, Info)
 
 					Options.Visible = true
 				end
-				
+
 				Tween(Options, Info, { Size = TweenSize });
 				Tween(Arrow, Info, { Rotation = ArrowRotation });
-				
+
 				Opened.Value = not Opened.Value
 			end
 
 			Foreach(DropdownOptions, function(Index, Option)
 				local Button = Lib.DropdownButton
 				local Clone = Button:Clone()
-				
+
 				Clone.Parent = Scroll 
 				Clone.Text = Index or "no name!"
 				Clone.Visible = true
 				Library.Hover(Clone)
-				
+
 				Connect(Clone.MouseButton1Click, function() 
 					Drop.Text = Index
 
@@ -1413,7 +1413,7 @@ Library.new = function(Object, Info)
 					Callback(Option);
 				end)
 			end)
-			
+
 			Connect(Drop.MouseButton1Click, Show)
 			Connect(New.MouseButton1Click, Show)
 
@@ -1522,26 +1522,26 @@ Library.Theming = {
 				Tab.BackgroundColor3 = RGB(Settings.Themes.Primary, 3)
 			end
 		end,
-		
+
 		["Dropdown"] = function(Item)
 			if Item:IsA("Frame") then
 				Item.BackgroundColor3 = Settings.Themes.Secondary
 			end
 		end,
-		
+
 		["Drop"] = function(Item)
 			if Item:IsA("GuiButton") and Item.Parent.Name == "Dropdown" then
 				Item.BackgroundColor3 = Settings.Themes.Primary
 				Item.TextColor3 = Settings.Themes.Description
 			end
 		end,
-		
+
 		["DropdownButton"] = function(Item)
 			if Item:IsA("GuiButton") then
 				Item.BackgroundColor3 = Settings.Themes.Primary
 			end
 		end,
-		
+
 		["Options"] = function(Item)
 			if Item:IsA("Frame") and Item.Parent.Name == "Dropdown" then
 				Item.BackgroundColor3 = RGB(Settings.Themes.Primary, 3)
@@ -1664,7 +1664,7 @@ Library.LoadTheme = function(Table)
 		if Library.Theming.Names[Object.Name] then
 			local Function = Library.Theming.Names[Object.Name]
 			Function(Object)
-	
+
 		elseif Library.Theming.Classes[Object.ClassName] then
 			local Function = Library.Theming.Classes[Object.ClassName]
 			Function(Object)
@@ -1787,10 +1787,10 @@ Autofills.AutoSize = function(Number)
 	Spawn(function()
 		local Info = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		local Sizes = {
-			[1] = UDim2.fromOffset(441, 70),
-			[2] = UDim2.fromOffset(441, 125),
-			[3] = UDim2.fromOffset(441, 188),
-			[4] = UDim2.fromOffset(441, 246),
+			[1] = UDim2.fromOffset(460, 80),
+			[2] = UDim2.fromOffset(460, 132),
+			[3] = UDim2.fromOffset(460, 187),
+			[4] = UDim2.fromOffset(460, 241),
 		}
 
 		if Number < 4 then
@@ -2137,68 +2137,68 @@ Data.Webhook.Send = function(Webhook, Message)
 end
 
 Spawn(function()
-if not Data.get("Settings.json") then
-	Data.new("Settings.json", JSONEncode(Services.Http, Settings));
-end
-
-if not Data.get("Themes.json") then
-	local Themes = {}
-
-	for Index, Color in next, Settings.Themes do
-		Themes[Index] = tostring(Color)
+	if not Data.get("Settings.json") then
+		Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 	end
 
-	Data.new("Themes.json", JSONEncode(Services.Http, Themes));
-end
+	if not Data.get("Themes.json") then
+		local Themes = {}
 
-if not Data.get("CustomAliases.json") then
-	Data.new("CustomAliases.json", JSONEncode(Services.Http, {}));
-end
-
-if not Data.get("Scale.json") then
-	Data.new("Scale.json", "1");
-end
-
-if not Data.get("Waypoints.json") then
-	Data.new("Waypoints.json", JSONEncode(Services.Http, {}));
-end
-
-if not Data.get("Toggles.json") then
-	Data.new("Toggles.json", JSONEncode(Services.Http, Options));
-end
-
-if Checks.File then
-	xpcall(function()
-		Settings.Themes = Data.SetUpThemeTable(JSONDecode(Services.Http, Data.get("Themes.json")));
-
-		local Themes = Settings.Themes;
-		Settings = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings));
-		Settings.Themes = (Themes or Settings.Themes);
-		Settings.ScaleSize = (Data.get("Scale.json") or 1);
-		Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
-
-		Library.LoadTheme()
-
-		if Settings and (not Settings.Version or Settings.Version ~= OriginalSettings.Version) then
-			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
-
-			for Index, Setting in next, OriginalSettings do
-				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" and Index ~= "Blur" then
-                    Settings[Index] = Setting
-				end
-			end
-
-			if Settings.Blur == nil then
-				Settings.Blur = false
-			end
-
-			Data.new("Settings.json", JSONEncode(Services.Http, Settings));
+		for Index, Color in next, Settings.Themes do
+			Themes[Index] = tostring(Color)
 		end
 
-	end, function(Result) 
-		warn(Format("there has been an error trying to load ui settings OR checking if you're using an outdated version - %s", Result))
-	end)
-end
+		Data.new("Themes.json", JSONEncode(Services.Http, Themes));
+	end
+
+	if not Data.get("CustomAliases.json") then
+		Data.new("CustomAliases.json", JSONEncode(Services.Http, {}));
+	end
+
+	if not Data.get("Scale.json") then
+		Data.new("Scale.json", "1");
+	end
+
+	if not Data.get("Waypoints.json") then
+		Data.new("Waypoints.json", JSONEncode(Services.Http, {}));
+	end
+
+	if not Data.get("Toggles.json") then
+		Data.new("Toggles.json", JSONEncode(Services.Http, Options));
+	end
+
+	if Checks.File then
+		xpcall(function()
+			Settings.Themes = Data.SetUpThemeTable(JSONDecode(Services.Http, Data.get("Themes.json")));
+
+			local Themes = Settings.Themes;
+			Settings = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings));
+			Settings.Themes = (Themes or Settings.Themes);
+			Settings.ScaleSize = (Data.get("Scale.json") or 1);
+			Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
+
+			Library.LoadTheme()
+
+			if Settings and (not Settings.Version or Settings.Version ~= OriginalSettings.Version) then
+				Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
+
+				for Index, Setting in next, OriginalSettings do
+					if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" and Index ~= "Blur" then
+						Settings[Index] = Setting
+					end
+				end
+
+				if Settings.Blur == nil then
+					Settings.Blur = false
+				end
+
+				Data.new("Settings.json", JSONEncode(Services.Http, Settings));
+			end
+
+		end, function(Result) 
+			warn(Format("there has been an error trying to load ui settings OR checking if you're using an outdated version - %s", Result))
+		end)
+	end
 end)
 
 SetUIScale = function(Scale)
@@ -3502,7 +3502,7 @@ Command.Add({
 
 			Spawn(function()
 				Connect(Services.Input.InputBegan, function(Key, Processed)
-                    print(Key, Aimbot.Key)
+					print(Key, Aimbot.Key)
 					if Key == Aimbot.Key and Aimbot.Camlock and not Processed then
 						local Closest = Aimbot.Closest()
 
@@ -5512,15 +5512,15 @@ Command.Add({
 
 		Connect(Root:GetPropertyChangedSignal("CFrame"), function() 
 			if Env().AntiCFrame then
-		    	Allowed = true
-		   		Root.CFrame = Old
-		    	Wait();
-   				Allowed = false
+				Allowed = true
+				Root.CFrame = Old
+				Wait();
+				Allowed = false
 			end
 		end)
 
 		repeat Wait();
-   			Old = Root.CFrame
+			Old = Root.CFrame
 		until not Root
 	end,
 })
@@ -7694,7 +7694,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-        Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
+		Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
 	end,
 })
 
@@ -7704,7 +7704,7 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-        Services.Input.MouseBehavior = Enum.MouseBehavior.Default
+		Services.Input.MouseBehavior = Enum.MouseBehavior.Default
 	end,
 })
 
