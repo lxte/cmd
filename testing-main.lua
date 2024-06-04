@@ -79,7 +79,7 @@ local Player = Services.Players.LocalPlayer;
 
 local Local = {
 	Player = Player,
-	Character = Player.Character,
+	Character = Player.Character or Player.CharacterAdded:Wait(),
 	Mouse = Player:GetMouse(),
 	Backpack = Player.Backpack,
 	Camera = workspace.CurrentCamera,
