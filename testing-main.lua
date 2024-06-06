@@ -48,11 +48,13 @@ local Options = { -- for the settings tab
 	Recommendation = true,
 	Popups = true,
 	Logging = false,
+	AutoSimRadius = false,
 }
 
 local Ref = cloneref or function(ref) 
 	return ref
 end
+
 
 local Services = {
 	Players = Ref(game:GetService("Players"));
@@ -85,10 +87,23 @@ local Local = {
 	Camera = workspace.CurrentCamera,
 };
 
+newcclosure = newcclosure or function(func) 
+	return coroutine.wrap(func)
+end
+
+setsimulationradius = setsimulationradius or function(Radius, MaxRadius) 
+	pcall(function() 
+		Local.Player.SimulationRadius = Radius
+		Local.Player.MaxSimulationDistance = MaxRadius
+	end)
+end
+
+
 local Checks = {
 	File = (isfile and isfolder and writefile and readfile);
 	Hook = (hookmetamethod or hookfunction);
 };
+
 
 local JSONEncode, JSONDecode = Services.Http.JSONEncode, Services.Http.JSONDecode
 local Connect = game.Loaded.Connect
@@ -107,8 +122,6 @@ Connect(Player.CharacterAdded, function(Character)
 	Local.Character = Character;
 	Local.Backpack = Local.Player.Backpack;
 end)
-
-warn(string.format("[LOADING INFORMATION] - Before file checks & ui (%s)", tostring(tick() - LoadTime)))
 
 xpcall(function()
 	if Checks.File then
@@ -153,8 +166,6 @@ xpcall(function()
 end, function()
 	Screen.Parent = (Local.Player.PlayerGui);
 end)
-
-warn(string.format("[LOADING INFORMATION] - After & before loading functions (%s)", tostring(tick() - LoadTime)))
 
 -- functions & stuff like that lol
 local Lower = string.lower;
@@ -292,7 +303,7 @@ end
 R6Check = function(Player)
 	Player = Player or Local.Player
 	if Player then
-		if Player.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
+		if Player.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
 			return true
 		end
 	end
@@ -349,9 +360,6 @@ CreateInstance = function(Name, Properties, Children)
 
 	return Object
 end
-
-warn(string.format("[LOADING INFORMATION] - After & before fly (%s)", tostring(tick() - LoadTime)))
-
 
 local Fly = nil;
 
@@ -494,9 +502,6 @@ Spawn(function()
 		end
 	end
 end)
-
-warn(string.format("[LOADING INFORMATION] - After fly (%s)", tostring(tick() - LoadTime)))
-
 
 local PlayerArgs = {
 	["all"] = function() 
@@ -738,9 +743,6 @@ Foreach({ Cmd:GetChildren(), Screen:GetChildren() }, function(Index, Canva)
 	end
 end, true)
 
-warn(string.format("[LOADING INFORMATION] - Finished functions & before command functions (%s)", tostring(tick() - LoadTime)))
-
-
 -- command lib
 Command = {}
 Commands = {}
@@ -806,8 +808,6 @@ Methods.Destroy = function(Part)
 		Local.Player.Backpack:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint:InvokeServer(Unpack(ArgumentTable));
 	end
 end
-
-warn(string.format("[LOADING INFORMATION] - After command functions & before Module loading (%s)", tostring(tick() - LoadTime)))
 
 local Modules = {
 	Freecam = nil,
@@ -897,8 +897,6 @@ local Fling = function(Target)
 		Walkfling(10000, 1000, false)
 	end)
 end	
-
-warn(string.format("[LOADING INFORMATION] - After module loading & before ui lib loading (%s)", tostring(tick() - LoadTime)))
 
 -- ui lib
 local Utils = {}
@@ -2004,8 +2002,6 @@ Utils.ColorPopup = function(Callback)
 	end
 end
 
-warn(string.format("[LOADING INFORMATION] - After ui lib & before data functions (%s)", tostring(tick() - LoadTime)))
-
 -- data functions
 local Data = {}
 Data.Webhook = {}
@@ -2216,9 +2212,6 @@ SetUIScale = function(Scale)
 	end
 end
 
-warn(string.format("[LOADING INFORMATION] - After data functions & before command lib (%s)", tostring(tick() - LoadTime)))
-
-
 -- command lib
 Command.Add = function(Information)
 	local Aliases = Information.Aliases;
@@ -2366,9 +2359,6 @@ Autofills.Recommend = function(Input)
 		Recommend.Text = Blank
 	end
 end
-
-warn(string.format("[LOADING INFORMATION] - After command lib & before commands (%s)", tostring(tick() - LoadTime)))
-
 
 -- Commands
 
@@ -3054,6 +3044,15 @@ Command.Add({
 				end,
 			})
 
+			Library.new("Toggle", { Title = "Automatic Simulation Radius",
+				Description = "Automatically sets your simulation radius to 9e9",
+				Default = Options.AutoSimRadius,
+				Parent = Toggles,
+				Callback = function(Boolean)
+					Data.SetOption("AutoSimRadius", Boolean)
+				end,
+			})
+
 			-- Themes
 			Library.new("Input", { Title = "Transparency", Description = "Set transparency of the UI", Default = "0.05", Parent = Themes, Callback = function(Input) 
 				local Numeral = tonumber(Input)
@@ -3184,7 +3183,7 @@ ESPSettings.InfoESP = function(Target)
 		local Char = Target.Character
 
 		if Char and not ESPSettings.Holder:FindFirstChild(Target.Name) and Target ~= Local.Player then
-			local Head = Char:FindFirstChild("Head");
+			local Head = Char:WaitForChild("Head");
 			local Billboard = Instance.new("BillboardGui", ESPSettings.Holder);
 			local InfoTag = Instance.new("TextLabel", Billboard);
 
@@ -3208,7 +3207,7 @@ ESPSettings.InfoESP = function(Target)
 
 			repeat Wait(0.2) 
 				InfoTag.Text = Format("<b>%s</b> <font color='rgb(200, 200, 200)'>(%s)</font>\n[%s] [%s / 100]", tostring(Target.DisplayName), tostring(Target.Name), tostring(math.floor((Local.Character.Head.Position - Head.Position).Magnitude)), tostring(Char.Humanoid.Health))
-			until Char.Humanoid.Health == 0 or not Billboard or not Char
+			until Char.Humanoid.Health == 0 or not Billboard or not Head
 
 			Billboard:Destroy()
 		end
@@ -3232,6 +3231,7 @@ Command.Add({
 			Spawn(function()
 				if Player and Player.Character and Player ~= Local.Player then
 					local Char = Player.Character;
+					local Humanoid = Char:WaitForChild("Humanoid");
 					local Find = Char:FindFirstChildOfClass("Highlight");
 
 					if ESPSettings.TargetsOnly and Player.Team == Local.Player.Team then
@@ -3275,7 +3275,9 @@ Command.Add({
 				local Character = Character(Player)
 
 				if Character then
-					AddHighlight(Bool, Transparency, Fill, Player)
+					Spawn(function()
+						AddHighlight(Bool, Transparency, Fill, Player);
+					end)
 				end
 			end
 		end
@@ -3330,7 +3332,6 @@ Command.Add({
 				AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player);
 
 				Connect(Player.CharacterAdded, function(Char)
-					Wait(0.5);
 					AddHighlight(ESPSettings.Current, ESPSettings.Outline, ESPSettings.Fill, Player);
 				end)
 			end
@@ -4462,16 +4463,287 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "attachpart" },
+	Description = "Click on a part to attach it to you",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        SetEnv("AttachParts", true);
+
+		Connect(Local.Mouse.Button1Down, function() 
+			local Part = Local.Mouse.Target
+			local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
+
+			if Env().AttachParts and Part and not Part.Anchored then
+				local Char = Local.Character;
+				local LocalRoot = Char.HumanoidRootPart;
+
+				if LocalRoot then
+					Utils.Notify("Success", "Success!", "Part should be attached", 5)
+
+					Attachment.Parent = Part;
+					Position.Parent = Part;
+					Orientation.Parent = Part;
+					Attachment2.Parent = LocalRoot;
+
+					Position.Responsiveness = 200;
+					Orientation.Responsiveness = 200;
+
+					Position.MaxForce = 9e9;
+					Orientation.MaxTorque = 9e9;
+
+					Position.Attachment0 = Attachment
+					Position.Attachment1 = Attachment2
+					Orientation.Attachment1 = Attachment2
+					Orientation.Attachment0 = Attachment
+				end
+			end
+		end)
+
+	end,
+})
+
+Command.Add({
+	Aliases = { "attachparts" },
+	Description = "Attaches every part that you have Network Ownership over",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		isnetworkowner = isnetworkowner or function(part) return true end 
+
+		pcall(function() 
+			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
+		end)
+
+		for Index, Part in next, workspace:GetDescendants() do
+			if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) then
+				local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
+				local Char = Local.Character;
+				local LocalRoot = Char.HumanoidRootPart;
+
+				if LocalRoot then
+					Attachment.Parent = Part;
+					Position.Parent = Part;
+					Orientation.Parent = Part;
+					Attachment2.Parent = LocalRoot;
+
+					Position.Responsiveness = 200;
+					Orientation.Responsiveness = 200;
+
+					Position.MaxForce = 9e9;
+					Orientation.MaxTorque = 9e9;
+
+					Position.Attachment0 = Attachment
+					Position.Attachment1 = Attachment2
+					Orientation.Attachment1 = Attachment2
+					Orientation.Attachment0 = Attachment
+				end
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "blackhole" },
+	Description = "Creates a blackhole that teleports parts to it",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		isnetworkowner = isnetworkowner or function(part) return true end 
+		SetEnv("Blackhole", true)
+
+		pcall(function() 
+			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
+			Blackhole:Destroy()
+		end)
+
+		Blackhole = Instance.new("Part");
+		Blackhole.Parent = workspace
+		Blackhole.Anchored = true
+		Blackhole.CFrame = GetRoot(Local.Character).CFrame * CFrame.new(0, 5, 5)
+		Blackhole.CanCollide = false
+
+		repeat task.wait(1)
+			for Index, Part in next, workspace:GetDescendants() do
+				if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) and not Services.Players:GetPlayerFromCharacter(Part:FindFirstAncestorOfClass("Model") or Part.Parent) then
+					local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
+					local Char = Local.Character;
+
+					Attachment.Parent = Part;
+					Position.Parent = Part;
+					Orientation.Parent = Part;
+					Attachment2.Parent = Blackhole;
+
+					Position.Responsiveness = 200;
+					Orientation.Responsiveness = 200;
+
+					Position.MaxForce = 9e9;
+					Orientation.MaxTorque = 9e9;
+
+					Position.Attachment0 = Attachment
+					Position.Attachment1 = Attachment2
+					Orientation.Attachment1 = Attachment2
+					Orientation.Attachment0 = Attachment
+				end
+			end
+		until not Env().Blackhole or not Blackhole
+	end,
+})
+
+Command.Add({
+	Aliases = { "unblackhole" },
+	Description = "Stops the blackhole command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		SetEnv("Blackhole", false)
+		Blackhole:Destroy()
+	end,
+})
+
+Command.Add({
+	Aliases = { "fullbright", "fb" },
+	Description = "Makes the game bright",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		Services.Lighting.ClockTime = 12
+		Services.Lighting.Brightness = 1
+		Services.Lighting.GlobalShadows = false
+		Services.Lighting.FogEnd = 9e9
+
+		Connect(PropertyChanged(Services.Lighting, "ClockTime"), function() 
+    		Services.Lighting.ClockTime = 12
+		end) 
+
+		Connect(PropertyChanged(Services.Lighting, "Brightness"), function() 
+    		Services.Lighting.Brightness = 1
+		end) 
+
+		Connect(PropertyChanged(Services.Lighting, "GlobalShadows"), function() 
+    		Services.Lighting.GlobalShadows = false
+		end) 
+
+		Connect(PropertyChanged(Services.Lighting, "FogEnd"), function() 
+  			Services.Lighting.FogEnd = 9e9
+		end) 
+	end,
+})
+
+Command.Add({
+	Aliases = { "deleteunanchored", "deleteua" },
+	Description = "Sends every unanchored part that you have Network Ownership over to the void",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		pcall(function() 
+			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
+		end)
+
+		for Index, Part in next, workspace:GetDescendants() do
+			if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) then
+				for Index = 1, 20 do
+					Part.CFrame = CFrame.new(0, workspace.FallenPartsDestroyHeight, 0)
+				end
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "setsimulationradius", "setsimradius", "ssr" },
+	Description = "Sets the simulation radius if your executor supports it (HEAVILY RECOMMENDED TO USE)",
+	Arguments = {
+		{ Name = "Amount (Higher the better)", Type = "Number" }
+	},
+	Plugin = false,
+	Task = function(Amount)
+		if setsimulationradius then
+			setsimulationradius(SetNumber(Amount), SetNumber(Amount))
+			Utils.Notify("Success", "Success!", Format("Your simulation radius is now set to %s", Amount))
+
+		else
+			Utils.Notify("Error", "Error!", "Your executor does not support this command, missing function: setsimulationradius")
+		end
+	end,
+})
+
+
+Command.Add({
+	Aliases = { "unattachpart" },
+	Description = "Stops the attach part command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        SetEnv("AttachParts", false);
+        Utils.Notify("Success", "Success!", "Attach Parts is now disabled")
+
+	end,
+})
+
+Command.Add({
+	Aliases = { "bang" },
+	Description = "please stop",
+	Arguments = {
+        { Name = "Target", Type = "Player" };
+        { Name = "Speed", Type = "Number" };
+    },
+	Plugin = false,
+	Task = function(Target, Speed) 
+        local Targets = GetPlayer(Target);
+        SetEnv("Bang", true);
+        
+        if Targets then
+            local Target = Targets[1]
+
+            if Target and Target.Character then
+                local Root = GetRoot(Target.Character);
+                local Animation = Instance.new("Animation");
+
+                if R6Check(Target) then
+                    Animation.AnimationId = "rbxassetid://148840371"
+                else
+                    Animation.AnimationId = "rbxassetid://5918726674"
+                end
+
+                BangAnim = GetHumanoid(Local.Character):LoadAnimation(Animation);
+                BangAnim:Play(Speed or 0.1, Speed or 1, Speed or 1)
+
+                repeat task.wait() 
+                    GetRoot(Local.Character).CFrame = GetRoot(Target.Character).CFrame * CFrame.new(0, 0, 1.2);
+                until not Env().Bang 
+            else
+                Utils.Notify("Error", "Error!", "No player found, please try again");
+            end
+        end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unbang" },
+	Description = "Stops the bang command",
+	Arguments = {},
+	Plugin = false,
+	Task = function() 
+        SetEnv("Bang", false);
+        BangAnim:Stop()
+	end,
+})
+
+
+Command.Add({
 	Aliases = { "controlnpc" },
 	Description = "Click on an NPC to control them (WONT WORK ON EVERY NPC)",
 	Arguments = {},
 	Plugin = false,
 	Task = function()
+        SetEnv("ControlNpc", true);
+
 		Connect(Local.Mouse.Button1Down, function() 
 			local Npc = Local.Mouse.Target.Parent
 			local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
 
-			if Npc and Npc:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Npc) then
+			if Env().ControlNpc and Npc and Npc:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Npc) then
 				local Root = Npc:FindFirstChild("HumanoidRootPart");
 				local Char = Local.Character;
 				local LocalRoot = Char.HumanoidRootPart;
@@ -4520,6 +4792,18 @@ Command.Add({
 
 	end,
 })
+
+Command.Add({
+	Aliases = { "uncontrolnpc" },
+	Description = "Stops the controlnpc command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+        SetEnv("ControlNpc", false);
+        Utils.Notify("Success", "Success!", "Control NPCs is now disabled")
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "invisible", "invis" },
@@ -5563,6 +5847,29 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "nopurchaseprompts", "noprompts", "nopp" },
+	Description = "Blocks purchase prompts from appearing",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		game:GetService("CoreGui").PurchasePrompt.Enabled = false
+		Utils.Notify("Success", "Success!", "Purchase prompts are now hidden")
+	end,
+})
+
+Command.Add({
+	Aliases = { "purchaseprompts", "prompts", "pp" },
+	Description = "Allows purchase prompts to appear",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		game:GetService("CoreGui").PurchasePrompt.Enabled = true
+		Utils.Notify("Success", "Success!", "Purchase prompts are now shown")
+	end,
+})
+
+
+Command.Add({
 	Aliases = { "checkgrabber" },
 	Description = "If someones using a tool grabber, it will tell you which one is doing that",
 	Arguments = {},
@@ -5739,11 +6046,14 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
-		for i, v in next, Local.Character:GetDescendants() do
-			if v:IsA("BasePart") then
-				v.CanCollide = false
-			end
-		end
+        SetEnv("Noclip", true)
+        repeat task.wait(0.1)
+		    for i, v in next, Local.Character:GetDescendants() do
+			    if v:IsA("BasePart") then
+			    	v.CanCollide = false
+		    	end
+		    end
+        until not Env().Noclip
 	end,
 })
 
@@ -5753,6 +6063,9 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
+        SetEnv("Noclip", false);
+        task.wait(0.5);
+
 		for i, v in next, Local.Character:GetDescendants() do
 			if v:IsA("BasePart") then
 				v.CanCollide = true
@@ -6661,8 +6974,6 @@ Command.Add({
 		end
 	end,
 })
-
-warn(string.format("[LOADING INFORMATION] - Mid-way through commands (%s)", tostring(tick() - LoadTime)))
 
 
 Command.Add({
@@ -7823,8 +8134,6 @@ Command.Add({
 	end,
 })
 
-warn(string.format("[LOADING INFORMATION] - After loading commands & checking vuln & before plugins (%s)", tostring(tick() - LoadTime)))
-
 Spawn(function()
 	if Checks.File then
 		xpcall(function()
@@ -7847,8 +8156,6 @@ Spawn(function()
 		end
 	end
 end)
-
-warn(string.format("[LOADING INFORMATION] - After plugins & before the rest (%s)", tostring(tick() - LoadTime)))
 
 -- Rest
 
@@ -7977,14 +8284,14 @@ do
 			end
 		end
 	end
-end
 
-warn(string.format("[LOADING INFORMATION] - After rest of stuff & before loading themes (%s)", tostring(tick() - LoadTime)))
+	if Options.AutoSimRadius and setsimulationradius then
+		setsimulationradius(9e9, 9e9);
+	end
+end
 
 Autofills.Search(Blank);
 Library.LoadTheme(Settings.Themes);
-
-warn(string.format("[LOADING INFORMATION] - Done! (%s)", tostring(tick() - LoadTime)))
 
 Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
 Utils.Notify("Success", "Loaded!", Format("Loaded in %.2f seconds", tick() - LoadTime), 5);
