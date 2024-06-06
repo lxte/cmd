@@ -4636,15 +4636,19 @@ Command.Add({
 	Arguments = {},
 	Plugin = false,
 	Task = function()
+		isnetworkowner = isnetworkowner or function(part) return true end 
+
 		pcall(function() 
 			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
 		end)
 
 		for Index, Part in next, workspace:GetDescendants() do
-			if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) then
-				for Index = 1, 20 do
-					Part.CFrame = CFrame.new(0, workspace.FallenPartsDestroyHeight, 0)
-				end
+			if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) and not Services.Players:GetPlayerFromCharacter(Part:FindFirstAncestorOfClass("Model") or Part.Parent) then
+				local Pos = Instance.new("BodyPosition", Part)
+				Part.CFrame = CFrame.new(0, workspace.FallenPartsDestroyHeight + 10, 0)
+				Pos.MaxForce = Vector3.new(1, 1, 1) * math.huge
+				Pos.Position = Part.Position
+				Pos.P = 1e9
 			end
 		end
 	end,
