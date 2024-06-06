@@ -4704,7 +4704,7 @@ Command.Add({
                 local Root = GetRoot(Target.Character);
                 local Animation = Instance.new("Animation");
 
-                if R6Check(Target) then
+                if R6Check(Local.Player) then
                     Animation.AnimationId = "rbxassetid://148840371"
                 else
                     Animation.AnimationId = "rbxassetid://5918726674"
