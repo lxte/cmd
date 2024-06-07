@@ -1,16 +1,8 @@
 --[[
-	Cmd [V1]
-	URL: "https://github.com/lxte/cmd";
+	Cmd V1
+	GitHub: "https://github.com/lxte/cmd";
 	Main: "https://raw.githubusercontent.com/lxte/cmd/main/main.lua";
 	Testing: "https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua";
-
-	Made by late.
-	
-	TODO - [
-		Remake the flight system - done
-		Test if the UI Blur saving works on an executor [Rn using studio so it can't save settings] - done
-		More commands ofc
-	]
 ]]
 
 if not game:IsLoaded() then
@@ -22,7 +14,7 @@ local Settings = {
 	Prefix = ";",
 	Seperator = ",",
 	Player = "/",
-	Version = "1.1", -- this only gets changed if i add something NEW in the settings
+	Version = "1.1",
 	ScaleSize = 1,
 	Blur = false,
 	Themes = {
@@ -40,9 +32,9 @@ local Settings = {
 	Binds = {},
 }
 
-local AutoLogger, OriginalSettings = {}, Settings -- auto logger - for logging chat messages without loading the logs tab | original settings (before swapping it with the saved one)
+local AutoLogger, OriginalSettings = {}, Settings 
 
-local Options = { -- for the settings tab
+local Options = { 
 	Notifications = true,
 	AntiInterfere =  false,
 	Recommendation = true,
@@ -54,7 +46,6 @@ local Options = { -- for the settings tab
 local Ref = cloneref or function(ref) 
 	return ref
 end
-
 
 local Services = {
 	Players = Ref(game:GetService("Players"));
@@ -138,7 +129,7 @@ end, function(Result)
 	warn(Result);
 end)
 
--- inserting the ui
+-- UI [INSERT]
 local Screen = nil
 
 if Services.Run:IsStudio() then
@@ -149,7 +140,7 @@ end
 
 local Cmd, Bar = Screen.Command, Screen.Command.Bar;
 local Blurred, Lib, Example, Open, Autofill, Box, Recommend, Popup, ColorPopup, pressTab, Protection =
-	{},
+{},
 Screen.Library,
 Screen.Example,
 Screen.Open,	
@@ -167,7 +158,7 @@ end, function()
 	Screen.Parent = (Local.Player.PlayerGui);
 end)
 
--- functions & stuff like that lol
+-- Cmd [FUNCTIONS]
 local Lower = string.lower;
 local Split = string.split;
 local Sub = string.sub;
@@ -287,6 +278,14 @@ GetTools = function(Player)
 	end, true)
 
 	return Tools
+end
+
+HighSimulationRadius = function() 
+	Spawn(function() 
+		repeat Wait(1)
+			setsimulationradius(100000 * 100000, 100000 * 100000) 
+		until not Screen
+	end)
 end
 
 Randomize = function(Characters)
@@ -743,7 +742,7 @@ Foreach({ Cmd:GetChildren(), Screen:GetChildren() }, function(Index, Canva)
 	end
 end, true)
 
--- command lib
+-- Admin [LIBRARY]
 Command = {}
 Commands = {}
 Admins = {}
@@ -756,13 +755,12 @@ local Env = function()
 end
 
 SetEnv = function(Name, Bool) 
-	-- this is so i dont do Env().blabla = false task.wait() Env().blabla = true (to stop a loop)
 	Env()[Name] = false
 	Wait();
 	Env()[Name] = Bool
 end
 
--- command functions 
+-- Command [FUNCTIONS]
 
 Methods = {}
 
@@ -816,9 +814,10 @@ local Modules = {
 	ColorPicker = nil,
 }
 
-Spawn(function() -- Command modules
-	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))();
+-- Command [MODULES]
+Spawn(function()
 	Modules.Freecam = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/freecam"))();
+	Modules.ColorPicker = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/colorpicker"))();
 	Modules.Bhop = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/bhop"))();
 	Modules.Blur = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/assets/blur"))();
 end)
@@ -831,8 +830,7 @@ end
 
 local Walkfling = function(Power, Distance, Bool)
 	Distance = tonumber(Distance) or 5
-
-	SetEnv("WalkFling", Bool)
+	SetEnv("WalkFling", Bool);
 
 	Spawn(function()
 		local HumanoidRootPart, Character, Velocity, Movel = GetRoot(Local.Character), Local.Character, nil, 0.1
@@ -898,7 +896,7 @@ local Fling = function(Target)
 	end)
 end	
 
--- ui lib
+-- UI [LIBRARY]
 local Utils = {}
 local Tweens = {}
 local Tab = {}
@@ -906,6 +904,7 @@ local Library = {}
 local Autofills = {}
 local Utils = {}
 Tweens.Info = {}
+
 Autofills.Args = {
 	["String"] = {
 		Name = "String",
@@ -2002,8 +2001,11 @@ Utils.ColorPopup = function(Callback)
 	end
 end
 
--- data functions
-local Data = {}
+-- Data [FUNCS]
+Data = {}
+Event = {}
+Events = {}
+
 Data.Webhook = {}
 
 Data.new = function(Name, Info)
@@ -2117,7 +2119,6 @@ Data.SetOption = function(OptionName, Value)
 	Data.new("Toggles.json", JSONEncode(Services.Http, Options));
 end
 
--- planned webhook command
 Data.Webhook.Send = function(Webhook, Message)
 	request({
 		Url = Webhook,
@@ -2132,70 +2133,70 @@ Data.Webhook.Send = function(Webhook, Message)
 	})
 end
 
-Spawn(function()
+Event.Default =  JSONEncode(Services.Http, { ["Executed"] = {}, ["Chat"] = {}, ["Respawn"] = {}, ["Died"] = {}, ["Damaged"] = {}, ["Leaving"] = {} })
+
+if Checks.File then
+	if not Data.get("Events.json") then
+		Data.new("Events.json", Event.Default);
+	end
+	
 	if not Data.get("Settings.json") then
 		Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 	end
-
+	
 	if not Data.get("Themes.json") then
 		local Themes = {}
-
+	
 		for Index, Color in next, Settings.Themes do
 			Themes[Index] = tostring(Color)
 		end
-
+	
 		Data.new("Themes.json", JSONEncode(Services.Http, Themes));
 	end
-
+	
 	if not Data.get("CustomAliases.json") then
 		Data.new("CustomAliases.json", JSONEncode(Services.Http, {}));
 	end
-
+	
 	if not Data.get("Scale.json") then
 		Data.new("Scale.json", "1");
 	end
-
+	
 	if not Data.get("Waypoints.json") then
 		Data.new("Waypoints.json", JSONEncode(Services.Http, {}));
 	end
-
+	
 	if not Data.get("Toggles.json") then
 		Data.new("Toggles.json", JSONEncode(Services.Http, Options));
 	end
 
-	if Checks.File then
-		xpcall(function()
-			Settings.Themes = Data.SetUpThemeTable(JSONDecode(Services.Http, Data.get("Themes.json")));
+	Spawn(function()
+		Events = JSONDecode(Services.Http, Data.get("Events.json") or Event.Default)
+		Settings.Themes = Data.SetUpThemeTable(JSONDecode(Services.Http, Data.get("Themes.json")));
 
-			local Themes = Settings.Themes;
-			Settings = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings));
-			Settings.Themes = (Themes or Settings.Themes);
-			Settings.ScaleSize = (Data.get("Scale.json") or 1);
-			Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
+		local Themes = Settings.Themes;
+		Settings = JSONDecode(Services.Http, Data.get("Settings.json") or JSONEncode(Services.Http, Settings));
+		Settings.Themes = (Themes or Settings.Themes);
+		Settings.ScaleSize = (Data.get("Scale.json") or 1);
+		Options = JSONDecode(Services.Http, Data.get("Toggles.json") or JSONEncode(Services.Http, Options));
 
-			Library.LoadTheme()
+		if Settings and (not Settings.Version or Settings.Version ~= OriginalSettings.Version) then
+			Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
 
-			if Settings and (not Settings.Version or Settings.Version ~= OriginalSettings.Version) then
-				Utils.Notify("Information", "Outdated Settings", "Since your saved settings are outdated, Cmd has reset them. Do not worry, your prefix & themes are still the same", 15)
-
-				for Index, Setting in next, OriginalSettings do
-					if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" and Index ~= "Blur" then
-						Settings[Index] = Setting
-					end
+			for Index, Setting in next, OriginalSettings do
+				if Index ~= "Prefix" and Index ~= "Themes" and Index ~= "ScaleSize" and Index ~= "Blur" then
+					Settings[Index] = Setting
 				end
-
-				if Settings.Blur == nil then
-					Settings.Blur = false
-				end
-
-				Data.new("Settings.json", JSONEncode(Services.Http, Settings));
 			end
 
-		end, function(Result) 
-			warn(Format("there has been an error trying to load ui settings OR checking if you're using an outdated version - %s", Result))
-		end)
-	end
-end)
+			if Settings.Blur == nil then
+				Settings.Blur = false
+			end
+
+			Data.new("Settings.json", JSONEncode(Services.Http, Settings));
+		end
+	end)
+end
 
 SetUIScale = function(Scale)
 	if not tonumber(Scale) then return end
@@ -2212,7 +2213,7 @@ SetUIScale = function(Scale)
 	end
 end
 
--- command lib
+-- Command [LIBRARY]
 Command.Add = function(Information)
 	local Aliases = Information.Aliases;
 	local Description = Information.Description;
@@ -2307,7 +2308,6 @@ Autofills.Recommend = function(Input)
 		end
 	end
 
-	-- close ur eyes theres trash code
 	if #Split(Input, " ") > 1 and Screen.Parent then
 		local Command = Command.Find(Lowered)
 		if Command then
@@ -2338,7 +2338,7 @@ Autofills.Recommend = function(Input)
 						end
 					end
 
-					if not PlayerFound then -- if still not found
+					if not PlayerFound then
 						local GetPlayerArguments = { "all", "random", "others", "seated", "stood", "me", "closest", "farthest", "enemies", "dead", "alive", "friends", "nonfriends"}
 						for Index, Arg in next, GetPlayerArguments do
 							if Find(Sub(Arg, 1, #Player), Lower(Player)) then
@@ -2360,7 +2360,82 @@ Autofills.Recommend = function(Input)
 	end
 end
 
--- Commands
+local OldHealth = 100
+
+Event.New = function(Name, Connection, UseHumanoid, HumanoidProperty, HumanoidCheck, ConnectionFunction) 
+	if not Screen then return end 
+
+	if Checks.File then
+		Events[Name] = (JSONDecode(Services.Http, Data.get("Events.json") or "{'Name': {}}, ")[Name]) or {}
+	else
+		Events[Name] = {}
+	end
+
+	if Name == "Executed" then
+		for Index, Cmd in next, Events[Name] do
+			Command.Parse(Cmd)
+		end
+	elseif UseHumanoid and HumanoidProperty then
+		Connect(PropertyChanged(Local.Character.Humanoid, HumanoidProperty), function() 
+			if HumanoidCheck(Local.Character.Humanoid) then
+				for Index, Cmd in next, Events[Name] do
+					Command.Parse(Cmd)
+				end
+			end
+		end)
+
+		Local.Player.CharacterAdded:Connect(function(Char)
+			Wait(.5);
+			local Humanoid = Char:WaitForChild("Humanoid");
+			OldHealth = 100
+
+			Connect(PropertyChanged(Local.Character.Humanoid, HumanoidProperty), function() 
+				if HumanoidCheck(Local.Character.Humanoid) then
+					for Index, Cmd in next, Events[Name] do
+						Command.Parse(Cmd)
+					end
+				end
+			end)
+		end)
+	elseif ConnectionFunction then
+		Connect(Connection, function(Connect) 
+			if ConnectionFunction(Connect) then
+				for Index, Cmd in next, Events[Name] do
+					Command.Parse(Cmd);
+				end
+			end
+		end)
+	else
+		Connect(Connection, function() 
+			for Index, Cmd in next, Events[Name] do
+				Command.Parse(Cmd);
+			end
+		end)
+	end
+end
+
+Event.AddCommand = function(Event, Command)
+	if not Screen then return end 
+
+	if Events[Event] then
+		Insert(Events[Event], Command)
+
+		local SavedEvents = JSONDecode(Services.Http, Data.get("Events.json") or Event.Default);
+		local SavedEvent = Events[Event];
+
+		if not Discover(SavedEvent, Command) then
+			SavedEvent[#SavedEvent + 1] = Command
+		end
+
+		Data.new("Events.json", JSONEncode(Services.Http, Events));
+	end
+end
+
+if Checks.File then
+	Events = JSONDecode(Services.Http, Data.get("Events.json") or Event.Default);
+end
+
+-- Admin [COMMANDS]
 
 Command.Add({
 	Aliases = { "tutorial" },
@@ -2898,6 +2973,7 @@ Command.Add({
 
 			-- Tabs
 			local Information = Library.new("Switch", { Title = "Information", Description = "Get info about Cmd", Parent = MainTab })
+			local EventSwitch = Library.new("Switch", { Title = "Events", Description = "Run commands whenever something happens", Parent = MainTab })
 			local Aliases = Library.new("Switch", { Title = "Aliases", Description = "Add custom aliases (nicknames) for commands!", Parent = MainTab })
 			local Toggles = Library.new("Switch", { Title = "Toggles", Description = "Enable or Disable certain Cmd options", Parent = MainTab })	
 			local Themes = Library.new("Switch", { Title = "Themes", Description = "Modify the appearance of Cmd", Parent = MainTab })	
@@ -2937,6 +3013,97 @@ Command.Add({
 			Library.new("Label", { Title = "UI Scale Size",
 				Description = tostring(Settings.ScaleSize),
 				Parent = Information 
+			})
+
+			-- Events
+			Library.new("Section", { Title = "Add Events", Parent = EventSwitch })
+
+			local AddEventBindButton = function(EventName, Description) 
+				local EventCommand = nil
+
+				Library.new("Button", { 
+					Title = EventName,
+					Description = Description,
+					Parent = EventSwitch,
+					Callback = function()
+						local Popup, Scroll = Tab.Popup(Main, "Add a new bind")
+	
+						Tab.ShowPopup(Popup)
+	
+						Library.new("Input", { 
+							Title = "Command",
+							Description = "The command you want to run (Arguments can be inputted too!)",
+							Parent = Scroll,
+							Default = Blank,
+							Callback = function(Cmd)
+								EventCommand = Cmd
+							end,
+						})
+	
+						
+						Library.new("Button", { 
+							Title = "Create",
+							Description = "Create the Event!",
+							Parent = Scroll,
+							Callback = function()
+								if EventCommand then
+									Event.AddCommand(EventName, EventCommand)
+									Utils.Notify("Success", "Success!", "Event command made!")
+								else
+									Utils.Notify("Error", "Error!", "Could not find Command")
+								end
+							end,
+						})		
+					end,
+				})
+			end
+
+			AddEventBindButton("Executed", "Runs a command as soon as Cmd is executed");
+			AddEventBindButton("Chat", "Runs a command as soon as you chat something");
+			AddEventBindButton("Respawn", "Runs a command as soon as your character respawns");
+			AddEventBindButton("Died", "Runs a command as soon as your character dies");
+			AddEventBindButton("Damaged", "Runs a command as soon as your character dies");
+			AddEventBindButton("Leaving", "Runs a command as soon as you're about to leave");
+
+			Library.new("Section", { Title = "Remove Events", Parent = EventSwitch })
+
+			local DeleteEventType, DeleteEvent = nil, nil
+
+			Library.new("Input", { 
+				Title = "Event Type",
+				Description = "Example; Damaged",
+				Parent = EventSwitch,
+				Default = Blank,
+				Callback = function(Cmd)
+					DeleteEventType = Cmd
+				end,
+			})
+
+			Library.new("Input", { 
+				Title = "Event Command",
+				Description = "Example; goto random",
+				Parent = EventSwitch,
+				Default = Blank,
+				Callback = function(Cmd)
+					DeleteEvent = Cmd
+				end,
+			})
+
+			Library.new("Button", { 
+				Title = "Delete",
+				Description = "Delete the event",
+				Parent = EventSwitch,
+				Callback = function()
+					local Type = Events[DeleteEventType] or {} 
+
+					for Index, Event in next, Type do
+						if Lower(Event) == Lower(DeleteEvent) then
+							Type[Index] = nil
+						end
+					end
+
+					Data.new("Events.json", JSONEncode(Services.Http, Events))
+				end,
 			})
 
 			-- Aliases
@@ -3168,6 +3335,8 @@ Command.Add({
 local ESPSettings = {
 	Fill = 0.5,
 	Outline = 0,
+	NameTagTransparency = 0.2,
+	NameTagSize = 12,
 	Current = false,
 	TargetsOnly = false,
 }
@@ -3195,19 +3364,19 @@ ESPSettings.InfoESP = function(Target)
 
 			InfoTag.BackgroundTransparency = 1
 			InfoTag.Size = UDim2.new(1, 0, 1, 0)
-			InfoTag.TextSize = 12
+			InfoTag.TextSize = NameTagSize or 12
 			InfoTag.TextColor3 = Color3.new(255, 255, 255)
 			InfoTag.Font = Enum.Font.ArialBold
 			InfoTag.AnchorPoint = Vector2.new(0.5, 0.5)
 			InfoTag.Position = UDim2.new(0.5, 0, 0.5, 0)
 			InfoTag.TextXAlignment = "Center"
 			InfoTag.RichText = true
-			InfoTag.TextTransparency = 0.2
+			InfoTag.TextTransparency = NameTagTransparency or 0.2
 			InfoTag.ZIndex = 100
 
 			repeat Wait(0.2) 
 				InfoTag.Text = Format("<b>%s</b> <font color='rgb(200, 200, 200)'>(%s)</font>\n[%s] [%s / 100]", tostring(Target.DisplayName), tostring(Target.Name), tostring(math.floor((Local.Character.Head.Position - Head.Position).Magnitude)), tostring(Char.Humanoid.Health))
-			until Char.Humanoid.Health == 0 or not Billboard or not Head
+			until Char.Humanoid.Health == 0 or not Billboard or not Head or not Target
 
 			Billboard:Destroy()
 		end
@@ -3326,6 +3495,41 @@ Command.Add({
 					SetESP(ESPSettings.Current, ESPSettings.Outline, Fill);
 				end,
 			})
+
+			Library.new("Input", { Title = "Name Tag Transaparency",
+			Description = "The transparency of player name tags",
+			Default = 0.2,
+			Parent = MainTab,
+			Callback = function(Input)
+					ESPSettings.NameTagTransparency = SetNumber(Input);
+					
+					for Index, Billboard in next, ESPSettings.Holder:GetChildren() do
+						local NameTag = Billboard:FindFirstChildOfClass("TextLabel");
+
+						if NameTag then
+							NameTag.TextTransparency = SetNumber(Input)
+						end
+					end
+				end,
+			})
+
+			Library.new("Input", { Title = "Name Tag Size",
+			Description = "The Size of player name tags",
+			Default = 12,
+			Parent = MainTab,
+			Callback = function(Input)
+					ESPSettings.NameTagSize = SetNumber(Input);
+					
+					for Index, Billboard in next, ESPSettings.Holder:GetChildren() do
+						local NameTag = Billboard:FindFirstChildOfClass("TextLabel");
+
+						if NameTag then
+							NameTag.TextSize = SetNumber(Input)
+						end
+					end
+				end,
+			})
+
 
 			for Index, Player in next, Services.Players:GetPlayers() do
 				local Char = Character(Player);
@@ -3503,7 +3707,6 @@ Command.Add({
 
 			Spawn(function()
 				Connect(Services.Input.InputBegan, function(Key, Processed)
-					print(Key, Aimbot.Key)
 					if Key == Aimbot.Key and Aimbot.Camlock and not Processed then
 						local Closest = Aimbot.Closest()
 
@@ -3929,7 +4132,6 @@ Command.Add({
 	end,
 })
 
-Env().Spam = false
 Command.Add({
 	Aliases = { "spamchat" },
 	Description = "Repeatedly spam a message in chat",
@@ -4199,7 +4401,6 @@ Command.Add({
 	end,
 })
 
-Env().LoopGoto = false
 Command.Add({
 	Aliases = { "loopgoto", "loopto" },
 	Description = "Repeatedly teleports you to your target",
@@ -4293,7 +4494,6 @@ Command.Add({
 	end,
 })
 
-Env().Sync = false
 Command.Add({
 	Aliases = { "sync" },
 	Description = "Repeatedly plays all the sounds in game",
@@ -4473,6 +4673,11 @@ Command.Add({
 		Connect(Local.Mouse.Button1Down, function() 
 			local Part = Local.Mouse.Target
 			local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
+			
+			Attachment.Name = "Cmd"
+			Position.Name = "Cmd"
+			Orientation.Name = "Cmd"
+			Attachment2.Name = "Cmd"
 
 			if Env().AttachParts and Part and not Part.Anchored then
 				local Char = Local.Character;
@@ -4480,6 +4685,7 @@ Command.Add({
 
 				if LocalRoot then
 					Utils.Notify("Success", "Success!", "Part should be attached", 5)
+                    Part.CanCollide = false
 
 					Attachment.Parent = Part;
 					Position.Parent = Part;
@@ -4511,17 +4717,20 @@ Command.Add({
 	Task = function()
 		isnetworkowner = isnetworkowner or function(part) return true end 
 
-		pcall(function() 
-			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
-		end)
-
 		for Index, Part in next, workspace:GetDescendants() do
 			if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) then
 				local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
 				local Char = Local.Character;
 				local LocalRoot = Char.HumanoidRootPart;
+				
+				Attachment.Name = "Cmd"
+				Position.Name = "Cmd"
+				Orientation.Name = "Cmd"
+				Attachment2.Name = "Cmd"
 
 				if LocalRoot then
+                    Part.CanCollide = false
+
 					Attachment.Parent = Part;
 					Position.Parent = Part;
 					Orientation.Parent = Part;
@@ -4544,6 +4753,43 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "unattachparts" },
+	Description = "Stops the attachparts command",
+	Arguments = {},
+	Plugin = false,
+	Task = function()
+		local Classes = { "Attachment", "AlignPosition", "AlignOrientation" }
+
+		for Index, Part in next, workspace:GetDescendants() do
+			if Part and Part:IsA("BasePart") and not Part.Anchored then
+				for Index, Child in next, Part:GetChildren() do
+					if Child.Name == "Cmd" and Discover(Classes, Child.ClassName) then
+						Child:Destroy() 
+					end
+				end
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "uafling" },
+	Description = "Flings with unanchored parts",
+	Arguments = {},
+	Plugin = false,
+	Task = function(Target)
+		local Targets = GetPlayer(Target)
+    
+        for Index, Target in next, Targets do
+            Command.Parse("attachparts")
+            Command.Parse(Format("fling %s", Target.Name))
+            task.wait(3)
+			Command.Parse("unattachparts")
+        end
+	end,
+})
+
+Command.Add({
 	Aliases = { "blackhole" },
 	Description = "Creates a blackhole that teleports parts to it",
 	Arguments = {},
@@ -4553,7 +4799,6 @@ Command.Add({
 		SetEnv("Blackhole", true)
 
 		pcall(function() 
-			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
 			Blackhole:Destroy()
 		end)
 
@@ -4568,6 +4813,13 @@ Command.Add({
 				if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) and not Services.Players:GetPlayerFromCharacter(Part:FindFirstAncestorOfClass("Model") or Part.Parent) then
 					local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
 					local Char = Local.Character;
+					
+					Attachment.Name = "Cmd"
+					Position.Name = "Cmd"
+					Orientation.Name = "Cmd"
+					Attachment2.Name = "Cmd"
+
+                    Part.CanCollide = false
 
 					Attachment.Parent = Part;
 					Position.Parent = Part;
@@ -4638,10 +4890,6 @@ Command.Add({
 	Task = function()
 		isnetworkowner = isnetworkowner or function(part) return true end 
 
-		pcall(function() 
-			setsimulationradius(9e9 * 9e9, 9e9 * 9e9) 
-		end)
-
 		for Index, Part in next, workspace:GetDescendants() do
 			if Part and Part:IsA("BasePart") and not Part.Anchored and isnetworkowner(Part) and not Services.Players:GetPlayerFromCharacter(Part:FindFirstAncestorOfClass("Model") or Part.Parent) then
 				local Pos = Instance.new("BodyPosition", Part)
@@ -4664,7 +4912,7 @@ Command.Add({
 	Task = function(Amount)
 		if setsimulationradius then
 			setsimulationradius(SetNumber(Amount), SetNumber(Amount))
-			Utils.Notify("Success", "Success!", Format("Your simulation radius is now set to %s", Amount))
+			Utils.Notify("Success", "Success!", Format("Your simulation radius is now set to %s", Amount or '0'))
 
 		else
 			Utils.Notify("Error", "Error!", "Your executor does not support this command, missing function: setsimulationradius")
@@ -4681,7 +4929,6 @@ Command.Add({
 	Task = function()
         SetEnv("AttachParts", false);
         Utils.Notify("Success", "Success!", "Attach Parts is now disabled")
-
 	end,
 })
 
@@ -4747,6 +4994,11 @@ Command.Add({
 			local Npc = Local.Mouse.Target.Parent
 			local Attachment, Position, Orientation, Attachment2 = Instance.new("Attachment"), Instance.new("AlignPosition"), Instance.new("AlignOrientation"), Instance.new("Attachment")
 
+			Attachment.Name = "Cmd"
+			Position.Name = "Cmd"
+			Orientation.Name = "Cmd"
+			Attachment2.Name = "Cmd"
+
 			if Env().ControlNpc and Npc and Npc:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Npc) then
 				local Root = Npc:FindFirstChild("HumanoidRootPart");
 				local Char = Local.Character;
@@ -4789,8 +5041,6 @@ Command.Add({
 					Orientation.Attachment0 = Attachment
 
 				end
-			else
-				warn("Following Model is not an NPC")
 			end
 		end)
 
@@ -4939,7 +5189,6 @@ Command.Add({
 	end,
 })
 
-Env().HiddenWalls = {}
 Command.Add({
 	Aliases = { "showwalls" },
 	Description = "Shows all the invisible walls",
@@ -5193,45 +5442,6 @@ Command.Add({
 	end,
 })
 
-
--- might be patched, will look into it.
---[[Command.Add({
-			Aliases = { "toolballs" },
-			Description = "Makes all your tools in inventory act like balls",
-			Arguments = {},
-			Plugin = false,
-			Task = function()
-				local Humanoid = GetHumanoid(Local.Character)
-				local Tools = GetTools(Local.Player)
-
-				if not Humanoid then return end
-
-				for _, x in next, Tools do
-					Methods.RemoveRightGrip(x)
-				end
-
-				for i,v in next, Tools do
-					local Part = Instance.new("Part", workspace)
-					Part.CFrame = GetRoot(Local.Character).CFrame
-					Part.Size = Vector3.new(3.5,3.5,3.5)
-					Part.Shape = "Ball"
-					Part.Transparency = 0.9
-					spawn(function()
-						while Wait() do
-							if v and v.Parent == Local.Character then
-								v.Handle.Position = Part.Position
-								v.Handle.CFrame = Part.CFrame
-							else
-								Wait()
-								Part:Destroy()
-							end
-						end
-					end)
-				end
-			end,
-		})
-]]
-
 Command.Add({
 	Aliases = { "antisit", "nosit" },
 	Description = "Makes you not able to sit in chairs",
@@ -5258,7 +5468,6 @@ Command.Add({
 	end,
 })
 
-Env().AntiFling = false
 Command.Add({
 	Aliases = { "antifling" },
 	Description = "Makes you a harder target to fling",
@@ -5532,20 +5741,6 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "colorpicker" },
-	Description = "Testing out the color picker",
-	Arguments = {},
-	Plugin = false,
-	Task = function()	
-		Utils.ColorPopup(function(RGB)
-			print(RGB) 
-			print(typeof(RGB))
-		end)
-	end,
-})
-
-Env().Fakelag = false
-Command.Add({
 	Aliases = { "fakelag" },
 	Description = "Makes it seem like you're lagging",
 	Arguments = {},
@@ -5690,8 +5885,6 @@ Command.Add({
 	end,
 })
 
-
-Env().Trigger = false
 Command.Add({
 	Aliases = { "triggerbot" },
 	Description = "Clicks automatically when your mouse in on a player",
@@ -5917,7 +6110,6 @@ Command.Add({
 	end,
 })
 
-Env().HeadStand = false
 Command.Add({
 	Aliases = { "headstand" },
 	Description = "Stand on your target's head",
@@ -5955,7 +6147,6 @@ Command.Add({
 	end,
 })
 
-Env().Follow = false
 Command.Add({
 	Aliases = { "follow" },
 	Description = "Follows your target",
@@ -6262,7 +6453,6 @@ Command.Add({
 	end,
 })
 
-Env().AnimSpeed = false
 Command.Add({
 	Aliases = { "animationspeed", "animspeed" },
 	Description = "Set your character's animation speed",
@@ -6738,6 +6928,7 @@ Command.Add({
 			Load:Stop()
 			Env().Stand = false
 			Command.Parse("unairwalk")
+			Local.Camera.CameraSubject = GetHumanoid(Local.Character)
 
 			break
 		end
@@ -6751,7 +6942,6 @@ Command.Add({
 	Plugin = false,
 	Task = function()
 		Env().Stand = false
-		Local.Camera.CameraSubject = GetHumanoid(Local.Character)
 	end,
 })
 
@@ -7548,7 +7738,6 @@ Command.Add({
 	end,
 })
 
-Env().AutoGrabTools = false
 Command.Add({
 	Aliases = { "autograbtools" },
 	Description = "Automatically grabs tools once they are dropped",
@@ -7599,7 +7788,6 @@ Command.Add({
 	end,
 })
 
-Env().AutoGrabDeleteTools = false
 Command.Add({
 	Aliases = { "autograbdeletetools", "autogdt" },
 	Description = "Automatically deletes tools once they are dropped",
@@ -7631,7 +7819,6 @@ Command.Add({
 	end,
 })
 
-Env().Annoy = false
 Command.Add({
 	Aliases = { "annoy" },
 	Description = "Annoys your target",
@@ -7922,7 +8109,6 @@ Command.Add({
 	end,
 })
 
-Env().Animations = {}
 Command.Add({
 	Aliases = { "playanimation" },
 	Description = "Plays animation using its ID",
@@ -8023,7 +8209,6 @@ Command.Add({
 	end,
 })
 
-Env().Hitbox = false
 Command.Add({
 	Aliases = { "hitbox" },
 	Description = "Set everyone's character hitbox in the server",
@@ -8161,7 +8346,12 @@ Spawn(function()
 	end
 end)
 
--- Rest
+Event.New("Executed", nil);
+Event.New("Chat", Local.Player.Chatted);
+Event.New("Respawn", Local.Player.CharacterAdded);
+Event.New("Died", nil, true, "Health", function(Humanoid) if Humanoid and Humanoid.Health == 0 then return true end end);
+Event.New("Damaged", nil, true, "Health", function(Humanoid) if Humanoid and Humanoid.Health > 0 and Humanoid.Health < OldHealth then OldHealth = Humanoid.Health; return true end end);	
+Event.New("Leaving", Services.Players.PlayerRemoving, false, false, false, function(Connection) if Connection == Local.Player then return true end end);	
 
 Spawn(function()
 	SetUIScale(Settings.ScaleSize)
@@ -8262,7 +8452,7 @@ do
 	Genv().CmdLoaded = true;
 	Genv().CmdPath = Screen;
 
-	-- loading saved options
+	-- Toggles loaded (from the options table)
 	for Index, Target in next, Services.Players:GetPlayers() do
 		Connect(Target.Chatted, function(Message) 
 			if Options.Logging then
@@ -8290,7 +8480,7 @@ do
 	end
 
 	if Options.AutoSimRadius and setsimulationradius then
-		setsimulationradius(9e9, 9e9);
+		HighSimulationRadius();
 	end
 end
 
