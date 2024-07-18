@@ -2984,7 +2984,7 @@ Command.Add({
 			Library.new("Section", { Title = "Discord", Parent = Information })
 
 			Library.new("Label", { Title = "Join our Discord!",
-				Description = "discord.com/invite/qXcMYSgQ",
+				Description = "discord.gg/6vxNs4K69S",
 				Parent = Information 
 			})
 
@@ -8487,7 +8487,7 @@ end
 Autofills.Search(Blank);
 Library.LoadTheme(Settings.Themes);
 
-Utils.Notify("Information", "IMPORTANT", "Join the discord server - https://discord.gg/GCeBDhm9WN", 15);
+Utils.Notify("Information", "IMPORTANT", "Join our NEW discord server (discord.gg/6vxNs4K69S)", 15);
 Utils.Notify("Success", "Loaded!", Format("Loaded in %.2f seconds", tick() - LoadTime), 5);
 
 Spawn(function()
