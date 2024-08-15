@@ -1,4 +1,6 @@
 # Cmd
+> [!WARNING]  
+> Cmd is no longer being updated, use at your own risk as it can be detectable.
 
 # 🌟 Features
 
