@@ -1,6 +1,6 @@
 # Cmd
 > [!WARNING]  
-> Cmd is no longer being updated, use at your own risk as it can be detectable.
+> Cmd is no longer being updated, use at your own risk as it can be detectable in some games.
 
 # 🌟 Features
 
