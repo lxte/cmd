@@ -1,7 +1,4 @@
 # Cmd
-> [!WARNING]  
-> Cmd is no longer being updated, use at your own risk as it can be detectable in some games.
-
 # 🌟 Features
 
 - Customizable
@@ -11,14 +8,14 @@
  
 <br/> 
 
-# ✨ Loadstring [W.I.P]
+# ✨ Loadstring
 
-## Main [DON'T USE THIS FOR NOW]
+## Main (NEW VERSION - REWRITE)
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/main.lua"))()
 ```
 
-## Testing [USE THIS FOR NOW]
+## Testing (OLD VERSION)
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))()
 ```
@@ -33,4 +30,3 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing
 
 - [7kayoh](https://github.com/7kayoh) - UI Inspiration
 - [ImSnox](https://devforum.roblox.com/u/imsnox/summary) - UI Blurring Module
-- [cocos pov](https://youtube.com) - cocos pov
