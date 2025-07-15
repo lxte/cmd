@@ -3182,8 +3182,6 @@ Command.Add({
 											return Part
 										elseif Lower == "hit" then 
 											return Part.CFrame
-										elseif Lower == "unitray" then
-											print("UNIT RAY.")
 										end	
 									end
 								end
