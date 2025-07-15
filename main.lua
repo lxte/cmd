@@ -1,40 +1,5 @@
---[[ 
-	hi so since roblox is now terming exploiters i decided to stop n release this
-	here are some freatures (i couldnt add everything i wanted mb since most execs are garbage)
-
-	[+] added | [/] changed | [-] removed 
-
-	>> added+
-	features
-	[+] staff notifier (toggleable) - notifies whenever a moderator is in your game
-	[+] new system - slider
-	[+] custom uis
-	[+] internal ui (toggleable)
-	[+] more toggles - (internal ui, fling seated, autofill cap, developer mode, )
-
-	commands
-	[+] search - search scripts using scriptblox api
-	[+] loopdroptools - drops ur tools resets and repeat
-	[+] highlight - highlight classnames & instances with the name you input
-	[+] resetfilter / ref - resets the chat filter if roblox keeps tagging your messages
-	[+] split - split your message into two and uses reset filter to say it
-
-	>> changed/
-	[/] new ui (commandbar, windows, notifications, popups)
-	[/] recoded the library and half the commands (not all commands lmao)
-	[/] esp now uses drawing library instead of roblox's highlight, and has a box and text toggle
-	[/] aimbot options - first person, third person, mouse
-	[/] all features like waypoints and keybinds are in the settings window
-	[/] in the command bar recommendation it will show you the argument name now instead of having to look at the icons to see the type of the argument (much better to understand the arguments needed)
-	[/] servers now should work on solara since it uses a proxy roblox api instead of the actual one, as well you can select the player count of the server you want to join
-	[/] most of the command names (aliases) have been renamed so i recommend looking at the commands to see the new ones
-	[/] a new & faster fling method 
-	[/] completely new plugin system, that provides built-in cmd functions & variables
-	[/] binds now dont need to be held instead just press the key to enable and disable 
-
-	>> removed
-	[-] bang & unbang (haha)
-]]
+-- cmd -> 1.1 beta
+-- 07/14/25
 
 if (not game:IsLoaded()) then
 	game.Loaded:Wait();
@@ -50,7 +15,7 @@ local Settings = {
 	Prefix	 = (";");
 	ChatPrefix = ("!");
 	Seperator = (",");
-	Version = ("Beta 1.0");
+	Version = ("Beta 1.1");
 
 	CustomUI = (Cmd().CustomUI) or "rbxassetid://18617417654",
 
@@ -93,7 +58,7 @@ local Settings = {
 		Developer = false,
 		Notify = true,
 		Popups = true,
-		Interfere = true,
+		RemoveCommandBars = false,
 		Recommendation = true,
 		InternalUI = false,
 		StaffNotifier = true,
@@ -143,7 +108,7 @@ local Methods = ({
 		xpcall(function() 
 			Child.Parent = (gethui and gethui()) or Services.Core
 		end, function() 
-			Child.Parent = Services.Players.LocalPlayer["PlayerGui"];
+			Child.Parent = PlayerGui;
 		end)
 	end,
 }); 
@@ -202,7 +167,7 @@ if (not Character) or (not Humanoid) or (not Root) then
 	end)
 end
 
--- :: INSERT[UI] ::
+-- :: INSERT[UI] :: --
 local UI = (Services.Run:IsStudio() and script.Parent) or Services.Insert:LoadLocalAsset(Settings.CustomUI);
 
 local Assets = UI.Assets 
@@ -221,37 +186,6 @@ local Input = Search.TextBox
 local Recommend = Search.Recommend 
 local Press = Search.Press
 
-local Protected = {} 
-
-if Check("Hook") then 
-	xpcall(function() 
-		--// untested since no free exec has hooking lol hopefully doesnt break...
-		for Index, Descendant in next, UI:GetDescendants() do 
-			Protected[Descendant] = ("RobloxGui");
-		end
-
-		Connect(UI.DescendantAdded, function(Descendant) 
-			Protected[Descendant] = ("RobloxGui");
-		end)
-
-		local Original
-		local isCaller = checkcaller or function() 
-			return true
-		end
-
-		Original = hookmetamethod(game, "__tostring", function(self) 
-			if self and Protected[self] and not isCaller() then 
-				return Protected[self]
-			end 
-			return Original
-		end)	
-
-	end, function(Result)
-		if Settings.Toggles.Developer then 
-			warn(Format("Error occured setting gui protection (%s)", Result))
-		end
-	end)
-end
 Methods.Parent(UI);
 UI.Name = (GenerateGUID(Services.Http));
 Tab.Name = (GenerateGUID(Services.Http));
@@ -612,58 +546,91 @@ local GetPlayer = function(Target)
 	end
 end
 
-local Fling = function(Targets) 
-	local S, Result = pcall(function() 
-		local Flung = (0)
+local Fling = function(Targets: { Player })
+    local Character = LocalPlayer.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
 
-		local Position = Root.CFrame
-		local Velocity = Root.Velocity
-		local DestroyHeight = workspace.FallenPartsDestroyHeight
+    if not (Character and Humanoid and RootPart) then
+        return
+    end
 
-		for Index, Target in next, (Targets) do 
-			local TCharacter = GetCharacter(Target);
-			local THumanoid = GetHumanoid(Target);
-			local TRoot = GetRoot(Target);
+    local Loop = function(BasePart, _Character, _Humanoid)
+        local Duration = 2
+        local Start = tick()
 
-			if (THumanoid) and (TRoot) and (Root) and (THumanoid.Health > 0) and (Target ~= LocalPlayer) then 
-				if not (Settings.Toggles.IngoreSeated and THumanoid.Sit) then
-					local Timer = tick()
-					local AlreadyFlung = (TRoot and TRoot.Velocity.Magnitude > 200)
+        repeat
+            local Velocity = BasePart.Velocity.Magnitude
+            local Direction = _Humanoid and _Humanoid.MoveDirection or Vector3.zero
 
-					Camera.CameraSubject = (THumanoid);
-					workspace.FallenPartsDestroyHeight = (-math.huge);
+            local Offsets = {
+                CFrame.new(0, 2, 0) + Direction * Velocity / 2,
+                CFrame.new(0, -2, 0) + Direction * Velocity / 2,
+                CFrame.new(2, 2, -2) + Direction * Velocity / 2,
+                CFrame.new(-2, -2, 2) + Direction * Velocity / 2
+            }
 
-					repeat Wait();
-						local Offset = TRoot.Velocity * Random.new():NextNumber(-0.2, 2.5)
-						Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-						Root.Velocity = Vector3.new(0, 1e6, 0)
-						Root.CFrame = CFrame.new(TRoot.Position + Offset)
-					until (not TCharacter) or (not Root) or (Settings.Toggles.IgnoreSeated and THumanoid.Sit) or (TRoot.Velocity.Magnitude > 200) or (THumanoid.Health <= 0) or (tick() - Timer >= 2)
-					if (not AlreadyFlung) and (TRoot and TRoot.Velocity.Magnitude > 200) then 
-						Flung += 1
-					end
-				end
-			end
-		end
+            for _, Offset in next, Offsets do
+                local Base = CFrame.new(BasePart.Position)
+                RootPart.CFrame = Base * Offset
+                Character:SetPrimaryPartCFrame(Base * Offset)
+                RootPart.Velocity = Vector3.new(9e7, 9e8, 9e7)
+                RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                Wait()
+            end
+        until BasePart.Velocity.Magnitude > 500 or not BasePart:IsDescendantOf(_Character) or tick() - Start >= Duration
+    end
 
-		repeat 
-			local Old = Position * CFrame.new(0, 1, 0);
-			Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-			Camera.CameraSubject = (Humanoid)
-			Root.CFrame = (Old)
-			Character:SetPrimaryPartCFrame(Old)
+    local OriginalPos = RootPart.CFrame
+    local OldFPDH = workspace.FallenPartsDestroyHeight
+    workspace.FallenPartsDestroyHeight = -1 / 0
 
-			for Index, BodyPart in next, GetClasses(Character, "BasePart", true) do 
-				BodyPart.Velocity = Vector3.new(0, 0, 0)
-				BodyPart.RotVelocity = Vector3.new(0, 0, 0)
-			end
+    local BV = Instance.new("BodyVelocity")
+    BV.Name = "FlingForce"
+    BV.Velocity = Vector3.new(1e8, 1e8, 1e8)
+    BV.MaxForce = Vector3.new(1 / 0, 1 / 0, 1 / 0)
+    BV.Parent = RootPart
 
-			CWait(Services.Run.Heartbeat);
-		until not Root or (Root.Position - Position.p).Magnitude < 20
-		workspace.FallenPartsDestroyHeight = DestroyHeight
-		return Flung
-	end)
-	return Result
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+    for _, TargetPlayer in next, Targets do
+        local _Character = TargetPlayer.Character
+        local _Humanoid = _Character and _Character:FindFirstChildOfClass("Humanoid")
+        local _RootPart = _Humanoid and _Humanoid.RootPart
+
+        if _Character and _RootPart then
+            workspace.CurrentCamera.CameraSubject = _RootPart
+            Loop(_RootPart, _Character, _Humanoid)
+        end
+    end
+
+    BV:Destroy()
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+    workspace.CurrentCamera.CameraSubject = Humanoid
+
+    RootPart.Velocity = Vector3.zero
+    RootPart.RotVelocity = Vector3.zero
+    for _, Part in next, GetClasses(Character, "BasePart") do
+        Part.Velocity = Vector3.zero
+        Part.RotVelocity = Vector3.zero
+    end
+
+    for _, Part in next, GetClasses(Character, "BasePart") do
+        Part.Anchored = true
+    end
+
+    Wait(0.1)
+
+    RootPart.CFrame = OriginalPos
+    Character:SetPrimaryPartCFrame(OriginalPos)
+
+    for _, Part in next, GetClasses(Character, "BasePart") do
+        Part.Anchored = false
+    end
+
+    Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+
+    workspace.FallenPartsDestroyHeight = OldFPDH
 end
 
 local SetFly
@@ -1278,7 +1245,7 @@ function Library:CreateWindow(Config: { Title: string })
 					Finished = (true)
 					Config.Callback(Key)
 
-					if table.find(Mouse, InputType) then
+					if Discover(Mouse, InputType) then
 						MultiSet(Bind, {
 							Text = tostring(InputType):gsub(Types.Mouse, "MB")
 						})
@@ -1374,7 +1341,7 @@ function Library:CreateWindow(Config: { Title: string })
 		local Activate = function()
 			Active = true
 
-			repeat task.wait()
+			repeat Wait()
 				Update()
 			until not Active
 		end
@@ -2329,6 +2296,26 @@ Command.Add({
 				end,
 			})
 
+            Window:AddToggle({
+				Title = "Remove Admin Prompts", 
+				Description = "Removes other command bars that get in the way (Adonis, HD Admin, etc.)",
+				Tab = "Toggles",
+				Default = Settings.Toggles.RemoveCommandBars,
+				Callback = function(Toggle)
+					Settings.Toggles.RemoveCommandBars = Toggle
+					SaveSettings()
+
+                    if Toggle then
+                        API:Notify({
+                            Title = "Success",
+                            Description = "Now everytime you run Cmd other admin prompts wont interfere",
+                            Mode = "Success",
+                            Duration = 5,
+                        })
+                    end
+				end,
+			})
+
 			Window:AddSection({ Title = "Autofill", Tab = "Toggles"})
 
 			Window:AddToggle({
@@ -2888,6 +2875,7 @@ Command.Add({
 
 local AimbotSettings = {
 	Enabled = (false),
+    Triggerbot = (false),
 	Part = ("Head"), --// Available parts: Head, HumanoidRootPart
 	Method = ("Camera"); --// Available methods: Camera, Mouse, Third
 
@@ -2939,6 +2927,10 @@ AimbotSettings.Closest = function()
 	return Target
 end
 
+AimbotSettings.GetPrediction = function(Part)
+	return (Part.Velocity * AimbotSettings.Prediction + Vector3.new(0, 0.1, 0))
+end
+
 Command.Add({
 	Aliases = { "aimbot" },
 	Description = "Tab with Aimbot features",
@@ -2959,6 +2951,44 @@ Command.Add({
 				Default = false,
 				Callback = function(Boolean) 
 					AimbotSettings.Enabled = Boolean
+				end,
+			})
+
+			Window:AddDropdown({
+				Title = "Aimbot Method",
+				Tab = "Home",
+				Options = {
+					["First Person"] = "Camera",
+					["Third Person"] = "Third",
+					["Silent Aim"] = "Silent",
+				},
+				Callback = function(Method) 
+					AimbotSettings.Method = Method
+					
+					if Method == "Silent" then 
+						if Check("Hook") then
+							API:Notify({
+								Title = "Silent Aim",
+								Description = "Enabled",
+								Type = "Success"
+							})
+						else
+							API:Notify({
+								Title = "Silent Aim",
+								Description = "Executor does not support it.",
+								Type = "Error"
+							})
+						end
+					end
+				end,
+			})
+
+            Window:AddToggle({
+				Title = "Trigger Bot Enabled",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Boolean) 
+					AimbotSettings.Triggerbot = Boolean
 				end,
 			})
 
@@ -3032,19 +3062,25 @@ Command.Add({
 				end,
 			})
 
-			Window:AddDropdown({
-				Title = "Aimbot Method",
-				Tab = "Home",
-				Options = {
-					["First Person"] = "Camera",
-					["Third Person"] = "Third",
-				},
-				Callback = function(Method) 
-					AimbotSettings.Method = Method
-				end,
-			})
-
 			Spawn(function()
+                Connect(Services.Run.RenderStepped, function() 
+                    if AimbotSettings.Triggerbot then 
+                        local Target = (function() 
+                            local Target = Mouse.Target
+                            local Character = Target and Target:FindFirstAncestorOfClass("Model")
+                            local Player = Character and Services.Players:GetPlayerFromCharacter(Character)
+
+                            if Player and Player ~= LocalPlayer then
+                                return Player
+                            end
+                        end)()
+
+                        if Target and not (AimbotSettings.TeamCheck and Target.Team == LocalPlayer.Team) then
+                            mouse1click()
+                        end
+                    end
+                end)
+
 				Connect(Services.Input.InputBegan, function(Key, Processed)
 					if Key == AimbotSettings.Key and AimbotSettings.Enabled and not Processed then
 						local Closest = AimbotSettings.Closest()
@@ -3057,7 +3093,7 @@ Command.Add({
 								local Method = AimbotSettings.Method
 								if (Method == "Camera" or Method == "Third") then 
 									local TargetPart = Closest.Character:FindFirstChild(AimbotSettings.Part)
-									local LookAt = TargetPart.CFrame + (TargetPart.Velocity * AimbotSettings.Prediction + Vector3.new(0, 0.1, 0))
+									local LookAt = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart)
 									Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, LookAt.Position)
 
 									if Method == "Third" then
@@ -3077,21 +3113,85 @@ Command.Add({
 					end
 				end)
 
-				local Circle
-				if (Drawing and Drawing.new) then
-					Circle = Drawing.new("Circle");
+				Spawn(function()
+					local Circle
+					if (Drawing and Drawing.new) then
+						Circle = Drawing.new("Circle");
 
-					repeat Wait();
-						local MouseLocation = (Services.Input:GetMouseLocation())
-						if AimbotSettings.Enabled then
-							Circle.Radius = AimbotSettings.FOV.Radius;
-							Circle.Position = Vector2.new(MouseLocation.X, MouseLocation.Y);
-							Circle.Visible = (true);
-						else
-							Circle.Visible = (false);
+						repeat Wait();
+							local MouseLocation = (Services.Input:GetMouseLocation())
+							if AimbotSettings.Enabled then
+								Circle.Radius = AimbotSettings.FOV.Radius;
+								Circle.Position = Vector2.new(MouseLocation.X, MouseLocation.Y);
+								Circle.Visible = (true);
+							else
+								Circle.Visible = (false);
+							end
+
+						until not Circle
+					end
+				end)
+
+				if Check("Hook") then 
+					local OldNamecall
+					OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+						if not checkcaller() and AimbotSettings.Enabled and AimbotSettings.Method == "Silent" and self == Services.Workspace then
+							local Method = getnamecallmethod()
+							local FindPartOnRay = Discover({ "FindPartOnRayWithWhitelist", "FindPartOnRayWithBlacklist", "FindPartOnRay"}, Method)
+														
+							if FindPartOnRay or Method == "Raycast" then 
+								local Target = AimbotSettings.Closest()
+								local Args = { ... }
+
+								if Target then
+									local Part = Target.Character and Target.Character:FindFirstChild(AimbotSettings.Part)
+
+									if Part then
+										if FindPartOnRay and typeof(Args[1]) == "Ray" then 
+											Args[2] = Ray.new(Args[2].Origin, ((Part.Position + AimbotSettings.GetPrediction(Part)) - Args[2].Origin).Unit * 500)
+											return OldNamecall(self, Unpack(Args))
+										elseif Method == "Raycast" and typeof(Args[2]) == "Vector3" then
+											Args[3] = (((Part.Position + AimbotSettings.GetPrediction(Part)) - Args[2]).Unit * 500)
+											return OldNamecall(self, Unpack(Args))
+										end
+									end
+								end
+							end
 						end
 
-					until not Circle
+						return OldNamecall(self, ...)
+					end))
+
+					local OldIndex
+					local Mouse = LocalPlayer:GetMouse()
+
+					OldIndex = hookmetamethod(game, "__index", newcclosure(function(self, Key)
+						if not checkcaller() and AimbotSettings.Enabled and AimbotSettings.Method == "Silent" and self == Mouse then
+							local Lower = Key:lower()
+
+							print(Lower)
+							
+							if Discover({ "target", "hit", "unitray" }, Lower) then
+								local Target = AimbotSettings.Closest()
+
+								if Target then
+									local Part = Target.Character and Target.Character:FindFirstChild(AimbotSettings.Part)
+									
+									if Part then
+										if Lower == "target" then 
+											return Part
+										elseif Lower == "hit" then 
+											return Part.CFrame
+										elseif Lower == "unitray" then
+											print("UNIT RAY.")
+										end	
+									end
+								end
+							end
+						end
+
+						return OldIndex(self, Key)
+					end))
 				end
 			end)
 
@@ -3135,7 +3235,7 @@ Command.Add({
 			})
 
 			local LoadServers = function() 
-				local Servers = Methods.Get(Format("https://games.robloxbadges.com/v1/games/%s/servers/Public?sortOrder=Desc&excludeFullGames=true&limit=100&cursor=", game.PlaceId));
+				local Servers = Methods.Get(Format("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Desc&excludeFullGames=true&limit=100&cursor=", game.PlaceId));
 				local Found = false 
 
 				repeat Wait() 
@@ -3774,6 +3874,47 @@ Command.Add({
 		return "Auto Respawn", "Auto Respawn has been disabled"
 	end,
 })
+
+Command.Add({
+	Aliases = { "fastcarts", "fastc" },
+	Description = "Makes carts go faster",
+	Arguments = {},
+	Task = function()
+		for _, Cart in next, GetClasses(workspace, "Model", false) do 
+            local Button = Cart:FindFirstChild("Up")
+            local ClickDetector = Button and Button:FindFirstChildOfClass("ClickDetector")
+
+            if Button and Button:IsA("BasePart") and ClickDetector then 
+                Spawn(function() 
+                    repeat Wait(0.05)
+                        fireclickdetector(ClickDetector)
+                    until not Button or not ClickDetector
+                end)
+            end
+        end
+	end,
+})
+
+Command.Add({
+	Aliases = { "slowcarts", "slowc" },
+	Description = "Makes carts go backwards",
+	Arguments = {},
+	Task = function()
+		for _, Cart in next, GetClasses(workspace, "Model", false) do 
+            local Button = Cart:FindFirstChild("Down")
+            local ClickDetector = Button and Button:FindFirstChildOfClass("ClickDetector")
+
+            if Button and Button:IsA("BasePart") and ClickDetector then 
+                Spawn(function() 
+                    repeat Wait(0.05)
+                        fireclickdetector(ClickDetector)
+                    until not Button or not ClickDetector
+                end)
+            end
+        end
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "enablechat", "enablec", "ech" },
@@ -5342,6 +5483,27 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "fireremotes", "fre" },
+	Description = "Fires every remote in-game",
+	Arguments = {},
+	Task = function()
+		local Fired = 0
+
+		for Index, Target in next, GetClasses(game, "RemoteEvents") do
+			Target:FireServer()
+			Fired += 1
+		end
+
+        for Index, Target in next, GetClasses(game, "UnreliableRemoteEvents") do
+			Target:FireServer()
+			Fired += 1
+		end
+
+		return "Fired", Format("Fired %s remotes", Fired)
+	end,
+})
+
+Command.Add({
 	Aliases = { "showprompts" },
 	Description = "Shows purchase prompts",
 	Arguments = {},
@@ -6529,7 +6691,6 @@ Command.Add({
 })
 
 -- :: SETUP :: --
-
 if Check("File") then
 	local LoadedPlugins = 0
 	for Index, Folder in next, { "Cmd", "Cmd/Logs", "Cmd/Plugins" } do 
@@ -6699,6 +6860,15 @@ Spawn(function()
 		loadstring(GetModule("internal-ui.lua"))()
 	end
 
+    -- remove other admin prompts
+    if Settings.Toggles.RemoveCommandBars then
+        for _, UI in next, PlayerGui:GetChildren() do
+            if UI.Name == "KCoreUI" or UI.Name == "HDAdminGuis" or UI.Name == "Essentials Client" or UI.Name == "Cmdr" then
+                Destroy(UI);
+            end
+        end
+    end
+
 	-- staff notifier
 	Connect(Services.Players.PlayerAdded, function(Player) 
 		local StaffMember, Role = IsStaff(Player)
@@ -6770,7 +6940,7 @@ end)
 
 API:Notify({
 	Title = "Welcome",
-	Description = Format("Loaded in %.2f seconds (this is unfinished)", tick() - Speed),
+	Description = Format("Loaded in %.2f seconds (Version %s)", tick() - Speed, Settings.Version),
 	Duration = 5,
 	Type = "Info",
 })
