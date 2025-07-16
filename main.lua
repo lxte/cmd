@@ -115,11 +115,13 @@ local Methods = {
 	end,
 
 	Check = function()
+		local LocalPlayer = Services.Players.LocalPlayer
+
 		if Services.Replicated:FindFirstChild("DeleteCar") then
 			return true
-		elseif Character:FindFirstChild("HandlessSegway") then
+		elseif LocalPlayer.Character:FindFirstChild("HandlessSegway") then
 			return true
-		elseif Backpack:FindFirstChild("Building Tools") then
+		elseif LocalPlayer.Backpack:FindFirstChild("Building Tools") then
 			return true
 		else
 			for _, Descendant in next, game:GetDescendants() do
@@ -209,6 +211,7 @@ local Assets = UI.Assets
 local Notification = UI.Frame
 local CommandBar = UI.Cmd.CommandBar
 local Tab = UI.Tab
+local Button = UI.OpenButton
 
 local Components = Assets.Components
 local Features = Assets.Features
@@ -247,6 +250,22 @@ local Minimum = function(Table, Minimum)
 		end
 	end
 	return New
+end
+
+local ConnectMessaged = function(Target: Player, Function: (string) -> ())
+	if Target and Function and UI then 
+		Services.Chat.MessageReceived:Connect(function(Message) 
+			local TextSource = Message.TextSource
+
+			if TextSource then 
+				local Player = Services.Players:GetPlayerByUserId(TextSource.UserId)
+
+				if Player == Target then
+					Function(Message.Text)
+				end
+			end
+		end)
+	end
 end
 
 local StringToInstance = function(String)
@@ -932,31 +951,42 @@ local Animate = {
 		end)
 	end,
 
-	Drag = function(Window)
+	Drag = function(Window, UseAlternative)
 		if Window then
 			local Dragging
 			local DragInput
 			local Start
 			local StartPosition
 
-			local function Update(input)
-				local delta = input.Position - Start
+			local function Update(Input)
+				local Delta = Input.Position - Start
 				local Screen = UI.AbsoluteSize
 				local Absolute = Window.AbsoluteSize
+				local ZAXis = (function() 
+					if UseAlternative then
+						return math.clamp(
+            				StartPosition.Y.Offset + Delta.Y,
+           				 	0,
+           					Screen.Y - Absolute.Y
+        				)
+					else
+						return math.clamp(
+							StartPosition.Y.Offset + Delta.Y,
+							-(Screen.Y / 2) + (Absolute.Y / 2),
+							(Screen.Y / 2) - (Absolute.Y / 2)
+						)
+					end
+				end)()
 
 				Window.Position = UDim2.new(
 					StartPosition.X.Scale,
 					math.clamp(
-						StartPosition.X.Offset + delta.X,
+						StartPosition.X.Offset + Delta.X,
 						-(Screen.X / 2) + (Absolute.X / 2),
 						(Screen.X / 2) - (Absolute.X / 2)
 					),
 					StartPosition.Y.Scale,
-					math.clamp(
-						StartPosition.Y.Offset + delta.Y,
-						-(Screen.Y / 2) + (Absolute.Y / 2),
-						(Screen.Y / 2) - (Absolute.Y / 2)
-					)
+					ZAXis
 				)
 			end
 
@@ -1669,6 +1699,13 @@ local Themes = {
 			end
 		end,
 
+		["OpenButton"] = function(Label)
+			if Label:IsA("TextButton") and Label.Parent == UI  then 
+				Label.BackgroundColor3 = Settings.Theme.Primary
+				Label.TextColor3 = Settings.Theme.Title
+			end
+		end,
+
 		["Actions"] = function(Label)
 			if Label:IsA("Frame") then
 				Label.BackgroundColor3 = Settings.Theme.Actions
@@ -2126,7 +2163,7 @@ end
 
 Command.Whitelist = function(Player)
 	Admins[Player.UserId] = true
-	Connect(Player.Chatted, function(Message)
+	ConnectMessaged(Player, function(Message)
 		if Find(Message, Settings.ChatPrefix) then
 			Command.Parse(false, Split(Message, Settings.ChatPrefix)[2])
 		end
@@ -7455,8 +7492,29 @@ end)
 
 --// Command Bar
 local ChatDebounce = false --// for some reason chatted fires twice because of the chat bubble LOL
+local OpenCommandBar = function() 
+	local Transparency = Settings.Theme.Transparency
+	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding")
+	Wait()
 
-Connect(LocalPlayer.Chatted, function(Message)
+	Input:CaptureFocus()
+	BarShadow.Transparency = 1
+	Padding.PaddingTop = UDim.new(0, -5)
+
+	MultiSet(CommandBar, {
+		GroupTransparency = 1,
+		Visible = true,
+		Position = UDim2.new(0.5, 0, 0.5, -9),
+	})
+
+	Tween(BarShadow, 0.2, { Transparency = 0.9 })
+	Tween(Padding, 0.2, { PaddingTop = UDim.new(0, 0) })
+	Tween(CommandBar, 0.2, {
+		GroupTransparency = (Transparency == 0) and 0.07 or Settings.Theme.Transparency,
+	}, { EasingDirection = Enum.EasingDirection.In, EasingStyle = Enum.EasingStyle.Linear })
+end
+
+ConnectMessaged(LocalPlayer, function(Message)
 	if not ChatDebounce and Find(Message, Settings.ChatPrefix) then
 		ChatDebounce = true
 		Command.Parse(false, Split(Message, Settings.ChatPrefix)[2])
@@ -7467,25 +7525,7 @@ end)
 
 Connect(Mouse.KeyDown, function(Key)
 	if Lower(Key) == Lower(Settings.Prefix) then
-		local Transparency = Settings.Theme.Transparency
-		local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding")
-		Wait()
-
-		Input:CaptureFocus()
-		BarShadow.Transparency = 1
-		Padding.PaddingTop = UDim.new(0, -5)
-
-		MultiSet(CommandBar, {
-			GroupTransparency = 1,
-			Visible = true,
-			Position = UDim2.new(0.5, 0, 0.5, -9),
-		})
-
-		Tween(BarShadow, 0.2, { Transparency = 0.9 })
-		Tween(Padding, 0.2, { PaddingTop = UDim.new(0, 0) })
-		Tween(CommandBar, 0.2, {
-			GroupTransparency = (Transparency == 0) and 0.07 or Settings.Theme.Transparency,
-		}, { EasingDirection = Enum.EasingDirection.In, EasingStyle = Enum.EasingStyle.Linear })
+		OpenCommandBar()
 	end
 end)
 
@@ -7535,6 +7575,10 @@ do
 end
 
 Spawn(function()
+	-- making opening button work
+	Animate.Drag(Button, true)
+	Button.MouseButton1Click:Connect(OpenCommandBar)
+
 	-- loading internal ui
 	if Settings.Toggles.InternalUI then
 		loadstring(GetModule("internal-ui.lua"))()
@@ -7630,8 +7674,8 @@ end)
 
 API:Notify({
 	Title = "Welcome",
-	Description = Format("Loaded in %.2f seconds (Version %s)", tick() - Speed, Settings.Version),
-	Duration = 5,
+	Description = Format("Loaded in %.2f seconds (Version %s)\nChat Prefix: %s", tick() - Speed, Settings.Version, Settings.ChatPrefix),
+	Duration = 15,
 	Type = "Info",
 })
 
