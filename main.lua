@@ -3307,7 +3307,7 @@ Command.Add({
 				Options = {
 					["First Person"] = "Camera",
 					["Third Person"] = "Third",
-					["Silent Aim"] = "Silent",
+					["Silent Aim - Work in Progress"] = "Silent",
 				},
 				Callback = function(Method)
 					AimbotSettings.Method = Method
@@ -3438,23 +3438,26 @@ Command.Add({
 							and Closest.Character:FindFirstChildOfClass("Humanoid")
 							and Closest.Character:FindFirstChildOfClass("Humanoid").Health > 0
 						then
-							local TargetPart = Closest.Character:FindFirstChild(AimbotSettings.Part)
 							AimbotSettings.Held = true
 
 							repeat
 								Wait()
 								local Method = AimbotSettings.Method
-								if Method == "Camera" or Method == "Third" then
+								local TargetPart = Closest.Character:FindFirstChild(AimbotSettings.Part)
+
+								if (Method == "Camera" or Method == "Third") and TargetPart then
 									local TargetPart = Closest.Character:FindFirstChild(AimbotSettings.Part)
 									local LookAt = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart)
-									Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, LookAt.Position)
+									
+									if TargetPart.Position.Y > -100 then 
+										Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, LookAt.Position)
+									end
 
 									if Method == "Third" then
 										Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
 									end
-								elseif AimbotSettings.Method == "Mouse" then
 								end
-							until not AimbotSettings.Held or not Closest
+							until not AimbotSettings.Held or not Closest or not TargetPart
 						end
 					end
 				end)
