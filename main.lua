@@ -951,42 +951,56 @@ local Animate = {
 		end)
 	end,
 
-	Drag = function(Window, UseAlternative)
+	Drag = function(Window, UseAlternative, AllowOffScreen)
 		if Window then
 			local Dragging
 			local DragInput
 			local Start
 			local StartPosition
 
+			if not UseAlternative and Discover({Enum.Platform.IOS, Enum.Platform.Android}, Services.Input:GetPlatform()) then
+				AllowOffScreen = true
+			end
+
 			local function Update(Input)
 				local Delta = Input.Position - Start
 				local Screen = UI.AbsoluteSize
 				local Absolute = Window.AbsoluteSize
-				local ZAXis = (function() 
-					if UseAlternative then
-						return math.clamp(
-            				StartPosition.Y.Offset + Delta.Y,
-           				 	0,
-           					Screen.Y - Absolute.Y
-        				)
-					else
-						return math.clamp(
-							StartPosition.Y.Offset + Delta.Y,
-							-(Screen.Y / 2) + (Absolute.Y / 2),
-							(Screen.Y / 2) - (Absolute.Y / 2)
-						)
-					end
-				end)()
 
-				Window.Position = UDim2.new(
-					StartPosition.X.Scale,
-					math.clamp(
+				local PosX, PosY
+
+				if AllowOffScreen then
+					PosX = StartPosition.X.Offset + Delta.X
+					PosY = StartPosition.Y.Offset + Delta.Y
+				else
+					PosX = math.clamp(
 						StartPosition.X.Offset + Delta.X,
 						-(Screen.X / 2) + (Absolute.X / 2),
 						(Screen.X / 2) - (Absolute.X / 2)
-					),
+					)
+
+					PosY = (function() 
+						if UseAlternative then
+							return math.clamp(
+								StartPosition.Y.Offset + Delta.Y,
+								0,
+								Screen.Y - Absolute.Y
+							)
+						else
+							return math.clamp(
+								StartPosition.Y.Offset + Delta.Y,
+								-(Screen.Y / 2) + (Absolute.Y / 2),
+								(Screen.Y / 2) - (Absolute.Y / 2)
+							)
+						end
+					end)()
+				end
+
+				Window.Position = UDim2.new(
+					StartPosition.X.Scale,
+					PosX,
 					StartPosition.Y.Scale,
-					ZAXis
+					PosY
 				)
 			end
 
@@ -1022,7 +1036,7 @@ local Animate = {
 				end
 			end)
 		end
-	end,
+	end
 }
 
 local Color = function(Color, Factor, Mode)
