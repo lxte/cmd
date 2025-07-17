@@ -189,7 +189,6 @@ local Mouse, PlayerGui = LocalPlayer:GetMouse(), LocalPlayer.PlayerGui
 
 local Camera = workspace.CurrentCamera
 local RespectFilteringEnabled = Services.Sound.RespectFilteringEnabled
-local LegacyChat = (Services.Chat.ChatVersion == Enum.ChatVersion.LegacyChatService)
 
 local GetModule = function(Name)
 	return (Methods.Get(Format("https://raw.githubusercontent.com/lxte/modules/main/cmd/%s", Name)))
@@ -306,11 +305,7 @@ Spoof = function(Instance, Property, Value)
 end
 
 local Chat = function(Message)
-	if LegacyChat then
-		Services.Replicated.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(Message, "All")
-	else
-		Services.Chat.TextChannels.RBXGeneral:SendAsync(Message)
-	end
+	Services.Chat.TextChannels.RBXGeneral:SendAsync(Message)
 end
 
 local Foreach = function(Table, Func, Loop)
@@ -3741,8 +3736,7 @@ Command.Add({
 
 			local Send = function()
 				local Character = " "
-				local UsernameType = (LegacyChat and "[%s]") or "%s"
-				Chat(Disguise .. Character:rep(125) .. Format(UsernameType .. ": %s", Username, Message))
+				Chat(Disguise .. Character:rep(125) .. Format("%s" .. ": %s", Username, Message))
 			end
 
 			Window:AddButton({
@@ -4755,7 +4749,7 @@ Command.Add({
 		Refresh("Flood", true)
 		repeat
 			Wait(1)
-			Chat(("⸻"):rep((LegacyChat and 180) or 50))
+			Chat(("⸻"):rep(50))
 		until not Get("Flood")
 	end,
 })
@@ -7319,7 +7313,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index = 1, 3 do
-			Services.Players:Chat(Format("/e hi")) -- crazy stuff...
+			Services.Players:Chat(Format("!clear"))
 		end
 		return "Filter", "Reset"
 	end,
@@ -7345,6 +7339,28 @@ Command.Add({
 		end
 	end,
 })
+
+Command.Add({
+	Aliases = { "toolfling", "toolf" },
+	Description = "Flings players using a tool",
+	Arguments = {},
+	Task = function()
+		local Tools = LocalPlayer.Backpack:GetChildren()
+
+		if #Tools > 0 then 
+			local SelectedTool = Tools[math.random(1, #Tools)]
+
+			SelectedTool.Parent = Character
+			SelectedTool.GripPos = Vector3.new(0, -10000, 0)
+			SelectedTool.Handle.Massless = true
+		else
+			return "Tool Fling", "No tool found"
+		end
+
+		return "Tool Fling", "Do not unequip the tool"
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "fling" },
@@ -7726,7 +7742,11 @@ if Methods.Check() then
 						local Players = GetPlayer(Input)
 
 						for _, Player in next, Players do
-							Methods.Destroy(GetCharacter(Player).Head)
+							local Character = GetCharacter(Player)
+							
+							if Character then
+								Methods.Destroy(Character:FindFirstChild("Head"))
+							end
 						end
 					end,
 				})
@@ -7739,7 +7759,11 @@ if Methods.Check() then
 						local Players = GetPlayer(Input)
 
 						for _, Player in next, Players do
-							Methods.Destroy(GetRoot(Player))
+							local Root = GetRoot(Player)
+
+							if Root then
+								Methods.Destroy(Root)
+							end
 						end
 					end,
 				})
@@ -7812,7 +7836,11 @@ if Methods.Check() then
 						local Players = GetPlayer(Input)
 
 						for _, Player in next, Players do
-							Methods.Destroy(GetCharacter(Player))
+							local Character = GetCharacter(Player)
+
+							if Character then 
+								Methods.Destroy(Character)
+							end
 						end
 					end,
 				})
