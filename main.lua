@@ -1548,7 +1548,7 @@ function Library:CreateWindow(Config: { Title: string })
 	for Index, Button in next, Actions:GetChildren() do
 		local Type = Button.Name
 
-		if Button:IsA("TextButton") then
+		if Button:IsA("GuiButton") then
 			Animations:Component(Button, true)
 
 			Connect(Button.MouseButton1Click, function()
