@@ -3316,7 +3316,7 @@ Command.Add({
 				Options = {
 					["First Person"] = "Camera",
 					["Third Person"] = "Third",
-					["Silent Aim - Work in Progress"] = "Silent",
+					--["Silent Aim - Work in Progress"] = "Silent",
 				},
 				Callback = function(Method)
 					AimbotSettings.Method = Method
