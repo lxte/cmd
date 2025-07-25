@@ -185,7 +185,7 @@ local Spawn, Delay, Wait = task.spawn, task.delay, task.wait
 local JSONEncode, JSONDecode, GenerateGUID =
 	Services.Http.JSONEncode, Services.Http.JSONDecode, Services.Http.GenerateGUID
 
-local Mouse, PlayerGui = LocalPlayer:GetMouse(), LocalPlayer.PlayerGui
+local Mouse, PlayerGui = LocalPlayer.GetMouse(LocalPlayer), LocalPlayer.PlayerGui
 
 local Camera = workspace.CurrentCamera
 local RespectFilteringEnabled = Services.Sound.RespectFilteringEnabled
@@ -252,11 +252,11 @@ local Minimum = function(Table, Minimum)
 end
 
 local ConnectMessaged = function(Target: Player, Function: (string) -> ())
-	if Target and Function and UI then 
-		Services.Chat.MessageReceived:Connect(function(Message) 
+	if Target and Function and UI then
+		Services.Chat.MessageReceived:Connect(function(Message)
 			local TextSource = Message.TextSource
 
-			if TextSource then 
+			if TextSource then
 				local Player = Services.Players:GetPlayerByUserId(TextSource.UserId)
 
 				if Player == Target then
@@ -953,7 +953,10 @@ local Animate = {
 			local Start
 			local StartPosition
 
-			if not UseAlternative and Discover({Enum.Platform.IOS, Enum.Platform.Android}, Services.Input:GetPlatform()) then
+			if
+				not UseAlternative
+				and Discover({ Enum.Platform.IOS, Enum.Platform.Android }, Services.Input:GetPlatform())
+			then
 				AllowOffScreen = true
 			end
 
@@ -974,13 +977,9 @@ local Animate = {
 						(Screen.X / 2) - (Absolute.X / 2)
 					)
 
-					PosY = (function() 
+					PosY = (function()
 						if UseAlternative then
-							return math.clamp(
-								StartPosition.Y.Offset + Delta.Y,
-								0,
-								Screen.Y - Absolute.Y
-							)
+							return math.clamp(StartPosition.Y.Offset + Delta.Y, 0, Screen.Y - Absolute.Y)
 						else
 							return math.clamp(
 								StartPosition.Y.Offset + Delta.Y,
@@ -991,12 +990,7 @@ local Animate = {
 					end)()
 				end
 
-				Window.Position = UDim2.new(
-					StartPosition.X.Scale,
-					PosX,
-					StartPosition.Y.Scale,
-					PosY
-				)
+				Window.Position = UDim2.new(StartPosition.X.Scale, PosX, StartPosition.Y.Scale, PosY)
 			end
 
 			Connect(Window.InputBegan, function(Input)
@@ -1031,7 +1025,7 @@ local Animate = {
 				end
 			end)
 		end
-	end
+	end,
 }
 
 local Color = function(Color, Factor, Mode)
@@ -1709,7 +1703,7 @@ local Themes = {
 		end,
 
 		["OpenButton"] = function(Label)
-			if Label:IsA("TextButton") and Label.Parent == UI  then 
+			if Label:IsA("TextButton") and Label.Parent == UI then
 				Label.BackgroundColor3 = Settings.Theme.Primary
 				Label.TextColor3 = Settings.Theme.Title
 			end
@@ -3246,9 +3240,10 @@ local AimbotSettings = {
 	},
 }
 
-AimbotSettings.BehindWall = function(Target: Player)
+AimbotSettings.BehindWall = function(Target)
 	if Target and Target.Character and (Target ~= LocalPlayer) then
-		local Walls = Camera:GetPartsObscuringTarget(
+		local Walls = Camera.GetPartsObscuringTarget(
+			Camera,
 			{ Character.Head.Position, Target.Character.Head.Position },
 			{ Character, Target.Character }
 		)
@@ -3257,30 +3252,39 @@ AimbotSettings.BehindWall = function(Target: Player)
 end
 
 AimbotSettings.Closest = function()
-	local Distance, Target = 9e9, nil
+	local Fov_Size = AimbotSettings.FOV.Radius
+	local MouseX, MouseY = Mouse.X, Mouse.Y
 
-	for Index, Player in next, (Services.Players:GetPlayers()) do
-		if not (AimbotSettings.TeamCheck and Player.Team == LocalPlayer.Team) then
-			if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild(AimbotSettings.Part) then
-				local Character = Player.Character
-				local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-				local Location, Visible =
-					Camera:WorldToViewportPoint(Character:FindFirstChild(AimbotSettings.Part).Position)
+	local ClosestDistance = Fov_Size
+	local ClosestPlayer
+	local ClosestPlayerPart
 
-				if not (AimbotSettings.WallCheck and AimbotSettings.BehindWall(Player)) then
-					if Visible and not (AimbotSettings.AliveCheck and Humanoid.Health <= 0) then
-						local Magnitude = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(Location.X, Location.Y)).Magnitude
-						if Magnitude < AimbotSettings.FOV.Radius and Magnitude < Distance then
-							Distance = Magnitude
-							Target = Player
-						end
-					end
+	for _, Player in next, Services.Players.GetPlayers(Services.Players) do
+		local Character = Player and Player.Character
+		local TargetPart = Character and Character.FindFirstChild(Character, AimbotSettings.Part)
+
+		if TargetPart and Player ~= LocalPlayer then
+			local Coordinates, Visible = Camera.WorldToViewportPoint(Camera, TargetPart.Position)
+
+			if
+				not (AimbotSettings.TeamCheck and Player.Team == LocalPlayer.Team)
+				and not (AimbotSettings.WallCheck and AimbotSettings.BehindWall(Player))
+				and not (AimbotSettings.AliveCheck and Humanoid.Health <= 0)
+				and Coordinates
+				and Visible
+			then
+				local Distance = (Vector2.new(MouseX, MouseY) - Vector2.new(Coordinates.X, Coordinates.Y)).Magnitude
+
+				if Distance < Fov_Size and Distance < ClosestDistance then
+					ClosestDistance = Distance
+					ClosestPlayer = Player
+					ClosestPlayerPart = TargetPart
 				end
 			end
 		end
 	end
 
-	return Target
+	return ClosestPlayerPart
 end
 
 AimbotSettings.GetPrediction = function(Part)
@@ -3316,7 +3320,7 @@ Command.Add({
 				Options = {
 					["First Person"] = "Camera",
 					["Third Person"] = "Third",
-					--["Silent Aim - Work in Progress"] = "Silent",
+					["Silent Aim - Work in Progress"] = "Silent",
 				},
 				Callback = function(Method)
 					AimbotSettings.Method = Method
@@ -3439,26 +3443,18 @@ Command.Add({
 
 				Connect(Services.Input.InputBegan, function(Key, Processed)
 					if Key == AimbotSettings.Key and AimbotSettings.Enabled and not Processed then
-						local Closest = AimbotSettings.Closest()
+						local TargetPart = AimbotSettings.Closest()
+						local Method = AimbotSettings.Method
 
-						if
-							Closest
-							and Closest.Character
-							and Closest.Character:FindFirstChildOfClass("Humanoid")
-							and Closest.Character:FindFirstChildOfClass("Humanoid").Health > 0
-						then
+						if TargetPart then
 							AimbotSettings.Held = true
 
 							repeat
 								Wait()
-								local Method = AimbotSettings.Method
-								local TargetPart = Closest.Character:FindFirstChild(AimbotSettings.Part)
-
 								if (Method == "Camera" or Method == "Third") and TargetPart then
-									local TargetPart = Closest.Character:FindFirstChild(AimbotSettings.Part)
 									local LookAt = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart)
-									
-									if TargetPart.Position.Y > -100 then 
+
+									if TargetPart.Position.Y > -100 then
 										Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, LookAt.Position)
 									end
 
@@ -3466,7 +3462,7 @@ Command.Add({
 										Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
 									end
 								end
-							until not AimbotSettings.Held or not Closest or not TargetPart
+							until not AimbotSettings.Held or not TargetPart
 						end
 					end
 				end)
@@ -3499,96 +3495,39 @@ Command.Add({
 
 				if Check("Hook") then
 					local OldNamecall
-					OldNamecall = hookmetamethod(
-						game,
-						"__namecall",
-						newcclosure(function(self, ...)
-							if
-								not checkcaller()
-								and AimbotSettings.Enabled
-								and AimbotSettings.Method == "Silent"
-								and self == Services.Workspace
-							then
-								local Method = getnamecallmethod()
-								local FindPartOnRay = Discover(
-									{ "FindPartOnRayWithWhitelist", "FindPartOnRayWithBlacklist", "FindPartOnRay" },
-									Method
-								)
+					OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+						local Method = getnamecallmethod()
 
-								if FindPartOnRay or Method == "Raycast" then
-									local Target = AimbotSettings.Closest()
+						if
+							not checkcaller()
+							and string.find(string.lower(Method), "ray")
+							and AimbotSettings.Enabled
+							and AimbotSettings.Method == "Silent"
+						then
+							if
+								Method == "FindPartOnRay"
+								or Method == "FindPartOnRayWithIgnoreList"
+								or Method == "FindPartOnRayWithWhitelist"
+							then
+								local ClosestRoot = AimbotSettings.Closest()
+
+								if ClosestRoot then
 									local Args = { ... }
+									local Origin = Args[1].Origin
+									local Direction = Args[1].Direction
 
-									if Target then
-										local Part = Target.Character
-											and Target.Character:FindFirstChild(AimbotSettings.Part)
-
-										if Part then
-											if FindPartOnRay and typeof(Args[1]) == "Ray" then
-												Args[2] = Ray.new(
-													Args[2].Origin,
-													(
-														(Part.Position + AimbotSettings.GetPrediction(Part))
-														- Args[2].Origin
-													).Unit * 500
-												)
-												return OldNamecall(self, Unpack(Args))
-											elseif Method == "Raycast" and typeof(Args[2]) == "Vector3" then
-												Args[3] = (
-													((Part.Position + AimbotSettings.GetPrediction(Part)) - Args[2]).Unit
-													* 500
-												)
-												return OldNamecall(self, Unpack(Args))
-											end
-										end
+									print(Direction.Magnitude)
+									if Direction.Magnitude > 50 then
+										Args[1] = Ray.new(Origin, (ClosestRoot.Position - Origin).Unit * 500)
 									end
+
+									return OldNamecall(self, table.unpack(Args))
 								end
 							end
+						end
 
-							return OldNamecall(self, ...)
-						end)
-					)
-
-					local OldIndex
-					local Mouse = LocalPlayer:GetMouse()
-
-					OldIndex = hookmetamethod(
-						game,
-						"__index",
-						newcclosure(function(self, Key)
-							if
-								not checkcaller()
-								and AimbotSettings.Enabled
-								and AimbotSettings.Method == "Silent"
-								and self == Mouse
-							then
-								local Lower = Key:lower()
-
-								print(Lower)
-
-								if Discover({ "target", "hit", "unitray" }, Lower) then
-									local Target = AimbotSettings.Closest()
-
-									if Target then
-										local Part = Target.Character
-											and Target.Character:FindFirstChild(AimbotSettings.Part)
-
-										if Part then
-											if Lower == "target" then
-												return Part
-											elseif Lower == "hit" then
-												return Part.CFrame
-											elseif Lower == "unitray" then
-												print("UNIT RAY.")
-											end
-										end
-									end
-								end
-							end
-
-							return OldIndex(self, Key)
-						end)
-					)
+						return OldNamecall(self, ...)
+					end)
 				end
 			end)
 		end
@@ -7347,7 +7286,7 @@ Command.Add({
 	Task = function()
 		local Tools = LocalPlayer.Backpack:GetChildren()
 
-		if #Tools > 0 then 
+		if #Tools > 0 then
 			local SelectedTool = Tools[math.random(1, #Tools)]
 
 			SelectedTool.Parent = Character
@@ -7360,7 +7299,6 @@ Command.Add({
 		return "Tool Fling", "Do not unequip the tool"
 	end,
 })
-
 
 Command.Add({
 	Aliases = { "fling" },
@@ -7525,7 +7463,7 @@ end)
 
 --// Command Bar
 local ChatDebounce = false --// for some reason chatted fires twice because of the chat bubble LOL
-local OpenCommandBar = function() 
+local OpenCommandBar = function()
 	local Transparency = Settings.Theme.Transparency
 	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding")
 	Wait()
@@ -7707,7 +7645,12 @@ end)
 
 API:Notify({
 	Title = "Welcome",
-	Description = Format("Loaded in %.2f seconds (Version %s)\nChat Prefix: %s", tick() - Speed, Settings.Version, Settings.ChatPrefix),
+	Description = Format(
+		"Loaded in %.2f seconds (Version %s)\nChat Prefix: %s",
+		tick() - Speed,
+		Settings.Version,
+		Settings.ChatPrefix
+	),
 	Duration = 15,
 	Type = "Info",
 })
@@ -7743,7 +7686,7 @@ if Methods.Check() then
 
 						for _, Player in next, Players do
 							local Character = GetCharacter(Player)
-							
+
 							if Character then
 								Methods.Destroy(Character:FindFirstChild("Head"))
 							end
@@ -7838,7 +7781,7 @@ if Methods.Check() then
 						for _, Player in next, Players do
 							local Character = GetCharacter(Player)
 
-							if Character then 
+							if Character then
 								Methods.Destroy(Character)
 							end
 						end
