@@ -3261,6 +3261,7 @@ AimbotSettings.Closest = function()
 
 	for _, Player in next, Services.Players.GetPlayers(Services.Players) do
 		local Character = Player and Player.Character
+        local Humanoid = Character and Character.FindFirstChild(Character, "Humanoid")
 		local TargetPart = Character and Character.FindFirstChild(Character, AimbotSettings.Part)
 
 		if TargetPart and Player ~= LocalPlayer then
