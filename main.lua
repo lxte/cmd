@@ -3517,7 +3517,6 @@ Command.Add({
 									local Origin = Args[1].Origin
 									local Direction = Args[1].Direction
 
-									print(Direction.Magnitude)
 									if Direction.Magnitude > 50 then
 										Args[1] = Ray.new(Origin, (ClosestRoot.Position - Origin).Unit * 500)
 									end
