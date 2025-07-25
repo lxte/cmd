@@ -8487,7 +8487,7 @@ end
 Autofills.Search(Blank);
 Library.LoadTheme(Settings.Themes);
 
-Utils.Notify("Information", "IMPORTANT", "Join our NEW discord server (discord.gg/6vxNs4K69S)", 15);
+Utils.Notify("Information", "IMPORTANT", "You are using an old version of this script. A rewrite has been made and it would be recommended to switch over to the rewrite. Go to the GitHub for more information (github.com/lxte/cmd)", 20);
 Utils.Notify("Success", "Loaded!", Format("Loaded in %.2f seconds", tick() - LoadTime), 5);
 
 Spawn(function()
