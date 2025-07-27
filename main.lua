@@ -98,6 +98,7 @@ local Services = {
 	Starter = GetService("StarterGui"),
 	ContextActionService = GetService("ContextActionService"),
 	Sound = GetService("SoundService"),
+	AssetService = GetService("AssetService"),
 }
 
 local Methods = {
@@ -253,7 +254,7 @@ end
 
 local ConnectMessaged = function(Target: Player, Function: (string) -> ())
 	if Target and Function and UI then
-		Services.Chat.MessageReceived:Connect(function(Message)
+		Connect(Services.Chat.MessageReceived, function(Message)
 			local TextSource = Message.TextSource
 
 			if TextSource then
@@ -644,51 +645,43 @@ local GetPlayer = function(Target)
 end
 
 local Fling = function(Targets: { Player })
-	local Character = LocalPlayer.Character
-	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
-	local RootPart = Humanoid and Humanoid.RootPart
+	local Flinged = 0
 
-	if not (Character and Humanoid and RootPart) then
+	if not (Character and Humanoid and Root) then
 		return
 	end
 
-	local Loop = function(BasePart, _Character, _Humanoid)
+	local Loop = function(TargetRoot, _Character, _Humanoid)
 		local Duration = 2
 		local Start = tick()
 
-		repeat
-			local Velocity = BasePart.Velocity.Magnitude
+		repeat Wait()
+			local Magnitude = TargetRoot.Velocity.Magnitude
 			local Direction = _Humanoid and _Humanoid.MoveDirection or Vector3.zero
 
-			local Offsets = {
-				CFrame.new(0, 2, 0) + Direction * Velocity / 2,
-				CFrame.new(0, -2, 0) + Direction * Velocity / 2,
-				CFrame.new(2, 2, -2) + Direction * Velocity / 2,
-				CFrame.new(-2, -2, 2) + Direction * Velocity / 2,
-			}
+			local PredictionOffset = Direction * (Magnitude / Random.new():NextNumber(0.75, 2.5)) - Vector3.new(0, 0.5, 0)
+    		local TargetCFrame = CFrame.new(TargetRoot.Position)
+        	local PredictedCFrame = TargetCFrame * CFrame.new(PredictionOffset)
 
-			for _, Offset in next, Offsets do
-				local Base = CFrame.new(BasePart.Position)
-				RootPart.CFrame = Base * Offset
-				Character:SetPrimaryPartCFrame(Base * Offset)
-				RootPart.Velocity = Vector3.new(9e7, 9e8, 9e7)
-				RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
-				Wait()
-			end
-		until BasePart.Velocity.Magnitude > 500 or not BasePart:IsDescendantOf(_Character) or tick() - Start >= Duration
+			Root.CFrame = PredictedCFrame
+			Character:SetPrimaryPartCFrame(PredictedCFrame)
+			Root.Velocity = Vector3.new(1, 2, 1) * 9e9
+			Root.RotVelocity = Vector3.new(1, 2, 1) * 9e9
+		until (not TargetRoot) or (TargetRoot.Velocity.Magnitude > 500) or (not _Character) or (not _Humanoid) or (tick() - Start >= Duration)
+
+		if (TargetRoot) and (TargetRoot.Velocity.Magnitude > 500) then
+			Flinged += 1
+		end
 	end
 
-	local OriginalPos = RootPart.CFrame
-	local OldFPDH = workspace.FallenPartsDestroyHeight
-	workspace.FallenPartsDestroyHeight = -1 / 0
+	local OriginalPos = Root.CFrame * CFrame.new(0, 1, 0)
+	local OldHeight = workspace.FallenPartsDestroyHeight
+	local BodyVelocity = Instance.new("BodyVelocity")
 
-	local BV = Instance.new("BodyVelocity")
-	BV.Name = "FlingForce"
-	BV.Velocity = Vector3.new(1e8, 1e8, 1e8)
-	BV.MaxForce = Vector3.new(1 / 0, 1 / 0, 1 / 0)
-	BV.Parent = RootPart
-
-	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+	workspace.FallenPartsDestroyHeight = 1 / 0
+	BodyVelocity.Velocity = Vector3.new(1, 2, 1) * 9e9
+	BodyVelocity.MaxForce = Vector3.new(10, 10, 10) * 9e9
+	BodyVelocity.Parent = Root
 
 	for _, TargetPlayer in next, Targets do
 		local _Character = TargetPlayer.Character
@@ -696,38 +689,34 @@ local Fling = function(Targets: { Player })
 		local _RootPart = _Humanoid and _Humanoid.RootPart
 
 		if _Character and _RootPart then
-			workspace.CurrentCamera.CameraSubject = _RootPart
+			Camera.CameraSubject = _RootPart
 			Loop(_RootPart, _Character, _Humanoid)
 		end
 	end
 
-	BV:Destroy()
-	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-	workspace.CurrentCamera.CameraSubject = Humanoid
+	BodyVelocity:Destroy();
 
-	RootPart.Velocity = Vector3.zero
-	RootPart.RotVelocity = Vector3.zero
-	for _, Part in next, GetClasses(Character, "BasePart") do
-		Part.Velocity = Vector3.zero
-		Part.RotVelocity = Vector3.zero
-	end
+	Wait(0.5)
 
-	for _, Part in next, GetClasses(Character, "BasePart") do
-		Part.Anchored = true
-	end
+	repeat Wait()
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+		Camera.CameraSubject = Humanoid
 
-	Wait(0.1)
+		Root.Velocity = Vector3.new()
+		Root.RotVelocity = Vector3.new()
 
-	RootPart.CFrame = OriginalPos
-	Character:SetPrimaryPartCFrame(OriginalPos)
+		for _, Part in next, GetClasses(Character, "BasePart") do
+			Part.Velocity = Vector3.new()
+			Part.RotVelocity = Vector3.new()
+		end
 
-	for _, Part in next, GetClasses(Character, "BasePart") do
-		Part.Anchored = false
-	end
+		Root.CFrame = OriginalPos
+		Character:SetPrimaryPartCFrame(OriginalPos)
+		Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+	until (Root.Velocity.Magnitude < 10) and (Root.Position - OriginalPos.Position).Magnitude < 10
 
-	Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-
-	workspace.FallenPartsDestroyHeight = OldFPDH
+	workspace.FallenPartsDestroyHeight = OldHeight
+	return Flinged
 end
 
 local SetFly
@@ -1359,6 +1348,8 @@ function Library:CreateWindow(Config: { Title: string })
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
 		})
+
+		return Paragraph
 	end
 
 	function Component:AddKeybind(Config: { Title: string, Description: string, Tab: string, Callback: any })
@@ -3224,6 +3215,7 @@ local AimbotSettings = {
 	Triggerbot = false,
 	Part = "Head", --// Available parts: Head, HumanoidRootPart
 	Method = "Camera", --// Available methods: Camera, Mouse, Third
+	RandomPart = false,
 
 	AliveCheck = true,
 	TeamCheck = false,
@@ -3233,6 +3225,7 @@ local AimbotSettings = {
 	Key = Enum.KeyCode.E,
 
 	Prediction = 0,
+	AutoPrediction = false,
 	Target = nil,
 
 	FOV = {
@@ -3242,12 +3235,20 @@ local AimbotSettings = {
 
 AimbotSettings.BehindWall = function(Target)
 	if Target and Target.Character and (Target ~= LocalPlayer) then
+		local VisibleWalls = {}
 		local Walls = Camera.GetPartsObscuringTarget(
 			Camera,
 			{ Character.Head.Position, Target.Character.Head.Position },
 			{ Character, Target.Character }
 		)
-		return (#Walls == 0 and false) or (#Walls > 0 and true)
+
+		for _, Wall in next, Walls do 
+			if Wall and Wall.IsA(Wall, "BasePart") and Wall.Transparency < 1 then 
+				Insert(VisibleWalls, Wall)
+			end
+		end
+
+		return #VisibleWalls > 0
 	end
 end
 
@@ -3264,7 +3265,7 @@ AimbotSettings.Closest = function()
         local Humanoid = Character and Character.FindFirstChild(Character, "Humanoid")
 		local TargetPart = Character and Character.FindFirstChild(Character, AimbotSettings.Part)
 
-		if TargetPart and Player ~= LocalPlayer then
+		if Humanoid and TargetPart and Player ~= LocalPlayer then
 			local Coordinates, Visible = Camera.WorldToViewportPoint(Camera, TargetPart.Position)
 
 			if
@@ -3288,8 +3289,25 @@ AimbotSettings.Closest = function()
 	return ClosestPlayerPart
 end
 
+AimbotSettings.GetAutoPrediction = function()
+	local DataPing = game.Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
+	local Prediction = math.clamp(DataPing / 1000, 0, 1) * 1.285
+
+	return Prediction
+end
+
 AimbotSettings.GetPrediction = function(Part)
-	return (Part.Velocity * AimbotSettings.Prediction + Vector3.new(0, 0.1, 0))
+	local Prediction = AimbotSettings.AutoPrediction and AimbotSettings.GetAutoPrediction() or AimbotSettings.Prediction
+	local Horizontal = Vector3.new(Part.Velocity.X, 0, Part.Velocity.Z)
+
+	if AimbotSettings.AutoPrediction then
+		local Magnitude = Horizontal.Magnitude
+		local Clamped = math.clamp(Magnitude / 75, 1, 2)
+
+		Prediction *= Clamped
+	end
+
+	return (Horizontal * Prediction + Vector3.new(0, 0.1, 0))
 end
 
 Command.Add({
@@ -3302,6 +3320,7 @@ Command.Add({
 		if Tab then
 			Tab.Open()
 		else
+			local EnableAimbot
 			local Window = Library:CreateWindow({
 				Title = "Aimbot",
 			})
@@ -3321,12 +3340,13 @@ Command.Add({
 				Options = {
 					["First Person"] = "Camera",
 					["Third Person"] = "Third",
-					["Silent Aim - Work in Progress"] = "Silent",
+					["Silent Aim"] = "Silent",
 				},
 				Callback = function(Method)
 					AimbotSettings.Method = Method
 
 					if Method == "Silent" then
+						EnableAimbot()
 						if Check("Hook") then
 							API:Notify({
 								Title = "Silent Aim",
@@ -3344,20 +3364,20 @@ Command.Add({
 				end,
 			})
 
+			Window:AddKeybind({
+				Title = "Keybind",
+				Tab = "Home",
+				Callback = function(Key)
+					AimbotSettings.Key = Key
+				end,
+			})
+
 			Window:AddToggle({
 				Title = "Trigger Bot Enabled",
 				Tab = "Home",
 				Default = false,
 				Callback = function(Boolean)
 					AimbotSettings.Triggerbot = Boolean
-				end,
-			})
-
-			Window:AddKeybind({
-				Title = "Keybind",
-				Tab = "Home",
-				Callback = function(Key)
-					AimbotSettings.Key = Key
 				end,
 			})
 
@@ -3390,7 +3410,16 @@ Command.Add({
 				end,
 			})
 
-			Window:AddSection({ Title = "Sliders", Tab = "Home" })
+			Window:AddSection({ Title = "Sliders & Prediction", Tab = "Home" })
+
+			Window:AddToggle({
+				Title = "Auto Prediction",
+				Description = "Will ignore your set prediction",
+				Tab = "Home",
+				Callback = function(Boolean)
+					AimbotSettings.AutoPrediction = Boolean
+				end,
+			})
 
 			Window:AddSlider({
 				Title = "Prediction",
@@ -3417,14 +3446,21 @@ Command.Add({
 				Options = {
 					["Torso"] = "HumanoidRootPart",
 					["Head"] = "Head",
+					["Random"] = "Random"
 				},
 				Callback = function(Part)
 					AimbotSettings.Part = Part
+					AimbotSettings.RandomPart = (Part == "Random")
 				end,
 			})
 
 			Spawn(function()
 				Connect(Services.Run.RenderStepped, function()
+					if AimbotSettings.RandomPart then 
+						local Available = { "Head", "HumanoidRootPart" }
+						AimbotSettings.Part = Available[math.random(1, #Available)]
+					end
+
 					if AimbotSettings.Triggerbot then
 						local Target = (function()
 							local Target = Mouse.Target
@@ -3494,40 +3530,58 @@ Command.Add({
 					end
 				end)
 
-				if Check("Hook") then
-					local OldNamecall
-					OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-						local Method = getnamecallmethod()
+				local Enabled = false
+				EnableAimbot = function() 
+					if not Enabled and Check("Hook") then
+						Enabled = true
 
-						if
-							not checkcaller()
-							and string.find(string.lower(Method), "ray")
-							and AimbotSettings.Enabled
-							and AimbotSettings.Method == "Silent"
-						then
+						local OldNamecall
+						OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+							local Method = getnamecallmethod()
+
 							if
-								Method == "FindPartOnRay"
-								or Method == "FindPartOnRayWithIgnoreList"
-								or Method == "FindPartOnRayWithWhitelist"
+								not checkcaller()
+								and string.find(string.lower(Method), "ray")
+								and AimbotSettings.Enabled
+								and AimbotSettings.Method == "Silent"
 							then
-								local ClosestRoot = AimbotSettings.Closest()
+								if
+									Method == "FindPartOnRay"
+									or Method == "FindPartOnRayWithIgnoreList"
+									or Method == "FindPartOnRayWithWhitelist"
+								then
+									local ClosestRoot = AimbotSettings.Closest()
 
-								if ClosestRoot then
-									local Args = { ... }
-									local Origin = Args[1].Origin
-									local Direction = Args[1].Direction
+									if ClosestRoot then
+										local Args = { ... }
+										local Origin = Args[1].Origin
+										local Direction = Args[1].Direction
 
-									if Direction.Magnitude > 50 then
-										Args[1] = Ray.new(Origin, (ClosestRoot.Position - Origin).Unit * 500)
+										if Direction.Magnitude > 50 then
+											Args[1] = Ray.new(Origin, (ClosestRoot.Position - Origin).Unit * 500)
+										end
+
+										return OldNamecall(self, table.unpack(Args))
 									end
+								elseif Method == "Raycast" then
+									local ClosestRoot = AimbotSettings.Closest()
 
-									return OldNamecall(self, table.unpack(Args))
+									if ClosestRoot then
+										local Args = { ... }
+										local Direction = Args[2]
+
+										if Direction.Magnitude > 50 then
+											Args[2] = (ClosestRoot.Position - Origin).Unit * 500
+										end
+
+										return OldNamecall(self, table.unpack(Args))
+									end
 								end
 							end
-						end
 
-						return OldNamecall(self, ...)
-					end)
+							return OldNamecall(self, ...)
+						end)
+					end
 				end
 			end)
 		end
@@ -3654,6 +3708,158 @@ Command.Add({
 
 			Window:AddSection({ Title = "Servers", Tab = "Home" })
 			LoadServers()
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "chatlogs", "logs" },
+	Description = "Logs players messages",
+	Arguments = {},
+	Task = function()
+		local Tab = Library.Tabs["Chat Logs"]
+
+		if Tab then
+			Tab.Open()
+		else
+			local LayoutOrder = 100000
+			local Messages = {}
+			local Window = Library:CreateWindow({
+				Title = "Chat Logs",
+			})
+
+			Window:AddSection({ Title = "Settings", Tab = "Home" })
+
+			Window:AddButton({
+				Title = "Clear Messages",
+				Tab = "Home",
+				Callback = function()
+					LayoutOrder = 100000
+					for _, Message in next, Messages do
+						Message:Destroy();
+					end
+				end,
+			})
+
+			Window:AddSection({ Title = "Logs", Tab = "Home" })
+
+			local Detect = function(Player) 				
+				ConnectMessaged(Player, function(Message)
+					local Paragraph = Window:AddParagraph({
+						Title = Format("%s (@%s)", Player.DisplayName, Player.Name),
+						Description = Message,
+						Tab = "Home"
+					})
+
+					LayoutOrder -= 1 
+					Paragraph.LayoutOrder = LayoutOrder
+					Insert(Messages, Paragraph)
+				end)
+			end
+
+			Connect(Services.Players.PlayerAdded, Detect)
+			for _, Player in next, Services.Players:GetPlayers() do 
+				Detect(Player)
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "gameinfo", "game", "info" },
+	Description = "Tons of information about the game you're in",
+	Arguments = {},
+	Task = function()
+		local Tab = Library.Tabs.Game
+
+		if Tab then
+			Tab.Open()
+		else
+			local Window = Library:CreateWindow({
+				Title = "Game",
+			})
+
+			-- Tabs
+			Window:AddTab({
+				Title = "Regular Data",
+				Description = "Shows game title, description, etc.",
+				Tab = "Home",
+			})
+
+			Window:AddTab({
+				Title = "Game's Subplaces",
+				Description = "Shows all the other subplaces this game owns (hidden games)",
+				Tab = "Home",
+			})
+
+			-- Universe Id
+			local UniverseData = Methods.Get(Format("https://apis.roblox.com/universes/v1/places/%d/universe", game.PlaceId))
+			local Decoded = UniverseData and JSONDecode(Services.Http, UniverseData)
+			local UniverseId = Decoded and Decoded.universeId
+
+			-- Regular Data
+			local Data = Methods.Get(Format("https://games.roblox.com/v1/games?universeIds=%d", UniverseId))
+			local DecodedData = Data and JSONDecode(Services.Http, Data)
+
+			for Name, Info in next, DecodedData.data[1] or {} do
+				if typeof(Info) == "table" then
+					local String = ""
+					local Added = 0
+
+					for Name, Value in next, Info do
+						if typeof(Name) == "number" then
+							Name = ""
+						else
+							Name ..= ": "
+						end
+
+						Added += 1
+						String ..= Format("%s%s%s", Name, tostring(Value), (Added == #Info and "") or "\n")
+					end
+
+					Info = String
+				end
+
+				Info = tostring(Info)
+				if Info == "" then
+					Info = "empty (no information)"
+				end
+
+				Window:AddParagraph({
+					Title = Name:sub(1, 1):upper() .. Name:sub(2),
+					Description = Info,
+					Tab = "Regular Data"
+				})
+			end
+
+			-- Subplaces
+			local SubplacePages = Services.AssetService:GetGamePlacesAsync()
+			local Subplaces = {}
+
+			repeat
+				for _, Place in SubplacePages:GetCurrentPage() do
+					Insert(Subplaces, Place)
+				end
+
+				if SubplacePages.IsFinished then
+					break
+				end
+
+				SubplacePages:AdvanceToNextPageAsync()
+			until false
+			
+			for _, Place in next, Subplaces do
+				if Place.PlaceId ~= game.PlaceId then
+					Window:AddButton({
+						Title = Place.Name,
+						Description = Format("PlaceId: %d\nClick to join subplace", Place.PlaceId),
+						Tab = "Game's Subplaces",
+						Callback = function()
+							Services.Teleport:Teleport(Place.PlaceId, LocalPlayer)
+						end,
+					})
+				end
+			end
 		end
 	end,
 })
@@ -7313,7 +7519,7 @@ Command.Add({
 		end
 
 		local Successes = Fling(Targets)
-		return "Fling", Format("Successfully flinged (%s/%s) player(s)", Successes, #Targets)
+		return "Fling", Format("Successfully flinged (%s/%s) player(s)", Successes or 0, #Targets)
 	end,
 })
 
@@ -7462,7 +7668,7 @@ Connect(Services.Input.InputBegan, function(Key)
 end)
 
 --// Command Bar
-local ChatDebounce = false --// for some reason chatted fires twice because of the chat bubble LOL
+local ChatDebounce = false 
 local OpenCommandBar = function()
 	local Transparency = Settings.Theme.Transparency
 	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding")
@@ -7548,7 +7754,7 @@ end
 Spawn(function()
 	-- making opening button work
 	Animate.Drag(Button, true)
-	Button.MouseButton1Click:Connect(OpenCommandBar)
+	Connect(Button.MouseButton1Click, OpenCommandBar)
 
 	-- loading internal ui
 	if Settings.Toggles.InternalUI then
