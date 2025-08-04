@@ -5254,7 +5254,7 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Player)
-		local Players = GetPlayer(Player)
+		local Players = GetPlayer(Player or "me")
 		local Target = Players[1] or LocalPlayer
 
 		for _, Part in next, GetClasses(workspace, "BasePart") do
@@ -7595,7 +7595,7 @@ Command.Add({
 	},
 	Task = function(Input)
 		local Targets = GetPlayer(Input)
-		
+
 		if #Targets == 0 then
 			return "Fling", "No targets found"
 		end
