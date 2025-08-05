@@ -123,12 +123,14 @@ local Methods = {
 
 	Check = function()
 		local LocalPlayer = Services.Players.LocalPlayer
+        	local Backpack = LocalPlayer:WaitForChild("Backpack")
+        	local Character = LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded)
 
 		if Services.Replicated:FindFirstChild("DeleteCar") then
 			return true
-		elseif LocalPlayer.Character:FindFirstChild("HandlessSegway") then
+		elseif Character:FindFirstChild("HandlessSegway") then
 			return true
-		elseif LocalPlayer.Backpack:FindFirstChild("Building Tools") then
+		elseif Backpack:FindFirstChild("Building Tools") then
 			return true
 		else
 			for _, Descendant in next, game:GetDescendants() do
@@ -198,7 +200,7 @@ local Methods = {
 
 local LocalPlayer = Services.Players.LocalPlayer
 local Character = LocalPlayer.Character
-local Backpack = LocalPlayer.Backpack
+local Backpack = LocalPlayer:WaitForChild("Backpack")
 local Humanoid = (Character and Character:FindFirstChildOfClass("Humanoid"))
 local Root = (Character and Character:FindFirstChild("HumanoidRootPart"))
 
