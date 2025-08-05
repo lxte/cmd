@@ -207,7 +207,7 @@ local Root = (Character and Character:FindFirstChild("HumanoidRootPart"))
 Connect(LocalPlayer.CharacterAdded, function(Char)
 	Character = Char
 	Humanoid = Character:WaitForChild("Humanoid")
-	Root = (Character:FindFirstChild("HumanoidRootPart"))
+	Root = (Character:WaitForChild("HumanoidRootPart"))
 	Backpack = LocalPlayer.Backpack
 end)
 
@@ -243,8 +243,8 @@ end
 if (not Character) or (not Humanoid) or (not Root) then
 	Spawn(function()
 		Character = (Character or CWait(LocalPlayer.CharacterAdded))
-		Humanoid = Character:FindFirstChildOfClass("Humanoid")
-		Root = Character:FindFirstChild("HumanoidRootPart")
+		Humanoid = Character:WaitForChild("Humanoid")
+		Root = Character:WaitForChild("HumanoidRootPart")
 	end)
 end
 
