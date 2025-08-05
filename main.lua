@@ -482,10 +482,10 @@ local Bring = function(Part, Target)
 		Part.CanCollide = false
 
 		Delay(1, function()
-			Attachment:Destroy();
-			Position:Destroy();
-			Torque:Destroy();
-			Attachment2:Destroy();
+			Destroy(Attachment);
+            Destroy(Position);
+            Destroy(Torque);
+            Destroy(Attachment2);
 			Part.CanCollide = OldCollide
 		end)
 	end
@@ -786,7 +786,7 @@ local Fling = function(Targets: { Player })
 		end
 	end
 
-	BodyVelocity:Destroy()
+	Destroy(BodyVelocity);
 
 	repeat Wait()
 		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
@@ -3835,7 +3835,7 @@ Command.Add({
 				Callback = function()
 					LayoutOrder = 100000
 					for _, Message in next, Messages do
-						Message:Destroy()
+						Destroy(Message)
 					end
 				end,
 			})
@@ -5128,7 +5128,7 @@ Command.Add({
 			end
 		end
 
-		Target:Destroy();
+		Destroy(Target);
 	end,
 })
 
@@ -6502,12 +6502,12 @@ Command.Add({
 		local Character = GetCharacter(LocalPlayer)
 
 		if GetHumanoid(LocalPlayer).RigType == Enum.HumanoidRigType.R6 then
-			local Clone = Root:Clone()
-			Root:Destroy()
+			local Clone = Clone(Root);
+			Destroy(Root);
 			Clone.Parent = Character
 		else
 			Character.LowerTorso.Anchored = true
-			Character.LowerTorso.Root:Destroy()
+			Destroy(Character.LowerTorso.Root);
 		end
 
 		return "Freeze Walk", "Enabled"
@@ -7847,16 +7847,18 @@ Spawn(function()
 
 	-- remove other admin prompts
 	if Settings.Toggles.RemoveCommandBars then
-		for _, UI in next, PlayerGui:GetChildren() do
-			if
-				UI.Name == "KCoreUI"
-				or UI.Name == "HDAdminGuis"
-				or UI.Name == "Essentials Client"
-				or UI.Name == "Cmdr"
-			then
-				Destroy(UI)
-			end
-		end
+		Delay(2, function()
+            for _, UI in next, PlayerGui:GetChildren() do
+                if
+                    UI.Name == "KCoreUI"
+                    or UI.Name == "HDAdminGuis"
+                    or UI.Name == "Essentials Client"
+                    or UI.Name == "Cmdr"
+                then
+                    Destroy(UI);
+                end
+            end
+        end)
 	end
 
 	-- staff notifier
