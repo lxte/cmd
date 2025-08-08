@@ -2119,6 +2119,12 @@ local GetSavedSettings = function()
 		end
 	end
 
+	for Type, Default in next, Settings do
+		if not Theming[Type] then
+			Theming[Type] = Default
+		end
+	end
+
 	return Theming
 end
 
@@ -3109,6 +3115,11 @@ Command.Add({
 			--: Aliases
 			local CommandName = ""
 			local AliasName = ""
+
+			if (not Settings.Aliases) then
+				Settings.Aliases = {}
+			end
+
 			local AddAliasButton = function(AliasName, CommandName)
 				Window:AddButton({
 					Title = Format("%s (%s)", AliasName, CommandName),
@@ -3179,7 +3190,7 @@ Command.Add({
 
 			Window:AddSection({ Title = "Delete Aliases", Tab = "Aliases" })
 
-			for AliasName, CommandName in next, Settings.Aliases do
+			for AliasName, CommandName in next, Settings.Aliases or {} do
 				AddAliasButton(AliasName, CommandName);
 			end
 		end
@@ -7910,7 +7921,7 @@ do
 
 	Settings = GetSavedSettings()
 
-	for AliasName, CommandName in next, Settings.Aliases do
+	for AliasName, CommandName in next, Settings.Aliases or {} do
 		local Cmd = Command.Find(Lower(CommandName))
 
 		if Cmd and CommandName and AliasName then
