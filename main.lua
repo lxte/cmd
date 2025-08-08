@@ -118,14 +118,14 @@ local Methods = {
 		xpcall(function()
 			Child.Parent = (gethui and gethui()) or Services.Core
 		end, function()
-			Child.Parent = PlayerGui
+			Child.Parent = Services.Players.LocalPlayer.PlayerGui
 		end)
 	end,
 
 	Check = function()
 		local LocalPlayer = Services.Players.LocalPlayer
-        	local Backpack = LocalPlayer:WaitForChild("Backpack")
-        	local Character = LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded)
+		local Backpack = LocalPlayer:WaitForChild("Backpack")
+		local Character = LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded)
 
 		if Services.Replicated:FindFirstChild("DeleteCar") then
 			return true
@@ -213,7 +213,7 @@ Connect(LocalPlayer.CharacterAdded, function(Char)
 end)
 
 local Lower, Split, Sub, GSub, Find, Match, Format, Blank =
-	string.lower, string.split, string.sub, string.gsub, string.find, string.match, string.format, "", ""
+	string.lower, string.split, string.sub, string.gsub, string.find, string.match, string.format, ""
 
 local Unpack, Insert, Discover, Concat, Remove, FullArgs =
 	table.unpack, table.insert, table.find, table.concat, table.remove, {}
@@ -250,7 +250,7 @@ if (not Character) or (not Humanoid) or (not Root) then
 end
 
 -- :: INSERT[UI] :: --
-local UI = (Services.Run:IsStudio() and script.Parent) or Services.Insert:LoadLocalAsset(Settings.CustomUI)
+local UI = (Services.Run:IsStudio() and script.Parent.Parent) or Services.Insert:LoadLocalAsset(Settings.CustomUI)
 
 local Assets = UI.Assets
 local Notification = UI.Frame
@@ -484,9 +484,9 @@ local Bring = function(Part, Target)
 
 		Delay(1, function()
 			Destroy(Attachment);
-            Destroy(Position);
-            Destroy(Torque);
-            Destroy(Attachment2);
+			Destroy(Position);
+			Destroy(Torque);
+			Destroy(Attachment2);
 			Part.CanCollide = OldCollide
 		end)
 	end
@@ -765,7 +765,7 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 				local PredictionOffset = Direction * (Magnitude / Random.new():NextNumber(0, 7)) - Vector3.new(0, YAxis or 0.2, 0)
 				local TargetCFrame = CFrame.new(_Root.Position)
 				local PredictedCFrame = TargetCFrame * CFrame.new(PredictionOffset)
-				
+
 				Humanoid.Sit = false
 				Camera.CameraSubject = _Humanoid
 				Root.CFrame = PredictedCFrame * CFrame.Angles(Angle or math.random(0, 360), 0, 0)
@@ -1001,9 +1001,13 @@ local Animate = {
 			local Start
 			local StartPosition
 
+			local Success, Platform = pcall(function()
+				return Services.Input:GetPlatform()
+			end)
+
 			if
 				not UseAlternative
-				and Discover({ Enum.Platform.IOS, Enum.Platform.Android }, Services.Input:GetPlatform())
+				and Discover({ Enum.Platform.IOS, Enum.Platform.Android }, Success and Platform or Enum.Platform.IOS)
 			then
 				AllowOffScreen = true
 			end
@@ -1094,6 +1098,7 @@ function Library:CreateWindow(Config: { Title: string })
 	local Actions = Window.Actions
 	local Tabs = Window.Tabs
 	local Topbar = Window.Topbar
+	local Shadow = Window.ShadowBackground
 
 	local TabName = Topbar.Title
 	local WindowName = Topbar.Description
@@ -1183,8 +1188,17 @@ function Library:CreateWindow(Config: { Title: string })
 	Library.Tabs[Config.Title].Open()
 	Animate.Drag(Window)
 
-	--// Animations
+	local SetShadow = function(Bool)
+		Spawn(function()
+			Shadow.Visible = true
+			Tween(Shadow, 0.5, {
+				BackgroundTransparency = Bool and 0.7 or 1
+			}); Wait(0.5)
+			Shadow.Visible = Bool
+		end)
+	end
 
+	--> Animations
 	function Animations:SetTab(Name)
 		TabName.Text = Name
 		Current = Name
@@ -1240,7 +1254,7 @@ function Library:CreateWindow(Config: { Title: string })
 		end)
 	end
 
-	--// Components
+	--> Components
 	function Component:Set(Component, Title, Description)
 		local Labels = Component.Frame
 		local TLabel, DLabel = Labels.Title, Labels.Description
@@ -1363,6 +1377,30 @@ function Library:CreateWindow(Config: { Title: string })
 		})
 	end
 
+	function Component:AddMultiActions(Config: { Title: string, Description: string, Tab: string, Direction: string, Callback: (string, TextButton) -> (), Actions: { string } })
+		local MultiActions = Clone(Components["MultiActions"])
+		local Holder = MultiActions.Holder
+
+		Component:Set(MultiActions, Config.Title, Config.Description)
+		Holder.UIListLayout.FillDirection = Enum.FillDirection[Config.Direction or "Vertical"]
+		MultiSet(MultiActions, {
+			Parent = Tabs[Config.Tab].ScrollingFrame,
+			Visible = true,
+		})
+
+		for _, Action in next, Config.Actions do
+			local Button = Holder.ActionTemplate:Clone();
+			Button.Parent = Holder
+			Button.Visible = true
+			Button.Title.Text = Action
+			Animations:Component(Button)
+
+			Connect(Button.MouseButton1Click, function()
+				Config.Callback(Action, MultiActions)
+			end)
+		end
+	end
+
 	function Component:AddInput(
 		Config: { Title: string, Description: string, Tab: string, Default: string, Callback: any }
 	)
@@ -1456,6 +1494,162 @@ function Library:CreateWindow(Config: { Title: string })
 		})
 	end
 
+	function Component:AddColorPickerWindow(Callback: (Color3) -> (), H, S, V)
+		local ColorPopup = Clone(Components["ColorPopup"])
+
+		ColorPopup.Parent = Window
+		Animate.Open(ColorPopup, 0)
+		SetShadow(true)
+
+		local HueSatFrame = ColorPopup.HueSaturationFrame
+		local ValueSlider = ColorPopup.ValueFrame
+
+		local HueSatPointer = HueSatFrame.Pointer
+		local ValuePointer = ValueSlider.Pointer
+
+		local HexInput = ColorPopup.Hex
+		local RgbInputs = {
+			R = ColorPopup.RGB.R.Input,
+			G = ColorPopup.RGB.G.Input,
+			B = ColorPopup.RGB.B.Input
+		}
+
+		local ColorPreview = ColorPopup.ColorDisplay
+		local CloseButton = ColorPopup.Buttons.CloseColorPicker
+		local DoneButton = ColorPopup.Buttons.Done
+
+		local Hue = H or 0
+		local Saturation = S or 1
+		local Brightness = V or 1
+
+		local UpdateColor = function()
+			local FinalColor = Color3.fromHSV(Hue, Saturation, Brightness)
+			local SliderColor = Color3.fromHSV(Hue, Saturation, 1)
+
+			ColorPreview.BackgroundColor3 = FinalColor
+			ValueSlider.BackgroundColor3 = SliderColor
+
+			local R, G, B = FinalColor.R * 255, FinalColor.G * 255, FinalColor.B * 255
+			HexInput.Text = string.format("#%02X%02X%02X", R, G, B)
+			RgbInputs.R.Text = math.floor(R)
+			RgbInputs.G.Text = math.floor(G)
+			RgbInputs.B.Text = math.floor(B)
+
+			HueSatPointer.Position = UDim2.new(Hue, 0, 1 - Saturation, 0) - UDim2.fromOffset(HueSatPointer.AbsoluteSize.X / 2, 0)
+			ValuePointer.Position = UDim2.new(Brightness, 0, 0.5, 0) - UDim2.fromOffset(ValuePointer.AbsoluteSize.X / 2, 0)
+		end
+
+		local Handle = function(Element, Callback)
+			Connect(Element.InputBegan, function(Input)
+				if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+					local Connection
+
+					Connection = Connect(Services.Input.InputChanged, function(Change)
+						if Change.UserInputType == Enum.UserInputType.MouseMovement then
+							Callback(Change.Position);
+						end
+					end)
+
+					Connect(Services.Input.InputEnded, function(End)
+						if End.UserInputType == Enum.UserInputType.MouseButton1 then
+							Connection:Disconnect();
+						end
+					end)
+				end
+			end)
+		end
+
+		Handle(HueSatFrame, function(MousePosition)
+			local RelX = math.clamp((MousePosition.X - HueSatFrame.AbsolutePosition.X) / HueSatFrame.AbsoluteSize.X, 0, 1)
+			local RelY = math.clamp((MousePosition.Y - HueSatFrame.AbsolutePosition.Y) / HueSatFrame.AbsoluteSize.Y, 0, 1)
+
+			Hue = RelX
+			Saturation = 1 - RelY
+
+			UpdateColor()
+		end)
+
+		Handle(ValueSlider, function(MousePosition)
+			local RelX = math.clamp((MousePosition.X - ValueSlider.AbsolutePosition.X) / ValueSlider.AbsoluteSize.X, 0, 1)
+
+			Brightness = RelX
+			UpdateColor()
+		end)
+
+		Connect(HexInput.FocusLost, function(EnterPressed)
+			if EnterPressed then
+				local Hex = HexInput.Text:gsub("#", "")
+				if #Hex == 6 then
+					local R = tonumber(Hex:sub(1, 2), 16)
+					local G = tonumber(Hex:sub(3, 4), 16)
+					local B = tonumber(Hex:sub(5, 6), 16)
+
+					if (R and G and B) then
+						local H, S, V = Color3.fromRGB(R, G, B):ToHSV()
+						Hue, Saturation, Brightness = H, S, V
+						UpdateColor()
+					end
+				end
+			end
+		end)
+
+		for Key, Box in next, RgbInputs do
+			Connect(Box.FocusLost, function(EnterPressed)
+				if EnterPressed then
+					local R = tonumber(RgbInputs.R.Text) or 0
+					local G = tonumber(RgbInputs.G.Text) or 0
+					local B = tonumber(RgbInputs.B.Text) or 0
+
+					R = math.clamp(R, 0, 255)
+					G = math.clamp(G, 0, 255)
+					B = math.clamp(B, 0, 255)
+
+					local H, S, V = Color3.fromRGB(R, G, B):ToHSV()
+					Hue, Saturation, Brightness = H, S, V
+					UpdateColor()
+				end
+			end)
+		end
+
+		Connect(CloseButton.MouseButton1Click, function()
+			SetShadow(false)
+			Animate.Close(ColorPopup, 0.9, true); Wait(0.5)
+			ColorPopup:Destroy();
+		end)
+
+		Connect(DoneButton.MouseButton1Click, function()
+			Callback(ColorPreview.BackgroundColor3)
+			SetShadow(false)
+			Animate.Close(ColorPopup, 0.9, true); Wait(0.5)
+			ColorPopup:Destroy();
+		end)
+
+
+		UpdateColor()
+	end
+
+	function Component:AddColorPicker(Config: { Title: string, Description: string, Tab: string, Default: Color3, Callback: (Color3) -> () })
+		local ColorPicker = Clone(Components["ColorPicker"])
+		local Current = ColorPicker.CurrentColor
+
+		Component:Set(ColorPicker, Config.Title, Config.Description)
+		Animations:Component(ColorPicker)
+		Current.BackgroundColor3 = Config.Default or Color3.fromRGB(255, 255, 255)
+		MultiSet(ColorPicker, {
+			Parent = Tabs[Config.Tab].ScrollingFrame,
+			Visible = true,
+		})
+
+		Connect(ColorPicker.MouseButton1Click, function()
+			Component:AddColorPickerWindow(function(Color)
+				Current.BackgroundColor3 = Color
+				Config.Callback(Color)
+			end, Current.BackgroundColor3:ToHSV());
+		end)
+
+		return ColorPicker
+	end
+
 	function Component:AddToggle(
 		Config: { Title: string, Description: string, Tab: string, Default: boolean, Callback: any }
 	)
@@ -1510,7 +1704,7 @@ function Library:CreateWindow(Config: { Title: string })
 		AllowDecimals: boolean,
 		DecimalAmount: number,
 		Callback: any,
-	})
+		})
 		local Slider = Clone(Components["Slider"])
 
 		local Main = Slider["Slider"]
@@ -1709,26 +1903,26 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 					Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 80) })
 					Wait(0.1)
 					Services.Tween
-						:Create(Box, Info, {
-							Size = UDim2.fromOffset(229, 80),
-							GroupTransparency = Settings.Theme.Transparency,
-						})
-						:Play()
+					:Create(Box, Info, {
+						Size = UDim2.fromOffset(229, 80),
+						GroupTransparency = Settings.Theme.Transparency,
+					})
+					:Play()
 					Wait(0.3)
 					Box.AutomaticSize = Enum.AutomaticSize.Y
 				end, function()
-					if not Closed then
-						Closed = true
+				if not Closed then
+					Closed = true
 
-						SetShadow(Box, false)
-						Tween(Box, 0.3, { GroupTransparency = 1 })
-						Notification.AutomaticSize = None
-						Tween(Notification, 0.35, { Size = UDim2.fromOffset(199, 0) })
-						Tween(Notification.UIPadding, 0.3, { PaddingLeft = UDim.new(0, 600) })
-						Wait(0.35)
-						Destroy(Notification)
-					end
+					SetShadow(Box, false)
+					Tween(Box, 0.3, { GroupTransparency = 1 })
+					Notification.AutomaticSize = None
+					Tween(Notification, 0.35, { Size = UDim2.fromOffset(199, 0) })
+					Tween(Notification.UIPadding, 0.3, { PaddingLeft = UDim.new(0, 600) })
+					Wait(0.35)
+					Destroy(Notification)
 				end
+			end
 
 			Connect(Interact.MouseButton1Click, Close)
 			Open()
@@ -1769,6 +1963,20 @@ local Themes = {
 						Button.BackgroundColor3 = Color(Settings.Theme.Actions, 2)
 					end
 				end
+			end
+		end,
+
+		["Hex"] = function(Label)
+			if Label:IsA("TextBox") then
+				Label.BackgroundColor3 = Settings.Theme.Secondary
+				Label.TextColor3 = Settings.Theme.Title
+			end
+		end,
+
+		["CloseColorPicker"] = function(Label)
+			if Label:IsA("TextButton") then
+				Label.BackgroundColor3 = Settings.Theme.Secondary
+				Label.TextColor3 = Settings.Theme.Description
 			end
 		end,
 
@@ -1814,6 +2022,12 @@ local Themes = {
 			end
 		end,
 
+		["ActionTemplate"] = function(Label)
+			if Label:IsA("TextButton") then
+				Label.BackgroundColor3 = Color(Settings.Theme.Component, 5)
+			end
+		end,
+
 		["Press"] = function(Label)
 			if Label:IsA("Frame") then
 				Label.BackgroundColor3 = Color(Settings.Theme.Secondary, 5)
@@ -1841,7 +2055,12 @@ local Themes = {
 			end
 		end,
 
-		--// Tables
+		--> Tables
+		["R"] = { "Frame", "Secondary", "BackgroundColor3"},
+		["G"] = { "Frame", "Secondary", "BackgroundColor3"},
+		["B"] = { "Frame", "Secondary", "BackgroundColor3"},
+		["ColorPopup"] = { "CanvasGroup", "Primary", "BackgroundColor3"},
+		["ColorLine"] = { "Frame", "Outline", "BackgroundColor3" },
 		["Title"] = { "TextLabel", "Title", "TextColor3" },
 		["Description"] = { "TextLabel", "Description", "TextColor3" },
 		["Line"] = { "Frame", "Highlight", "BackgroundColor3" },
@@ -1850,6 +2069,7 @@ local Themes = {
 		["Shadow"] = { "UIStroke", "Shadow", "Color" },
 		["Highlight"] = { "Frame", "Highlight", "BackgroundColor3" },
 		["Circle"] = { "Frame", "Highlight", "BackgroundColor3" },
+		["SectionCircle"] = { "Frame", "Title", "BackgroundColor3" },
 		["Notification"] = { "CanvasGroup", "Primary", "BackgroundColor3", true },
 		["DropdownExample"] = { "CanvasGroup", "Primary", "BackgroundColor3" },
 	},
@@ -1871,7 +2091,7 @@ local Themes = {
 		end,
 
 		["ImageLabel"] = function(Label)
-			if Label.Image ~= "rbxassetid://6644618143" then
+			if Label.Image ~= "rbxassetid://6644618143" and Label.Name ~= "HueSaturationFrame" and Label.Name ~= "ValueFrame" then
 				Label.ImageColor3 = Settings.Theme.Icon
 			end
 		end,
@@ -2044,9 +2264,18 @@ local DefaultThemes = {
 	},
 }
 
+local ThemeButtons = {}
 local SetTheme = function(Table)
 	Settings.Theme = Table or Settings.Theme
 	CommandBar.BackgroundColor3 = Settings.Theme.Primary
+
+	for Type, Button in next, ThemeButtons do
+		local Color = Settings.Theme[Type]
+
+		if typeof(Color) == "Color3" then
+			Button.CurrentColor.BackgroundColor3 = Color
+		end
+	end
 
 	for Index, Descendant in next, UI:GetDescendants() do
 		xpcall(function()
@@ -2194,7 +2423,7 @@ Command.Run = function(IgnoreNotifications, Name, Callbacks)
 				end
 			end, function(Result)
 				Output(
-					Format("[COMMAND ERROR] : Error occured trying to run the command - %s\nERROR: %s", Name, Result)
+					Format("[COMMAND ERROR] : Error occured trying to run the command - %s\nERROR: %s\n%s", Name, Result, debug.traceback())
 				)
 			end)
 		elseif Name ~= Blank then
@@ -2262,7 +2491,7 @@ Fill.Recommend = function(Input)
 	local Lowered = Lower(Split(Input, " ")[1])
 	local Found = false
 
-	--// Command Recommendation
+	--> Command Recommendation
 	if #Split(Input, " ") == 1 then
 		for Index, Table in Commands do
 			for Index, Name in Table[1] do
@@ -2286,7 +2515,7 @@ Fill.Recommend = function(Input)
 					local PlayerFound = false
 					local Player = New[#New]
 
-					--// Display Name Recommendation
+					--> Display Name Recommendation
 
 					for Index, Plr in next, Services.Players:GetPlayers() do
 						if Find(Sub(Lower(Plr.DisplayName), 1, #Player), Lower(Player)) then
@@ -2297,7 +2526,7 @@ Fill.Recommend = function(Input)
 						end
 					end
 
-					--// Username Recommendation
+					--> Username Recommendation
 
 					if not PlayerFound then
 						for Index, Plr in next, Services.Players:GetPlayers() do
@@ -2310,7 +2539,7 @@ Fill.Recommend = function(Input)
 						end
 					end
 
-					--// Player Argument Recommendation
+					--> Player Argument Recommendation
 
 					if not PlayerFound then
 						local GetPlayerArguments = {
@@ -2444,10 +2673,8 @@ Fill.Search = function(Input)
 	end)
 end
 
---// :: FEATURE
-
---// Waypoints
-
+--> :: FEATURE
+--> Waypoints
 function Feature:AddWaypoint(Name, CFrame)
 	CFrame = tostring(CFrame)
 
@@ -2473,7 +2700,7 @@ function Feature:AddWaypoint(Name, CFrame)
 	end
 end
 
---// Events
+--> Events
 function Feature:AddEvent(Event, Command)
 	local info = Settings.Events[Event]
 
@@ -2534,7 +2761,7 @@ function Feature:ConnectEvent(Event, Connection, UseHumanoid, Check)
 			end
 		end
 
-		local Char = Character or (LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded)) -- so doesnt error if character doesnt exist
+		local Char = Character or (LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded))
 		CDetect(CHumanoid or Char:WaitForChild("Humanoid"))
 		Connect(LocalPlayer.CharacterAdded, function(NewCharacter)
 			CCharacter = NewCharacter
@@ -2611,7 +2838,7 @@ Command.Add({
 				Tab = "Home",
 			})
 
-			--// About
+			--> About
 			Window:AddSection({ Title = "Prefixes", Tab = "About" })
 
 			Window:AddParagraph({
@@ -2645,8 +2872,8 @@ Command.Add({
 				Description = "Unavailable",
 				Tab = "About",
 			})
-			--// Settings
 
+			--> Settings
 			Window:AddInput({
 				Title = "Prefix",
 				Description = "Prefix for the Command Bar",
@@ -2687,7 +2914,7 @@ Command.Add({
 				end,
 			})
 
-			--// Toggles
+			--> Toggles
 			Window:AddSection({ Title = "Command Bar", Tab = "Toggles" })
 
 			Window:AddToggle({
@@ -2815,7 +3042,7 @@ Command.Add({
 				end,
 			})
 
-			--// Themes
+			--> Themes
 			Window:AddSection({ Title = "Colors", Tab = "Theme" })
 
 			Window:AddTab({
@@ -2879,8 +3106,24 @@ Command.Add({
 				end,
 			})
 
-			--// Keybinds
+			for Theme, Default in next, Settings.Theme do
+				if typeof(Default) == "Color3" then
+					local Button = Window:AddColorPicker({
+						Title = Theme,
+						Tab = "Create Theme",
+						Default = Default,
+						Callback = function(NewColor)
+							Settings.Theme[Theme] = NewColor
+							SetTheme()
+							SaveSettings()
+						end,
+					})
 
+					ThemeButtons[Theme] = Button
+				end
+			end
+
+			--> Keybinds
 			Window:AddTab({
 				Title = "Create Keybind",
 				Description = "Create a Keybind to use",
@@ -2981,20 +3224,17 @@ Command.Add({
 				end
 			end)
 
-			--// Waypoints
+			--> Waypoints
 			local AddWaypoint = function(Name, Position)
-				Window:AddDropdown({
+				Window:AddMultiActions({
 					Title = Name,
-					Description = "Pick between the two options!",
-					Options = {
-						["Teleport to"] = "TP",
-						["Remove Waypoint"] = "Remove",
-					},
 					Tab = "Waypoints",
+					Actions = { "Teleport", "Remove" },
+					Direction = "Horizontal",
 					Callback = function(Method, Button)
 						local Waypoint = Settings.Waypoints[Name]
 
-						if Method == "TP" then
+						if Method == "Teleport" then
 							Root.CFrame = Position
 						else
 							Settings.Waypoints[Name] = nil
@@ -3023,7 +3263,7 @@ Command.Add({
 				AddWaypoint(WaypointName, CFrame.new(Unpack(Split(SavedPosition, ","))))
 			end
 
-			--// Events
+			--> Events
 			Window:AddTab({
 				Title = "Create Event",
 				Description = "Create a event to fire",
@@ -3379,8 +3619,8 @@ Command.Add({
 local AimbotSettings = {
 	Enabled = false,
 	Triggerbot = false,
-	Part = "Head", --// Available parts: Head, HumanoidRootPart
-	Method = "Camera", --// Available methods: Camera, Mouse, Third
+	Part = "Head", --> Available parts: Head, HumanoidRootPart, Random
+	Method = "Camera", --> Available methods: Camera, Silent, Third
 	RandomPart = false,
 
 	AliveCheck = true,
@@ -5537,8 +5777,8 @@ Command.Add({
 		end
 
 		return "Gamepasses fired",
-			Format("All gamepasses have been hooked as well as fired %s purchase signals", SignalsFired),
-			15
+		Format("All gamepasses have been hooked as well as fired %s purchase signals", SignalsFired),
+		15
 	end,
 })
 
@@ -6381,8 +6621,8 @@ Command.Add({
 		local Fired = 0
 		if not firetouchinterest then
 			return "Missing Function",
-				"Executor does not support this command, missing function - firetouchinterest",
-				10
+			"Executor does not support this command, missing function - firetouchinterest",
+			10
 		end
 
 		for Index, Target in next, GetClasses(workspace, "TouchTransmitter") do
@@ -6403,8 +6643,8 @@ Command.Add({
 		local Fired = 0
 		if not fireproximityprompt then
 			return "Missing Function",
-				"Executor does not support this command, missing function - fireproximityprompt",
-				10
+			"Executor does not support this command, missing function - fireproximityprompt",
+			10
 		end
 
 		for Index, Target in next, GetClasses(workspace, "ProximityPrompt") do
@@ -6426,8 +6666,8 @@ Command.Add({
 		local Fired = 0
 		if not fireclickdetector then
 			return "Missing Function",
-				"Executor does not support this command, missing function - fireclickdetector",
-				10
+			"Executor does not support this command, missing function - fireclickdetector",
+			10
 		end
 
 		for Index, Target in next, GetClasses(workspace, "ClickDetector") do
@@ -7835,7 +8075,7 @@ if Check("File") then
 	end
 end
 
---// Autofill & Recommendation
+--> Autofill & Recommendation
 for Index, Command in next, Commands do
 	Fill.Add(Command)
 end
@@ -7858,7 +8098,7 @@ Connect(Services.Input.InputBegan, function(Key)
 	end
 end)
 
---// Command Bar
+--> Command Bar
 local ChatDebounce = false
 local OpenCommandBar = function()
 	local Transparency = Settings.Theme.Transparency
@@ -7929,7 +8169,7 @@ do
 			Aliases[#Aliases + 1] = Lower(AliasName)
 		end
 	end
-	
+
 	if Settings.Toggles.Developer then
 		if Interface then
 			Interface.Parent = nil
@@ -7964,17 +8204,17 @@ Spawn(function()
 	-- remove other admin prompts
 	if Settings.Toggles.RemoveCommandBars then
 		Delay(2, function()
-            for _, UI in next, PlayerGui:GetChildren() do
-                if
-                    UI.Name == "KCoreUI"
-                    or UI.Name == "HDAdminGuis"
-                    or UI.Name == "Essentials Client"
-                    or UI.Name == "Cmdr"
-                then
-                    Destroy(UI);
-                end
-            end
-        end)
+			for _, UI in next, PlayerGui:GetChildren() do
+				if
+					UI.Name == "KCoreUI"
+					or UI.Name == "HDAdminGuis"
+					or UI.Name == "Essentials Client"
+					or UI.Name == "Cmdr"
+				then
+					Destroy(UI);
+				end
+			end
+		end)
 	end
 
 	-- staff notifier
@@ -8020,7 +8260,7 @@ Spawn(function()
 		})
 	end
 
-	if not Drawing then
+	if not Drawing and not Services.Run:IsStudio() then
 		Drawing = loadstring(GetModule("drawing.lua"))()
 	end
 end)
@@ -8054,9 +8294,10 @@ end)
 API:Notify({
 	Title = "Welcome",
 	Description = Format(
-		"Loaded in %.2f seconds (Version %s)\nChat Prefix: %s",
+		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'",
 		tick() - Speed,
 		Settings.Version,
+		Settings.Prefix,
 		Settings.ChatPrefix
 	),
 	Duration = 15,
@@ -8197,7 +8438,7 @@ if Methods.Check() then
 						end
 					end,
 				})
-				
+
 				Window:AddSection({ Title = "Game", Tab = "Home" })
 
 				Window:AddButton({
