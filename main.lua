@@ -19,6 +19,7 @@ local Settings = {
 
 	CustomUI = Cmd().CustomUI or "rbxassetid://18617417654",
 
+	Aliases = {},
 	Waypoints = {},
 	Events = {
 		["AutoExecute"] = {},
@@ -2581,6 +2582,12 @@ Command.Add({
 			})
 
 			Window:AddTab({
+				Title = "Aliases",
+				Description = "Custom names/aliases for commands",
+				Tab = "Home",
+			})
+
+			Window:AddTab({
 				Title = "Waypoints",
 				Description = "Set up buttons for places to teleport to",
 				Tab = "Home",
@@ -2969,7 +2976,6 @@ Command.Add({
 			end)
 
 			--// Waypoints
-
 			local AddWaypoint = function(Name, Position)
 				Window:AddDropdown({
 					Title = Name,
@@ -3012,7 +3018,6 @@ Command.Add({
 			end
 
 			--// Events
-
 			Window:AddTab({
 				Title = "Create Event",
 				Description = "Create a event to fire",
@@ -3100,6 +3105,83 @@ Command.Add({
 					EventCommand = Input
 				end,
 			})
+
+			--: Aliases
+			local CommandName = ""
+			local AliasName = ""
+			local AddAliasButton = function(AliasName, CommandName)
+				Window:AddButton({
+					Title = Format("%s (%s)", AliasName, CommandName),
+					Description = "Click to remove alias",
+					Tab = "Aliases",
+					Callback = function(Self)
+						Settings.Aliases[AliasName] = nil
+						SaveSettings();
+						Self:Destroy();
+						API:Notify({
+							Title = AliasName,
+							Description = "Removed alias",
+							Type = "Success",
+							Duration = 10,
+						})
+					end,
+				})
+			end
+
+			Window:AddSection({ Title = "Add Aliases", Tab = "Aliases" })
+			Window:AddInput({
+				Title = "Command Name",
+				Description = "The name for the command you are trying to make an alias for",
+				Tab = "Aliases",
+				Callback = function(Input)
+					CommandName = Lower(Input)
+				end,
+			})
+
+			Window:AddInput({
+				Title = "Alias Name",
+				Description = "The alias you want the command to have",
+				Tab = "Aliases",
+				Callback = function(Input)
+					AliasName = Lower(Input)
+				end,
+			})
+
+			Window:AddButton({
+				Title = "Create Alias",
+				Tab = "Aliases",
+				Callback = function()
+					local Cmd = Command.Find(Lower(CommandName))
+					local AliasExists = Command.Find(Lower(AliasName))
+
+					if Cmd and not AliasExists then
+						local Aliases = Cmd[1]
+						Aliases[#Aliases + 1] = Lower(AliasName)
+						Settings.Aliases[AliasName] = CommandName
+						SaveSettings();
+						AddAliasButton(AliasName, CommandName)
+						API:Notify({
+							Title = "Aliases",
+							Description = "Alias has been created successfully",
+							Type = "Success",
+							Duration = 5,
+						})
+					else
+						API:Notify({
+							Title = "Aliases",
+							Description = "Couldn't save alias because command not found or alias already exists",
+							Type = "Error",
+							Duration = 10,
+						})
+					end
+				end,
+			})
+
+			Window:AddSection({ Title = "Delete Aliases", Tab = "Aliases" })
+
+			for AliasName, CommandName in next, Settings.Aliases do
+				AddAliasButton(AliasName, CommandName);
+			end
 		end
 	end,
 })
@@ -7828,6 +7910,15 @@ do
 
 	Settings = GetSavedSettings()
 
+	for AliasName, CommandName in next, Settings.Aliases do
+		local Cmd = Command.Find(Lower(CommandName))
+
+		if Cmd and CommandName and AliasName then
+			local Aliases = Cmd[1]
+			Aliases[#Aliases + 1] = Lower(AliasName)
+		end
+	end
+	
 	if Settings.Toggles.Developer then
 		if Interface then
 			Interface.Parent = nil
