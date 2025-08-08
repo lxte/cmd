@@ -243,7 +243,7 @@ end
 -- another check in case humanoid not found lmao
 if (not Character) or (not Humanoid) or (not Root) then
 	Spawn(function()
-		Character = (Character or CWait(LocalPlayer.CharacterAdded))
+		Character = (LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded))
 		Humanoid = Character:WaitForChild("Humanoid")
 		Root = Character:WaitForChild("HumanoidRootPart")
 	end)
