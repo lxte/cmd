@@ -732,80 +732,54 @@ local GetPlayer = function(Target)
 	end
 end
 
-local Fling = function(Targets: { Player })
-	local Flinged = 0
+local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
+	local Flinged = (0)
+	local Flinging = true
+	local OldPosition = Root.CFrame
 
-	if not (Character and Humanoid and Root) then
-		return
-	end
-
-	local Loop = function(TargetRoot, _Character, _Humanoid)
-		local Duration = 2
-		local Start = tick()
+	Spawn(function()
+		local Movel = 0.1
 
 		repeat Wait()
-			local Magnitude = TargetRoot.Velocity.Magnitude
-			local Direction = _Humanoid and _Humanoid.MoveDirection or Vector3.zero
+			Velocity = Root.Velocity
+			Root.Velocity = Velocity * 10000 + Vector3.new(0, 10000, 0)
+			CWait(Services.Run.RenderStepped)
+			Root.Velocity = Velocity
+			CWait(Services.Run.Stepped)
+			Root.Velocity = Velocity + Vector3.new(0, Movel, 0)
+			Movel = Movel * -1
+		until not Flinging
+	end)
 
-			local PredictionOffset = Direction * (Magnitude / Random.new():NextNumber(0, 2.5)) - Vector3.new(0, 0.2, 0)
-			local TargetCFrame = CFrame.new(TargetRoot.Position)
-			local PredictedCFrame = TargetCFrame * CFrame.new(PredictionOffset)
+	for _, Player in next, Targets do
+		local _Humanoid = GetHumanoid(Player);
+		local _Root = GetRoot(Player);
+		local Start = tick();
 
-			Root.CFrame = PredictedCFrame
-			Character:SetPrimaryPartCFrame(PredictedCFrame)
-			Root.Velocity = Vector3.new(1, 2, 1) * 9e9
-			Root.RotVelocity = Vector3.new(1, 2, 1) * 9e9
-		until not TargetRoot
-			or (TargetRoot.Velocity.Magnitude > 500)
-			or not _Character
-			or not _Humanoid
-			or (tick() - Start >= Duration)
+		if (_Humanoid and _Root) then
+			repeat Wait()
+				local Magnitude = _Root.Velocity.Magnitude
+				local Direction = _Humanoid and _Humanoid.MoveDirection or Vector3.zero
 
-		if TargetRoot and (TargetRoot.Velocity.Magnitude > 500) then
-			Flinged += 1
+				local PredictionOffset = Direction * (Magnitude / Random.new():NextNumber(0, 7)) - Vector3.new(0, YAxis or 0.2, 0)
+				local TargetCFrame = CFrame.new(_Root.Position)
+				local PredictedCFrame = TargetCFrame * CFrame.new(PredictionOffset)
+				
+				Humanoid.Sit = false
+				Camera.CameraSubject = _Humanoid
+				Root.CFrame = PredictedCFrame * CFrame.Angles(Angle or math.random(0, 360), 0, 0)
+			until (tick() - Start >= 2) or (_Root.Velocity.Magnitude > 500) or (not Root) or (not Root.Parent)
+
+			if (_Root) and (_Root.Velocity.Magnitude > 500) then
+				Flinged += 1
+			end
 		end
 	end
 
-	local OriginalPos = Root.CFrame * CFrame.new(0, 1, 0)
-	local OldHeight = workspace.FallenPartsDestroyHeight
-	local BodyVelocity = Instance.new("BodyVelocity")
+	Flinging = false
+	Root.CFrame = OldPosition
+	Camera.CameraSubject = Humanoid
 
-	workspace.FallenPartsDestroyHeight = 1 / 0
-	BodyVelocity.Velocity = Vector3.new(1, 1, 1) * 9e9
-	BodyVelocity.MaxForce = Vector3.new(10, 10, 10) * 9e9
-	BodyVelocity.Parent = Root
-
-	for _, TargetPlayer in next, Targets do
-		local _Character = TargetPlayer.Character
-		local _Humanoid = _Character and _Character:FindFirstChildOfClass("Humanoid")
-		local _RootPart = _Humanoid and _Humanoid.RootPart
-
-		if _Character and _RootPart then
-			Camera.CameraSubject = _RootPart
-			Loop(_RootPart, _Character, _Humanoid)
-		end
-	end
-
-	Destroy(BodyVelocity);
-
-	repeat Wait()
-		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-		Camera.CameraSubject = Humanoid
-
-		Root.Velocity = Vector3.new()
-		Root.RotVelocity = Vector3.new()
-
-		for _, Part in next, GetClasses(Character, "BasePart") do
-			Part.Velocity = Vector3.new()
-			Part.RotVelocity = Vector3.new()
-		end
-
-		Root.CFrame = OriginalPos
-		Character:SetPrimaryPartCFrame(OriginalPos)
-		Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-	until (Root.Velocity.Magnitude < 10) and (Root.Position - OriginalPos.Position).Magnitude < 10
-
-	workspace.FallenPartsDestroyHeight = OldHeight
 	return Flinged
 end
 
@@ -5079,14 +5053,22 @@ Command.Add({
 		{ Name = "Amount", Type = "String" },
 	},
 	Task = function(Amount)
+		local BodyForces = {}		
 		local Gravity = SetNumber(Amount)
 		local Set = function(Part)
-			if Part and Part:IsA("BasePart") and not Part.Anchored then
-				Create("BodyForce", {
+			local Model = Part:FindFirstAncestorOfClass("Model")
+			local Character = Model and Services.Players:GetPlayerFromCharacter(Model)
+
+			if Part and Part:IsA("BasePart") and not Part.Anchored and not Character then
+				Insert(BodyForces, Create("BodyForce", {
 					Force = Part:GetMass() * Vector3.new(Gravity, workspace.Gravity, Gravity),
 					Parent = Part,
-				})
+				}))
 			end
+		end
+
+		for _, BodyForce in next, Get("SUG") or {} do
+			Destroy(BodyForce);
 		end
 
 		SetSRadius(9e9, 9e9)
@@ -5096,7 +5078,22 @@ Command.Add({
 			Set(Part)
 		end
 
+		Refresh("SUG", BodyForces)
+
 		return "Gravity", Format("Set unanchored gravity to %s", Amount)
+	end,
+})
+
+Command.Add({
+	Aliases = { "unsetunanchoredgravity", "unsug" },
+	Description = "Disables the SetUnanchoredGravity command",
+	Arguments = {},
+	Task = function()
+		for _, BodyForce in next, Get("SUG") or {} do
+			Destroy(BodyForce);
+		end
+
+		return "Gravity", "Removed gravity for unanchored parts"
 	end,
 })
 
@@ -7505,7 +7502,6 @@ Command.Add({
 	Task = function(Distance)
 		Refresh("Walkfling", true)
 		Spawn(function()
-			local NormalVelocity = Root.Velocity
 			local Velocity = Root.Velocity
 
 			repeat
@@ -7608,6 +7604,24 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "launch" },
+	Description = "Launches your target to the sky (basically fling but it makes them go up)",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)
+		local Targets = GetPlayer(Input)
+
+		if #Targets == 0 then
+			return "Fling", "No targets found"
+		end
+
+		local Successes = Fling(Targets, 3, 0)
+		return "Fling", Format("Successfully launched (%s/%s) player(s)", Successes or 0, #Targets)
+	end,
+})
+
+Command.Add({
 	Aliases = { "loopfling", "lf" },
 	Description = "Repeatedly flings your target",
 	Arguments = {
@@ -7615,7 +7629,7 @@ Command.Add({
 	},
 	Task = function(Input)
 		Refresh("Fling", true)
-		repeat
+		repeat Wait();
 			Fling(GetPlayer(Input))
 		until not Get("Fling")
 	end,
