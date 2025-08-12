@@ -100,6 +100,7 @@ local Services = {
 	ContextActionService = GetService("ContextActionService"),
 	Sound = GetService("SoundService"),
 	AssetService = GetService("AssetService"),
+	Stats = GetService("Stats"),
 }
 
 local Vuln = {
@@ -165,7 +166,6 @@ local Methods = {
 	end,
 
 	Destroy = function(Part)
-		local Keywords = { "destroy", "delete", "remove", "clear", "dispose" }
 		local LocalPlayer = Services.Players.LocalPlayer
 
 		if Services.Replicated:FindFirstChild("DeleteCar") then
@@ -176,7 +176,7 @@ local Methods = {
 			local ArgumentTable = { [1] = "Remove", [2] = { [1] = Part } }
 			LocalPlayer.Backpack
 				:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint
-				:InvokeServer(Unpack(ArgumentTable))
+				:InvokeServer(table.unpack(ArgumentTable))
 		else
 			local Arguments = (function()
 				local Return = {}
@@ -320,7 +320,7 @@ local StringToInstance = function(String)
 	local Current = game
 
 	if Path[1] == "workspace" then
-		Current = Services.Workspace
+		Current = workspace
 	end
 
 	Remove(Path, 1)
@@ -396,17 +396,16 @@ local Create = function(ClassName, Properties, Children)
 	return Object
 end
 
-local SetSRadius = setsimulationradius
-	or function(Radius, MaxRadius)
-		Spawn(function()
-			LocalPlayer.SimulationRadius = Radius
-			LocalPlayer.MaxSimulationDistance = MaxRadius
-		end)
-	end
+local SetSRadius = setsimulationradius or function(Radius, MaxRadius)
+	Spawn(function()
+		LocalPlayer.SimulationRadius = Radius
+		LocalPlayer.MaxSimulationDistance = MaxRadius
+	end)
+end
 
 local AttachName = GenerateGUID(Services.Http)
 local Attach = function(Part, Target)
-	if Part and Part:IsA("BasePart") and not Part.Anchored then
+	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
 		local ModelDescendant = Part:FindFirstAncestorOfClass("Model")
 		SetSRadius(9e9, 9e9)
 
@@ -449,7 +448,7 @@ local Attach = function(Part, Target)
 end
 
 local Bring = function(Part, Target)
-	if Part and Part:IsA("BasePart") and not Part.Anchored then
+	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
 		local ModelDescendant = Part:FindFirstAncestorOfClass("Model")
 		local OldCollide = Part.CanCollide
 		SetSRadius(9e9, 9e9)
@@ -493,21 +492,7 @@ local Bring = function(Part, Target)
 end
 
 local IsStaff = function(Player)
-	local StaffRoles = {
-		"owner",
-		"admin",
-		"staff",
-		"mod",
-		"founder",
-		"manager",
-		"dev",
-		"president",
-		"leader",
-		"supervisor",
-		"chairman",
-		"supervising",
-	}
-
+	local StaffRoles = { "owner", "admin", "staff", "mod", "founder", "manager", "dev", "president", "leader", "supervisor", "chairman", "supervising" }
 	local CurrentRole = Player:GetRoleInGroup(game.CreatorId)
 
 	for Index, Role in next, StaffRoles do
@@ -519,14 +504,13 @@ end
 
 local Tween = function(Object, Speed, Properties, Info)
 	local Info = Info or {}
-	local Style, Direction =
-		Info["EasingStyle"] or Enum.EasingStyle.Sine, Info["EasingDirection"] or Enum.EasingDirection.Out
-
+	local Style, Direction = (Info.EasingStyle or Enum.EasingStyle.Sine), (Info.EasingDirection or Enum.EasingDirection.Out)
 	return Services.Tween:Create(Object, TweenInfo.new(Speed, Style, Direction), Properties):Play()
 end
 
 local SetRig = function(Type)
 	local Avatar = GetService("AvatarEditorService")
+
 	Avatar:PromptSaveAvatar(Humanoid.HumanoidDescription, Enum.HumanoidRigType[Type])
 	CWait(Avatar.PromptSaveAvatarCompleted)
 	Command.Parse(true, "respawn")
@@ -1198,10 +1182,27 @@ function Library:CreateWindow(Config: { Title: string })
 		end)
 	end
 
+	local UpdateIcon = function()
+		if (Current == "Home") then
+			MultiSet(Topbar.Back.ImageLabel, {
+				Image = "rbxassetid://16898791349",
+				ImageRectOffset = Vector2.new(257, 0),
+				ImageRectSize = Vector2.new(256, 256),
+			})
+		else
+			MultiSet(Topbar.Back.ImageLabel, {
+				Image = "rbxassetid://16898617509",
+				ImageRectOffset = Vector2.new(0, 257),
+				ImageRectSize = Vector2.new(256, 256),
+			})
+		end
+	end
+
 	--> Animations
 	function Animations:SetTab(Name)
 		TabName.Text = Name
 		Current = Name
+		UpdateIcon();
 
 		for Index, Main in next, Tabs:GetChildren() do
 			if Main:IsA("CanvasGroup") then
@@ -1277,8 +1278,8 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddTab(Config: { Title: string, Description: string, Tab: string })
-		local Button = Clone(Components["Section"])
-		local Tab = Clone(Components["SectionExample"])
+		local Button = Clone(Components.Section)
+		local Tab = Clone(Components.SectionExample)
 
 		Connect(Button.MouseButton1Click, function()
 			Animations:SetTab(Config.Title)
@@ -1296,7 +1297,7 @@ function Library:CreateWindow(Config: { Title: string })
 	function Component:AddDropdown(
 		Config: { Title: string, Description: string, Options: {}, Tab: Instance, Callback: any }
 	)
-		local Dropdown = Clone(Components["Dropdown"])
+		local Dropdown = Clone(Components.Dropdown)
 		local Background = Window.Background
 		local Text = Dropdown.Holder.Main.Title
 
@@ -1362,7 +1363,7 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddButton(Config: { Title: string, Description: string, Tab: string, Callback: any })
-		local Button = Clone(Components["Button"])
+		local Button = Clone(Components.Button)
 
 		Component:Set(Button, Config.Title, Config.Description)
 		Animations:Component(Button)
@@ -1378,7 +1379,7 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddMultiActions(Config: { Title: string, Description: string, Tab: string, Direction: string, Callback: (string, TextButton) -> (), Actions: { string } })
-		local MultiActions = Clone(Components["MultiActions"])
+		local MultiActions = Clone(Components.MultiActions)
 		local Holder = MultiActions.Holder
 
 		Component:Set(MultiActions, Config.Title, Config.Description)
@@ -1404,7 +1405,7 @@ function Library:CreateWindow(Config: { Title: string })
 	function Component:AddInput(
 		Config: { Title: string, Description: string, Tab: string, Default: string, Callback: any }
 	)
-		local Button = Clone(Components["Input"])
+		local Button = Clone(Components.Input)
 		local Box = Button.Main.TextBox
 
 		Box.Text = Config.Default or Blank
@@ -1427,7 +1428,7 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddSection(Config: { Title: string, Tab: string })
-		local Section = Clone(Components["TabSection"])
+		local Section = Clone(Components.TabSection)
 
 		Section.Title.Text = Config.Title
 		MultiSet(Section, {
@@ -1437,7 +1438,7 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddParagraph(Config: { Title: string, Description: string, Tab: string })
-		local Paragraph = Clone(Components["Paragraph"])
+		local Paragraph = Clone(Components.Paragraph)
 
 		Component:Set(Paragraph, Config.Title, Config.Description)
 
@@ -1449,16 +1450,27 @@ function Library:CreateWindow(Config: { Title: string })
 		return Paragraph
 	end
 
-	function Component:AddKeybind(Config: { Title: string, Description: string, Tab: string, Callback: any })
-		local Dropdown = Clone(Components["Keybind"])
+	function Component:AddKeybind(Config: { Title: string, Description: string, Tab: string, Callback: any, Default: Enum.KeyCode })
+		local Dropdown = Clone(Components.Keybind)
 		local Bind = Dropdown.Holder.Main.Title
 
-		local Mouse =
-			{ Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3 }
+		local Mouse = { Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3 }
 		local Types = {
-			["Mouse"] = "Enum.UserInputType.MouseButton",
-			["Key"] = "Enum.KeyCode.",
+			Mouse = ("Enum.UserInputType.MouseButton"),
+			Key = ("Enum.KeyCode."),
 		}
+
+		local SetKey = function(InputType, KeyCode)
+			if Discover(Mouse, InputType) then
+				MultiSet(Bind, {
+					Text = tostring(InputType):gsub(Types.Mouse, "MB"),
+				})
+			elseif InputType == Enum.UserInputType.Keyboard then
+				MultiSet(Bind, {
+					Text = tostring(KeyCode):gsub(Types.Key, Blank),
+				})
+			end
+		end
 
 		Animations:Component(Dropdown)
 		Component:Set(Dropdown, Config.Title, Config.Description)
@@ -1467,23 +1479,14 @@ function Library:CreateWindow(Config: { Title: string })
 			local Time = tick()
 			local Detect, Finished
 
-			MultiSet(Bind, { Text = "..." })
+			MultiSet(Bind, { Text = "press key" })
 			Detect = Connect(Services.Input.InputBegan, function(Key, Focused)
 				local InputType = Key.UserInputType
 
-				if not Finished and not Focused then
+				if (not Finished and not Focused) then
 					Finished = true
 					Config.Callback(Key)
-
-					if Discover(Mouse, InputType) then
-						MultiSet(Bind, {
-							Text = tostring(InputType):gsub(Types.Mouse, "MB"),
-						})
-					elseif InputType == Enum.UserInputType.Keyboard then
-						MultiSet(Bind, {
-							Text = tostring(Key.KeyCode):gsub(Types.Key, Blank),
-						})
-					end
+					SetKey(InputType, Key.KeyCode)
 				end
 			end)
 		end)
@@ -1492,10 +1495,16 @@ function Library:CreateWindow(Config: { Title: string })
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
 		})
+
+		if Config.Default then
+			SetKey(Enum.UserInputType.Keyboard, Config.Default)
+		else
+			MultiSet(Bind, { Text = "none" })
+		end
 	end
 
 	function Component:AddColorPickerWindow(Callback: (Color3) -> (), H, S, V)
-		local ColorPopup = Clone(Components["ColorPopup"])
+		local ColorPopup = Clone(Components.ColorPopup)
 
 		ColorPopup.Parent = Window
 		Animate.Open(ColorPopup, 0)
@@ -1629,7 +1638,7 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddColorPicker(Config: { Title: string, Description: string, Tab: string, Default: Color3, Callback: (Color3) -> () })
-		local ColorPicker = Clone(Components["ColorPicker"])
+		local ColorPicker = Clone(Components.ColorPicker)
 		local Current = ColorPicker.CurrentColor
 
 		Component:Set(ColorPicker, Config.Title, Config.Description)
@@ -1653,11 +1662,11 @@ function Library:CreateWindow(Config: { Title: string })
 	function Component:AddToggle(
 		Config: { Title: string, Description: string, Tab: string, Default: boolean, Callback: any }
 	)
-		local Toggle = Clone(Components["Toggle"])
+		local Toggle = Clone(Components.Toggle)
 
-		local On = Toggle["Value"]
-		local Main = Toggle["Main"]
-		local Circle = Main["ToggleLabel"]
+		local On = Toggle.Value
+		local Main = Toggle.Main
+		local Circle = Main.ToggleLabel
 
 		local Set = function(Value)
 			if Value then
@@ -1701,18 +1710,19 @@ function Library:CreateWindow(Config: { Title: string })
 		Description: string,
 		Tab: string,
 		MaxValue: number,
+		Default: number,
 		AllowDecimals: boolean,
 		DecimalAmount: number,
 		Callback: any,
 		})
-		local Slider = Clone(Components["Slider"])
+		local Slider = Clone(Components.Slider)
 
-		local Main = Slider["Slider"]
-		local Amount = Main["Main"].Input
-		local Slide = Main["Slide"]
-		local Fire = Slide["Fire"]
-		local Fill = Slide["Highlight"]
-		local Circle = Fill["Circle"]
+		local Main = Slider.Slider
+		local Amount = Main.Main.Input
+		local Slide = Main.Slide
+		local Fire = Slide.Fire
+		local Fill = Slide.Highlight
+		local Circle = Fill.Circle
 
 		local Active = false
 		local Value = 0
@@ -1753,6 +1763,7 @@ function Library:CreateWindow(Config: { Title: string })
 
 		Fill.Size = UDim2.fromScale(Value, 1)
 		Animations:Component(Slider)
+		Update(Config.Default or 0)
 		Component:Set(Slider, Config.Title, Config.Description)
 
 		Connect(Amount.FocusLost, function()
@@ -1812,8 +1823,14 @@ function Library:CreateWindow(Config: { Title: string })
 
 	Animations:SetTab("Home")
 	Connect(Topbar.Back.MouseButton1Click, function()
+		if (Topbar.Back.ImageLabel.Image == "rbxassetid://16898791349") then
+			Animate.Close(Window); Wait(0.25)
+			Window.Visible = false
+		end
+
 		Animations:SetTab(Previous or "Home")
 		Previous = nil
+		UpdateIcon();
 	end)
 
 	local SearchEnabled = true
@@ -1867,8 +1884,8 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 			local Notification = Clone(Features.Notification)
 			local Box = Notification.CanvasGroup
 
-			local Timer = Box["Timer"]
-			local Interact = Box["Interact"]
+			local Timer = Box.Timer
+			local Interact = Box.Interact
 			local None = Enum.AutomaticSize.None
 
 			local Methods = {
@@ -1878,7 +1895,7 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 				["error"] = { icon = "rbxassetid://18797440055", color = Color3.fromRGB(246, 109, 104) },
 			}
 
-			local Information = (Methods[Lower(Config.Type or "info")] or Methods["info"])
+			local Information = (Methods[Lower(Config.Type or "info")] or Methods.info)
 			local Opposite = (Settings.Theme.Mode == "Dark" and "Light") or "Dark"
 
 			Timer.BackgroundColor3 = Information.color
@@ -2338,7 +2355,7 @@ local GetSavedSettings = function()
 		elseif Index == "Transparency" then
 			Theming.Theme[Index] = tonumber(Theme)
 		elseif Index == "Mode" then
-			Theming.Theme["Mode"] = tostring(Theme)
+			Theming.Theme.Mode = tostring(Theme)
 		end
 	end
 
@@ -3069,6 +3086,7 @@ Command.Add({
 				Title = "UI Transparency",
 				Tab = "Theme",
 				MaxValue = 0.8,
+				Default = Settings.Theme.Transparency,
 				AllowDecimals = true,
 				DecimalAmount = 2,
 				Callback = function(Amount)
@@ -3187,6 +3205,7 @@ Command.Add({
 				Title = "Keybind Keybind",
 				Description = "The keybind for the Keybind",
 				Tab = "Create Keybind",
+				Default = Keybind.Key,
 				Callback = function(Key)
 					Keybind.Key = Key
 				end,
@@ -3507,6 +3526,7 @@ Command.Add({
 				Title = "Box Thickness",
 				Tab = "Home",
 				MaxValue = 10,
+				Default = ESPSettings.BoxThickness,
 				Callback = function(Amount)
 					ESPSettings.BoxThickness = Amount
 				end,
@@ -3516,6 +3536,7 @@ Command.Add({
 				Title = "Text Size",
 				Tab = "Home",
 				MaxValue = 25,
+				Default = ESPSettings.TextSize,
 				Callback = function(Amount)
 					ESPSettings.TextSize = Amount
 				end,
@@ -3696,7 +3717,7 @@ AimbotSettings.Closest = function()
 end
 
 AimbotSettings.GetAutoPrediction = function()
-	local DataPing = game.Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
+	local DataPing = Services.Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
 	local Prediction = math.clamp(DataPing / 1000, 0, 1) * 1.285
 
 	return Prediction
@@ -3773,6 +3794,7 @@ Command.Add({
 			Window:AddKeybind({
 				Title = "Keybind",
 				Tab = "Home",
+				Default = AimbotSettings.Key,
 				Callback = function(Key)
 					AimbotSettings.Key = Key
 				end,
@@ -3832,6 +3854,7 @@ Command.Add({
 				Tab = "Home",
 				MaxValue = 1,
 				AllowDecimals = true,
+				Default = AimbotSettings.Prediction,
 				Callback = function(Amount)
 					AimbotSettings.Prediction = Amount
 				end,
@@ -3841,6 +3864,7 @@ Command.Add({
 				Title = "FOV Size",
 				Tab = "Home",
 				MaxValue = 500,
+				Default = AimbotSettings.FOV.Radius,
 				Callback = function(Amount)
 					AimbotSettings.FOV.Radius = Amount
 				end,
