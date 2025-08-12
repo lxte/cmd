@@ -1900,7 +1900,10 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 
 			Timer.BackgroundColor3 = Information.color
 			Timer.Outline.Color = Color(Information.color, 25, Opposite)
-
+			
+			Box.Gradient.BackgroundColor3 = Information.color
+			Box.Frame.Title.Notify.ImageColor3 = Information.color
+			Box.Frame.Title.Notify.Image = Information.icon
 			Notification.Parent = UI.Frame
 			Animate.Set(Box, Config.Title, Config.Description)
 			MultiSet(Box, {
@@ -1917,11 +1920,11 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 			local Open, Close =
 				function()
 					SetShadow(Box, true)
-					Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 80) })
+					Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 70) })
 					Wait(0.1)
 					Services.Tween
 					:Create(Box, Info, {
-						Size = UDim2.fromOffset(229, 80),
+						Size = UDim2.fromOffset(229, 70),
 						GroupTransparency = Settings.Theme.Transparency,
 					})
 					:Play()
@@ -1943,7 +1946,7 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 
 			Connect(Interact.MouseButton1Click, Close)
 			Open()
-			Tween(Timer, Duration, { Size = UDim2.fromOffset(0, 2) })
+			Tween(Timer, Duration, { Size = UDim2.fromOffset(0, 3) })
 			Wait(Duration)
 			Close()
 		end
@@ -2108,7 +2111,7 @@ local Themes = {
 		end,
 
 		["ImageLabel"] = function(Label)
-			if Label.Image ~= "rbxassetid://6644618143" and Label.Name ~= "HueSaturationFrame" and Label.Name ~= "ValueFrame" then
+			if Label.Image ~= "rbxassetid://6644618143" and Label.Name ~= "Notify" and Label.Name ~= "HueSaturationFrame" and Label.Name ~= "ValueFrame" and Label.Name ~= "ArgIcon" then
 				Label.ImageColor3 = Settings.Theme.Icon
 			end
 		end,
@@ -2486,12 +2489,46 @@ Fill.Add = function(Table)
 	local Aliases, Description, Arguments, Plugin, Callback = Unpack(Table)
 	local Button = Clone(Autofill.Example)
 	local Labels = Button.Frame
-
+	local ArgTitle = ArgumentFrame.ArgTitle
 	local Arg = Concat(Aliases, " / ")
+	local Data = {
+		String = { Color = Color3.fromRGB(202, 230, 251), Icon = { Id = "rbxassetid://16898617249", Offset = Vector2.new(514, 257), Size = Vector2.new(256, 256) }},
+		Number = { Color = Color3.fromRGB(204, 251, 199), Icon = { Id = "rbxassetid://16898613869", Offset = Vector2.new(257, 0), Size = Vector2.new(256, 256) }},
+		Player = { Color = Color3.fromRGB(251, 224, 200), Icon = { Id = "rbxassetid://16898789644", Offset = Vector2.new(514, 514), Size = Vector2.new(256, 256) }},
+	}
+	
+	for _, Argument in next, Arguments do
+		local Name, Type = Argument.Name, Argument.Type
+		local ArgumentFrame = Clone(Button.Arguments.TemplateArg)
+		local Icon = ArgumentFrame.ArgIcon
+		local Info = Data[Type]
+		local IconInfo = Info.Icon
+	
+		ArgTitle.Text = Name
+		MultiSet(ArgumentFrame, {
+			Parent = Button.Arguments,
+			Visible = true,
+			BackgroundTransparency = 0.1,
+			BackgroundColor3 = Info.Color,
+		})
 
+		MultiSet(Icon, {
+			Image = IconInfo.Id,
+			ImageRectOffset = IconInfo.Offset,
+			ImageRectSize = IconInfo.Size,
+		})
+	end
+	
 	Labels.Title.Text = Arg
 	Labels.Description.Text = Description
+	
+	Delay(0.1, function()
+		local ArgumentWidth = Button.Arguments.AbsoluteSize.X
+		local ButtonWidth = Button.AbsoluteSize.X
 
+		Button.Frame.Size = UDim2.new(0, ButtonWidth - ArgumentWidth - 5, 1, 0)
+	end)
+	
 	MultiSet(Button, {
 		Parent = Autofill,
 		Visible = true,
@@ -3647,6 +3684,7 @@ local AimbotSettings = {
 	AliveCheck = true,
 	TeamCheck = false,
 	WallCheck = false,
+	IncludeNpcs = false,
 
 	Held = false,
 	Key = Enum.KeyCode.E,
@@ -3660,23 +3698,21 @@ local AimbotSettings = {
 	},
 }
 
-AimbotSettings.BehindWall = function(Target)
-	if Target and Target.Character and (Target ~= LocalPlayer) then
-		local VisibleWalls = {}
-		local Walls = Camera.GetPartsObscuringTarget(
-			Camera,
-			{ Character.Head.Position, Target.Character.Head.Position },
-			{ Character, Target.Character }
-		)
+AimbotSettings.BehindWall = function(TargetCharacter)
+	local VisibleWalls = {}
+	local Walls = Camera.GetPartsObscuringTarget(
+		Camera,
+		{ Character.Head.Position, TargetCharacter.Head.Position },
+		{ Character, TargetCharacter }
+	)
 
-		for _, Wall in next, Walls do
-			if Wall and Wall.IsA(Wall, "BasePart") and Wall.Transparency < 1 then
-				Insert(VisibleWalls, Wall)
-			end
+	for _, Wall in next, Walls do
+		if Wall and Wall.IsA(Wall, "BasePart") and Wall.Transparency < 1 then
+			Insert(VisibleWalls, Wall)
 		end
-
-		return #VisibleWalls > 0
 	end
+
+	return #VisibleWalls > 0
 end
 
 AimbotSettings.Closest = function()
@@ -3684,20 +3720,21 @@ AimbotSettings.Closest = function()
 	local MouseX, MouseY = Mouse.X, Mouse.Y
 
 	local ClosestDistance = Fov_Size
-	local ClosestPlayer
 	local ClosestPlayerPart
 
-	for _, Player in next, Services.Players.GetPlayers(Services.Players) do
-		local Character = Player and Player.Character
+	local GetRange = function(Character)
+		if (not Character) then
+			return
+		end
+
 		local Humanoid = Character and Character.FindFirstChild(Character, "Humanoid")
 		local TargetPart = Character and Character.FindFirstChild(Character, AimbotSettings.Part)
 
-		if Humanoid and TargetPart and Player ~= LocalPlayer then
+		if Humanoid and TargetPart then
 			local Coordinates, Visible = Camera.WorldToViewportPoint(Camera, TargetPart.Position)
 
 			if
-				not (AimbotSettings.TeamCheck and Player.Team == LocalPlayer.Team)
-				and not (AimbotSettings.WallCheck and AimbotSettings.BehindWall(Player))
+				not (AimbotSettings.WallCheck and AimbotSettings.BehindWall(Character))
 				and not (AimbotSettings.AliveCheck and Humanoid.Health <= 0)
 				and Coordinates
 				and Visible
@@ -3706,9 +3743,22 @@ AimbotSettings.Closest = function()
 
 				if Distance < Fov_Size and Distance < ClosestDistance then
 					ClosestDistance = Distance
-					ClosestPlayer = Player
 					ClosestPlayerPart = TargetPart
 				end
+			end
+		end
+	end
+
+	for _, Player in next, Services.Players.GetPlayers(Services.Players) do
+		if Player ~= LocalPlayer and not (AimbotSettings.TeamCheck and Player.Team == LocalPlayer.Team) then
+			GetRange(Player and Player.Character)
+		end
+	end
+
+	if AimbotSettings.IncludeNpcs then
+		for Index, Model in next, GetClasses(workspace, "Model") do
+			if Model:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Model) then
+				GetRange(Model);
 			end
 		end
 	end
@@ -3826,6 +3876,15 @@ Command.Add({
 				Default = false,
 				Callback = function(Boolean)
 					AimbotSettings.TeamCheck = Boolean
+				end,
+			})
+
+			Window:AddToggle({
+				Title = "NPCs Allowed",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Boolean)
+					AimbotSettings.IncludeNpcs = Boolean
 				end,
 			})
 
@@ -3998,6 +4057,7 @@ Command.Add({
 
 									if ClosestRoot then
 										local Args = { ... }
+										local Origin = Args[1]
 										local Direction = Args[2]
 
 										if Direction.Magnitude > 50 then
@@ -5123,7 +5183,7 @@ Command.Add({
 	Aliases = { "activatetool", "at" },
 	Description = "Activates a specific tool",
 	Arguments = {
-		{ Name = "Tool", Type = "Script" },
+		{ Name = "Tool", Type = "String" },
 	},
 	Task = function(Input)
 		for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
@@ -5155,7 +5215,7 @@ Command.Add({
 	Aliases = { "equiptools", "et" },
 	Description = "Equips every tool in your inventory",
 	Arguments = {
-		{ Name = "Tool", Type = "Script" },
+		{ Name = "Tool", Type = "String" },
 	},
 	Task = function(Input)
 		for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
@@ -5762,7 +5822,7 @@ Command.Add({
 	Aliases = { "setsimulationradius", "setsimradius", "ssr" },
 	Description = "Useful for commands that require unanchored parts (set to a large number)",
 	Arguments = {
-		{ Name = "Amount", Type = "Amount" },
+		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
 		local N = SetNumber(Amount)
