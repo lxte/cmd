@@ -2489,7 +2489,6 @@ Fill.Add = function(Table)
 	local Aliases, Description, Arguments, Plugin, Callback = Unpack(Table)
 	local Button = Clone(Autofill.Example)
 	local Labels = Button.Frame
-	local ArgTitle = ArgumentFrame.ArgTitle
 	local Arg = Concat(Aliases, " / ")
 	local Data = {
 		String = { Color = Color3.fromRGB(202, 230, 251), Icon = { Id = "rbxassetid://16898617249", Offset = Vector2.new(514, 257), Size = Vector2.new(256, 256) }},
@@ -2500,6 +2499,7 @@ Fill.Add = function(Table)
 	for _, Argument in next, Arguments do
 		local Name, Type = Argument.Name, Argument.Type
 		local ArgumentFrame = Clone(Button.Arguments.TemplateArg)
+        local ArgTitle = ArgumentFrame.ArgTitle
 		local Icon = ArgumentFrame.ArgIcon
 		local Info = Data[Type]
 		local IconInfo = Info.Icon
@@ -2923,7 +2923,7 @@ Command.Add({
 
 			Window:AddParagraph({
 				Title = "Invite",
-				Description = "Unavailable",
+				Description = "https://discord.gg/QFuMP6w96Y",
 				Tab = "About",
 			})
 
@@ -8378,7 +8378,7 @@ end)
 API:Notify({
 	Title = "Welcome",
 	Description = Format(
-		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'",
+		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'\nDiscord: https://discord.gg/QFuMP6w96Y",
 		tick() - Speed,
 		Settings.Version,
 		Settings.Prefix,
