@@ -2923,7 +2923,7 @@ Command.Add({
 
 			Window:AddParagraph({
 				Title = "Invite",
-				Description = "https://discord.gg/QFuMP6w96Y",
+				Description = "Unavailable",
 				Tab = "About",
 			})
 
@@ -8378,7 +8378,7 @@ end)
 API:Notify({
 	Title = "Welcome",
 	Description = Format(
-		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'\nDiscord: https://discord.gg/QFuMP6w96Y",
+		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'",
 		tick() - Speed,
 		Settings.Version,
 		Settings.Prefix,
