@@ -12,8 +12,6 @@
       <img src="https://img.shields.io/github/last-commit/lxte/cmd?label=Last%20Modifed" alt="Last Modified" />
   </a>
 </p>
-
-[<b>Join the Discord Server</b>](https://discord.gg/QFuMP6w96Y)
 </div>
 
 # ⚙️ Features
