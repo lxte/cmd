@@ -28,7 +28,7 @@ local Settings = {
 	Seperator = ",",
 	Version = "1.2",
 
-	CustomUI = Cmd().CustomUI or "rbxassetid://76725659626481",
+	CustomUI = Cmd().CustomUI or "rbxassetid://86847075545953",
 
 	Aliases = {},
 	Waypoints = {},
