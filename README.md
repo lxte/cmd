@@ -1,48 +1,57 @@
 <div align="center">
-<h1>Cmd 📜</h1>
-<img width="800" src="assets/images/showcase-rounded.png" />
+
+# Cmd
+
+**Universal Admin Command System for Roblox**
+
+<img width="800" src="assets/images/showcase-rounded.png" alt="Cmd Showcase" />
+
 <p>
   <a href="https://github.com/lxte/cmd/stargazers">
-      <img src="https://img.shields.io/github/stars/lxte/cmd?label=Stars&logo=GitHub" alt="Repo Stars" />
+    <img src="https://img.shields.io/github/stars/lxte/cmd?label=Stars&logo=GitHub&style=flat-square" alt="GitHub Stars" />
   </a>
   <a href="https://github.com/lxte/cmd/forks">
-      <img src="https://img.shields.io/github/forks/lxte/cmd?label=Fork&logo=GitHub" alt="Repo Forks" />
+    <img src="https://img.shields.io/github/forks/lxte/cmd?label=Forks&logo=GitHub&style=flat-square" alt="GitHub Forks" />
   </a>
   <a href="https://github.com/lxte/cmd/commits">
-      <img src="https://img.shields.io/github/last-commit/lxte/cmd?label=Last%20Modifed" alt="Last Modified" />
+    <img src="https://img.shields.io/github/last-commit/lxte/cmd?label=Last%20Updated&style=flat-square" alt="Last Commit" />
   </a>
 </p>
+
 </div>
 
-# ⚙️ Features
-- ⭐ 200+ Commands
-- 🔌 Plugin system
-- 🎨 Themes
-- ⌨️ Keybinds
-- 📅 Event-ran commands
-- 📍 Waypoints
+---
 
-<br/> 
+## ⚙️ Features
 
-# ✨ Loadstring
+- ⭐ **200+ Commands**
+- 🔌 **Plugin system** - make your own commands
+- 🎨 **Themes** - customize the UI
+- ⌨️ **Keybinds** - bind commands to keys
+- 📅 **Event commands** - run commands on events
+- 📍 **Waypoints** - save and teleport to locations
 
-## Main - Rewrite (Recommended) ⭐
+## 🚀 Usage
+
+### Main - Rewrite (Recommended) ⭐
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/main.lua"))();
 ```
 
-## Testing - Old Version (Not recommended) ⚠️
+### Testing - Old Version (Not recommended) ⚠️
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/cmd/main/testing-main.lua"))();
 ```
-<br/>
 
-# 🌐 Tutorials
+## 🔨 Credits
 
-- [🔌 Plugins](https://github.com/lxte/cmd/wiki/Plugins) - How to create your own **plugin**
-- [🎨 Themes](https://github.com/lxte/cmd/wiki/Themes) - How to change your **Cmd theme**
-  
-# 🔨 Credits
+- **[7kayoh](https://github.com/7kayoh)** - Inspiration for the UI Design
+- **[ImSnox](https://devforum.roblox.com/u/imsnox/summary)** - UI Blurring module for the old Cmd version
 
-- [👤 7kayoh](https://github.com/7kayoh) - UI Inspiration
-- [👤 ImSnox](https://devforum.roblox.com/u/imsnox/summary) - UI Blur Module **(Old Version)**
+---
+
+<div align="center">
+
+**⭐ star if you find this project useful**
+
+</div>
