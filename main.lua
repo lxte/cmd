@@ -44,7 +44,7 @@ local Settings = {
 	Theme = {
 		Mode = "Dark",
 		Transparency = 0,
-		
+
 		-- Frames:
 		Primary = Color3.fromRGB(27, 27, 38),
 		Secondary = Color3.fromRGB(35, 35, 48),
@@ -52,15 +52,15 @@ local Settings = {
 		Component = Color3.fromRGB(35, 35, 48),
 		Highlight = Color3.fromRGB(149, 101, 207),
 		ScrollBar = Color3.fromRGB(22, 22, 30),
-		
+
 		-- Text:
 		Title = Color3.fromRGB(255, 255, 255),
 		Description = Color3.fromRGB(160, 160, 170),
-		
+
 		-- Outlines:
 		Shadow = Color3.fromRGB(0, 0, 0),
 		Outline = Color3.fromRGB(45, 45, 60),
-		
+
 		-- Image:
 		Icon = Color3.fromRGB(255, 255, 255),
 	},
@@ -114,6 +114,7 @@ local Services = {
 	Sound = GetService("SoundService"),
 	AssetService = GetService("AssetService"),
 	Stats = GetService("Stats"),
+	GroupService = GetService("GroupService"),
 }
 
 local Vuln = {
@@ -126,11 +127,11 @@ local UserPlatform do
 	local Successful, Platform = pcall(function()
 		return Services.Input:GetPlatform();
 	end)
-	
+
 	if (not Platform or not Successful) then
 		Platform = Enum.Platform.IOS
 	end
-	
+
 	UserPlatform = Platform
 end
 
@@ -142,7 +143,7 @@ local Methods = {
 
 	Parent = function(Child)
 		local PlayerGui = (Services.Players.LocalPlayer.PlayerGui);
-		
+
 		xpcall(function()
 			Child.Parent = (gethui and gethui()) or (Services.Core) or (PlayerGui);
 		end, function()
@@ -228,9 +229,9 @@ local Methods = {
 
 local LocalPlayer = Services.Players.LocalPlayer
 local Character = LocalPlayer.Character
-local Backpack = LocalPlayer:WaitForChild("Backpack")
-local Humanoid = (Character and Character:FindFirstChildOfClass("Humanoid"))
-local Root = (Character and Character:FindFirstChild("HumanoidRootPart"))
+local Backpack: Backpack = LocalPlayer:WaitForChild("Backpack")
+local Humanoid: Humanoid = (Character and Character:FindFirstChildOfClass("Humanoid"))
+local Root: Part = (Character and Character:FindFirstChild("HumanoidRootPart"))
 
 Connect(LocalPlayer.CharacterAdded, function(Char)
 	Character = Char
@@ -277,7 +278,13 @@ if (not Character) or (not Humanoid) or (not Root) then
 end
 
 -- :: INSERT[UI] :: --
-local UI = (Services.Run:IsStudio() and script.Parent) or Services.Insert:LoadLocalAsset(Settings.CustomUI)
+local UI = (Services.Run:IsStudio() and script.Parent) or (function()
+	if (game.PlaceId == 138747514708608 and not identifyexecutor) then -- testing place
+		return script.Parent
+	end
+
+	return Services.Insert:LoadLocalAsset(Settings.CustomUI)
+end)()
 
 local Assets = UI.Assets
 local Notification = UI.Frame
@@ -435,15 +442,21 @@ local SetSRadius = function(Radius, MaxRadius)
 	if (OldSRadius) then
 		OldSRadius:Disconnect();
 	end
-	
+
 	if (not MaxRadius) then
 		MaxRadius = 9e9
 	end
-	
+
 	OldSRadius = Connect(Services.Run.Heartbeat, function()
 		local Success, Result = pcall(function()
-			sethiddenproperty(LocalPlayer, "SimulationRadius", Radius);
-			sethiddenproperty(LocalPlayer, "MaximumSimulationRadius", MaxRadius);
+			if (sethiddenproperty) then
+				sethiddenproperty(LocalPlayer, "SimulationRadius", Radius);
+				sethiddenproperty(LocalPlayer, "MaximumSimulationRadius", MaxRadius);
+			end
+
+			if (setsimulationradius) then
+				setsimulationradius(Radius, MaxRadius);
+			end
 		end)
 
 		if (not Success) then
@@ -465,7 +478,7 @@ local Attach = function(Part, Target)
 
 		for _, Object in next, Part:GetChildren() do
 			local Blacklisted = ({ "Attachment", "AlignPosition", "AlignOrientation", "Attachment", "BodyPosition", "BodyGyro", "BodyThrust", "BodyForce", "BodyAngularVelocity", "BodyVelocity", "RocketPropulsion" });
-			
+
 			if Discover(Blacklisted, Object.ClassName) then
 				Object:Destroy();
 			end
@@ -519,7 +532,7 @@ local Bring = function(Part, Target)
 	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
 		local ModelDescendant = Part:FindFirstAncestorOfClass("Model")
 		local OldCollide = Part.CanCollide
-		
+
 		if (ModelDescendant) then
 			if (Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
 				return
@@ -533,7 +546,7 @@ local Bring = function(Part, Target)
 				Object:Destroy();
 			end
 		end
-		
+
 		SetSRadius(9e9, 9e9)
 		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0)
 		Part.CanCollide = false
@@ -801,11 +814,11 @@ end
 
 local GetTableLength = function(Table)
 	local Length = (0);
-	
+
 	for _, Value in next, Table do
 		Length += 1
 	end
-	
+
 	return Length
 end
 
@@ -848,11 +861,11 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 
 				local TargetCFrame = CFrame.new(_Root.Position);
 				local PredictedCFrame = TargetCFrame * CFrame.new(PredictionOffset);
-				
+
 				if (Seat and not Seat:IsA("VehicleSeat")) then
 					break
 				end
-				
+
 				if (Settings.Toggles.IgnoreSeated and Seat) then
 					break
 				end
@@ -1033,7 +1046,7 @@ local Type
 
 local Add = function(Global, Value)
 	Globals[Global] = Value
-	
+
 	if (not Value and Cleaner.Objects[Global]) then
 		Cleaner:Clean(Global);
 	end
@@ -1069,9 +1082,13 @@ Cleaner.Clean = function(self, Name)
 			elseif (Type == "RBXScriptConnection") then
 				Object:Disconnect();
 			elseif (Type == "Instance") then
+				if (Object.ClassName == "AnimationTrack") then
+					Object:Stop();
+				end
+
 				Object:Destroy();
 			end
-			
+
 			Cleaner.Objects[Name][Index] = nil
 		end
 	end
@@ -1142,7 +1159,7 @@ local Animate = {
 			local DragInput
 			local Start
 			local StartPosition
-			
+
 			if
 				not UseAlternative
 				and Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)
@@ -1179,11 +1196,11 @@ local Animate = {
 						end
 					end)()
 				end
-				
+
 				Tween(Window, 0.05, {
 					Position = UDim2.new(StartPosition.X.Scale, PosX, StartPosition.Y.Scale, PosY)
 				})
-				
+
 				--Window.Position = UDim2.new(StartPosition.X.Scale, PosX, StartPosition.Y.Scale, PosY)
 			end
 
@@ -1272,7 +1289,7 @@ function Library:CreateWindow(Config: { Title: string })
 						MousePos = Vector2.new(Mouse.X, Mouse.Y)
 						Size = Window.AbsoluteSize
 						UIPos = Window.Position
-						
+
 						Tween(Types.Icon, 0.25, {
 							ImageTransparency = 0,
 							Size = UDim2.fromOffset(15, 15),
@@ -2580,7 +2597,7 @@ local GetSavedSettings = function()
 			Themed.Toggles[Name] = Value
 		end
 	end
-	
+
 	return Theming
 end
 
@@ -2669,7 +2686,7 @@ Command.Parse = function(IgnoreNotifications, Input)
 
 	if Name then
 		local Arguments = {}
-		
+
 		for arg in ArgsString:gmatch("%s*([^" .. Settings.Seperator .. "]+)") do
 			Insert(Arguments, arg)
 		end
@@ -2719,7 +2736,7 @@ Fill.Add = function(Table)
 			BackgroundTransparency = 0.1,
 			BackgroundColor3 = Info.Color,
 		})
-		
+
 		Icon.Image = IconInfo.Id
 	end
 
@@ -3097,7 +3114,7 @@ Command.Add({
 
 			--> About
 			Window:AddSection({ Title = "Prefixes", Tab = "About" })
-			
+
 			Window:AddParagraph({
 				Title = "Prefix",
 				Description = Format("Current prefix is '%s'", Settings.Prefix),
@@ -3123,7 +3140,7 @@ Command.Add({
 				Description = Format("Version %s", Settings.Version),
 				Tab = "About",
 			})
-			
+
 			Window:AddParagraph({
 				Title = "Command Count",
 				Description = Format("Currently Cmd has %d commands", GetTableLength(Commands)),
@@ -3132,7 +3149,7 @@ Command.Add({
 
 			Window:AddParagraph({
 				Title = "Invite",
-				Description = "Unavailable",
+				Description = "https://discord.gg/JSkvFkC9Eq",
 				Tab = "About",
 			})
 
@@ -3304,7 +3321,7 @@ Command.Add({
 					SaveSettings()
 				end,
 			})
-			
+
 			Window:AddToggle({
 				Title = "Allow Window From Leaving Screen",
 				Description = "Toggle if Windows can be dragged off the screen",
@@ -3314,11 +3331,11 @@ Command.Add({
 					if (not Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
 						Settings.Toggles.ClampWindowDrag = Toggle
 					end
-					
+
 					SaveSettings()
 				end,
 			})
-			
+
 			Window:AddToggle({
 				Title = "Show Command Bar Opening Button",
 				Description = "This will only work if you're on PC",
@@ -3326,11 +3343,11 @@ Command.Add({
 				Default = Settings.Toggles.CommandBarOpenButtonShown,
 				Callback = function(Toggle)
 					Settings.Toggles.CommandBarOpenButtonShown = Toggle
-					
+
 					if (not Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
 						Button.Visible = Toggle
 					end
-					
+
 					SaveSettings()
 				end,
 			})
@@ -3418,19 +3435,6 @@ Command.Add({
 			end
 
 			--> Keybinds
-			Window:AddTab({
-				Title = "Create Keybind",
-				Description = "Create a Keybind to use",
-				Tab = "Keybinds",
-			})
-
-			Window:AddTab({
-				Title = "Current Keybinds",
-				Description = "List of active Keybinds",
-				Tab = "Keybinds",
-			})
-
-			-- : Create Keybind
 			local Keybind = { Begin = nil, End = nil, Key = nil }
 			local CreateKeybind = function(Keybind)
 				local Key, Begin, End = Keybind.Key, Keybind.Begin, Keybind.End
@@ -3438,19 +3442,20 @@ Command.Add({
 				Window:AddButton({
 					Title = GSub(tostring(Key.KeyCode), "Enum.KeyCode.", Blank),
 					Description = "Click this to remove the Keybind",
-					Tab = "Current Keybinds",
+					Tab = "Keybinds",
 					Callback = function(Button)
 						Keybinds[Key] = nil
 						Destroy(Button)
 					end,
 				})
 			end
-			Window:AddSection({ Title = "Create", Tab = "Create Keybind" })
+			
+			Window:AddSection({ Title = "Create", Tab = "Keybinds" })
 
 			Window:AddButton({
 				Title = "Create Keybind",
 				Description = "Create the Keybind!",
-				Tab = "Create Keybind",
+				Tab = "Keybinds",
 				Callback = function()
 					local Key, Begin, End = Keybind.Key, Keybind.Begin, Keybind.End
 
@@ -3475,12 +3480,10 @@ Command.Add({
 				end,
 			})
 
-			Window:AddSection({ Title = "Settings", Tab = "Create Keybind" })
-
 			Window:AddKeybind({
 				Title = "Keybind Keybind",
 				Description = "The keybind for the Keybind",
-				Tab = "Create Keybind",
+				Tab = "Keybinds",
 				Default = Keybind.Key,
 				Callback = function(Key)
 					Keybind.Key = Key
@@ -3490,7 +3493,7 @@ Command.Add({
 			Window:AddInput({
 				Title = "Keybind Begin Command",
 				Description = "The command to run when you want the Keybind to begin",
-				Tab = "Create Keybind",
+				Tab = "Keybinds",
 				Callback = function(Cmd)
 					Keybind.Begin = Cmd
 				end,
@@ -3499,13 +3502,19 @@ Command.Add({
 			Window:AddInput({
 				Title = "Keybind End Command",
 				Description = "The command to run when you want to END the Keybind",
-				Tab = "Create Keybind",
+				Tab = "Keybinds",
 				Callback = function(Cmd)
 					Keybind.End = Cmd
 				end,
 			})
+			
+			Window:AddSection({ Title = "Keybinds", Tab = "Keybinds" })
 
-			Connect(Services.Input.InputBegan, function(Key)
+			Connect(Services.Input.InputBegan, function(Key, InputFocused)
+				if (InputFocused) then
+					return
+				end
+				
 				local Keybind = Keybinds[Key]
 
 				if Keybind then
@@ -3675,24 +3684,7 @@ Command.Add({
 			end
 
 			Window:AddSection({ Title = "Add Aliases", Tab = "Aliases" })
-			Window:AddInput({
-				Title = "Command Name",
-				Description = "The name for the command you are trying to make an alias for",
-				Tab = "Aliases",
-				Callback = function(Input)
-					CommandName = Lower(Input)
-				end,
-			})
-
-			Window:AddInput({
-				Title = "Alias Name",
-				Description = "The alias you want the command to have",
-				Tab = "Aliases",
-				Callback = function(Input)
-					AliasName = Lower(Input)
-				end,
-			})
-
+			
 			Window:AddButton({
 				Title = "Create Alias",
 				Tab = "Aliases",
@@ -3720,6 +3712,24 @@ Command.Add({
 							Duration = 10,
 						})
 					end
+				end,
+			})
+			
+			Window:AddInput({
+				Title = "Command Name",
+				Description = "The name for the command you are trying to make an alias for",
+				Tab = "Aliases",
+				Callback = function(Input)
+					CommandName = Lower(Input)
+				end,
+			})
+
+			Window:AddInput({
+				Title = "Alias Name",
+				Description = "The alias you want the command to have",
+				Tab = "Aliases",
+				Callback = function(Input)
+					AliasName = Lower(Input)
 				end,
 			})
 
@@ -4479,8 +4489,9 @@ Command.Add({
 						Description = Message,
 						Tab = "Home",
 					})
-
+					
 					LayoutOrder -= 1
+					Paragraph.Size = UDim2.new(1, -10, 0, 0);
 					Paragraph.LayoutOrder = LayoutOrder
 					Insert(Messages, Paragraph)
 				end)
@@ -4610,23 +4621,13 @@ Command.Add({
 			})
 
 			local Send = function()
-				local Character = " "
-				Chat(Disguise .. Character:rep(125) .. Format("%s" .. ": %s", Username, Message))
+				Chat(Format("%s%s: %s", ("ㅤ"):rep(37), Username, Message))
 			end
 
 			Window:AddButton({
 				Title = "Send",
 				Tab = "Home",
 				Callback = Send,
-			})
-
-			Window:AddInput({
-				Title = "Disguise Text",
-				Tab = "Home",
-				Default = "Hello",
-				Callback = function(Input)
-					Disguise = Input
-				end,
 			})
 
 			Window:AddInput({
@@ -4663,18 +4664,24 @@ Command.Add({
 			local Window = Library:CreateWindow({
 				Title = "Commands",
 			})
-			
+
 			Window:AddSection({ Title = Format("Displaying %d commands", GetTableLength(Commands)), Tab = "Home" })
 
 			for Index, Command in next, Commands do
 				local Aliases, Description, Arguments = Unpack(Command)
 				local Args = "Arguments: "
 
-				Window:AddParagraph({
+				local Paragraph = Window:AddParagraph({
 					Title = Concat(Aliases, " / "),
 					Description = Description,
 					Tab = "Home",
 				})
+				
+				if (Discover(Aliases, "discord")) then
+					Paragraph.LayoutOrder = 0
+				else
+					Paragraph.LayoutOrder = 1
+				end
 			end
 		end
 	end,
@@ -4701,13 +4708,13 @@ Command.Add({
 			local LogFunction = function(Func, Name)
 				local Old = Func
 				Old = hookfunction(Func, function(self, Url, ...)
-					if Name and Url then
+					if (Name and Url) then
 						Window:AddButton({
 							Title = Name,
 							Description = Url,
 							Tab = "Home",
 							Callback = function()
-								setclipboard(Url)
+								setclipboard(Url);
 								API:Notify({
 									Title = "Http Spy",
 									Description = "URL Copied",
@@ -4716,14 +4723,16 @@ Command.Add({
 						})
 					end
 
-					return Old(self, Url, ...)
+					return Old(self, Url, ...);
 				end)
 			end
 
 			LogFunction(game.HttpGet, "HttpGet Request")
 			LogFunction(game.HttpPost, "HttpPost Request")
 			LogFunction(request, "Request")
-
+			LogFunction(Services.Http.PostAsync, "HttpService Post")
+			LogFunction(Services.Http.GetAsync, "HttpService Get")
+			
 			return "Http Spy", "Enabled"
 		end
 	end,
@@ -4984,6 +4993,242 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "animation", "anim" },
+	Description = "Plays animation id",
+	Arguments = {
+		{ Name = "Animation Id", Type = "String" },
+		{ Name = "Speed", Type = "Number" },
+	},
+	Task = function(AnimationId, AnimationSpeed)
+		Refresh("Animation", true);
+
+		local Animation = Humanoid:FindFirstChildOfClass("Animator"):LoadAnimation(Create("Animation", {
+			AnimationId = Format("rbxassetid://%s", AnimationId),
+		}))
+
+		Animation:Play();
+		Animation:AdjustSpeed(SetNumber(AnimationSpeed or 1));
+		Cleaner:Add("Animation", Animation);
+	end,
+})
+
+Command.Add({
+	Aliases = { "unanimation", "unanim" },
+	Description = "Stops the animation you're currently playing",
+	Arguments = {},
+	Task = function()
+		Refresh("Animation", false);
+	end,
+})
+
+Command.Add({
+	Aliases = { "emote" },
+	Description = "Plays emotes using the Emote IDs",
+	Arguments = {
+		{ Name = "Emote Id", Type = "String" },
+		{ Name = "Speed", Type = "Number" },
+	},
+	Task = function(EmoteId, EmoteSpeed)
+		Refresh("Emote", true);
+		
+		local ID = (function()
+			local Object = Services.Insert:LoadLocalAsset(Format("rbxassetid://%s", EmoteId))
+			
+			if (Object) then
+				return Object.AnimationId
+			end
+		end)()
+		
+		if (not ID) then
+			return "Emote", "Couldn't find Emote Animation ID"
+		end
+		
+		local EmoteTrack = Humanoid:FindFirstChildOfClass("Animator"):LoadAnimation(Create("Animation", {
+			AnimationId = ID,
+		}))
+
+		EmoteTrack:Play();
+		EmoteTrack:AdjustSpeed(SetNumber(EmoteSpeed or 1));
+		Cleaner:Add("Emote", EmoteTrack);
+	end,
+})
+
+Command.Add({
+	Aliases = { "unemote" },
+	Description = "Undoes the Emote command",
+	Arguments = {},
+	Task = function(EmoteId, EmoteSpeed)
+		Refresh("Emote", false);
+	end,
+})
+
+Command.Add({
+	Aliases = { "discord", "joindiscord" },
+	Description = "Join the Discord - Command copies the link to your clipboard",
+	Arguments = {},
+	Task = function(EmoteId, EmoteSpeed)
+		if (setclipboard) then
+			setclipboard("https://discord.gg/JSkvFkC9Eq");
+			return "Cmd", "Set discord invite to clipboard (discord.gg/JSkvFkC9Eq)"
+		else
+			return "Cmd", "Couldn't set to clipboard, join discord.gg/JSkvFkC9Eq", 30
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "f3x", "btools" },
+	Description = "Clientside building tools",
+	Arguments = {},
+	Task = function()
+		local System = game:GetObjects("rbxassetid://6695644299")[1]
+
+		if (System) then
+			loadstring(System.Source)();
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "antifling", "antif" },
+	Description = "Stops people from flinging you",
+	Arguments = {},
+	Task = function()
+		Refresh("AntiFling", true);
+
+		Cleaner:Add("AntiFling", Connect(Services.Run.Heartbeat, function()
+			for _, Player in next, Services.Players:GetPlayers() do
+				if (Player ~= LocalPlayer) then
+					pcall(function()
+						for _, BasePart: BasePart in next, GetClasses(Player.Character, "BasePart") do
+							BasePart.CanCollide = false
+							BasePart.Velocity = Vector3.zero
+							BasePart.RotVelocity = Vector3.zero
+							BasePart.AssemblyLinearVelocity = Vector3.zero
+							BasePart.AssemblyAngularVelocity = Vector3.zero
+						end
+					end)
+				end
+			end
+		end))
+
+		return "Anti Fling", "Enabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "unantifling", "unantif" },
+	Description = "Disables the AntiFling command",
+	Arguments = {},
+	Task = function()
+		Refresh("AntiFling", false);
+		return "Anti Fling", "Disabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "clonetools", "ctools" },
+	Description = "Clones all tools a player has",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Target)
+		for _, Player in next, GetPlayer(Target) do
+			if (Player.Backpack) then
+				for _, Tool in next, GetClasses(Player.Backpack, "Tool", true) do
+					Tool:Clone().Parent = LocalPlayer.Backpack
+				end
+			end
+
+			if (Player.Character) then
+				for _, Tool in next, GetClasses(Player.Character, "Tool", true) do
+					Tool:Clone().Parent = LocalPlayer.Backpack
+				end
+			end
+		end
+
+		return "Clone Tools", "Cloned player tools (if there were no tools added, the player doesn't have any tools)"
+	end,
+})
+
+Command.Add({
+	Aliases = { "hideguis", "hguis" },
+	Description = "Hides all GUIs on your screen",
+	Arguments = {},
+	Task = function(Target)
+		if (Get("HideGUIs")) then
+			Command.Parse(true, "showguis")
+		end
+
+		Refresh("HideGUIs", {});
+
+		for _, GUI in next, GetClasses(LocalPlayer.PlayerGui, "ScreenGui", true) do
+			if (GUI.Enabled) then
+				Insert(Get("HideGUIs"), GUI);
+				GUI.Enabled = false
+			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "showguis", "sguis" },
+	Description = "Undoes the HideGUIs command",
+	Arguments = {},
+	Task = function(Target)
+		for _, GUI in next, (Get("HideGUIs") or {}) do
+			GUI.Enabled = true
+		end
+
+		Add("HideGUIs", nil);
+	end,
+})
+
+Command.Add({
+	Aliases = { "antibang", "abang" },
+	Description = "This DOESN'T automatically run - run this when someone is using the bang command on you",
+	Arguments = {},
+	Task = function()
+		local OldHeight = workspace.FallenPartsDestroyHeight
+		local OldCoordinate = Root.CFrame
+
+		workspace.FallenPartsDestroyHeight = 0/0
+
+		Root.CFrame = CFrame.new(0, -9e9, 0); Wait(1);
+		Root.CFrame = OldCoordinate
+
+		workspace.FallenPartsDestroyHeight = OldHeight
+	end,
+})
+
+Command.Add({
+	Aliases = { "creatorid", "cid" },
+	Description = "Makes the client think you're the game owner",
+	Arguments = {},
+	Task = function()
+		local CreatorId = (game.CreatorType == Enum.CreatorType.User and game.CreatorId) or (Services.GroupService:GetGroupInfoAsync(game.CreatorId).Owner.Id);
+		local Username = Services.Players:GetNameFromUserIdAsync(CreatorId);
+		
+		LocalPlayer.UserId = (CreatorId or 1);
+		LocalPlayer.Name = (Username or LocalPlayer.Name);
+		
+		return "Creator Id", "Set UserId to the CreatorId"
+	end,
+})
+
+Command.Add({
+	Aliases = { "invitelink", "invlink" },
+	Description = "Makes a invite link to join the server you're in",
+	Arguments = {},
+	Task = function()
+		local InviteLink = Format("roblox://placeId=%d&gameInstanceId=%s", game.PlaceId, game.JobId);
+		setclipboard(InviteLink);
+		
+		return "Invite Link", Format("Invite Link copied to your clipboard (%s)", InviteLink);
+	end,
+})
+
+Command.Add({
 	Aliases = { "loop" },
 	Description = "Repeatedly fire a command",
 	Arguments = {
@@ -5209,7 +5454,7 @@ Command.Add({
 		if (not fireclickdetector) then
 			return "Fast Carts", "Unsupported Executor", "Your executor does not support this command, missing function - fireclickdetector()"
 		end
-		
+
 		local Slow = function(Cart)
 			if (Cart:IsA("Model")) then
 				local Button = Cart:FindFirstChild("Up");
@@ -5251,11 +5496,11 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("SlowCarts", true);
-		
+
 		if (not fireclickdetector) then
 			return "Slow Carts", "Unsupported Executor", "Your executor does not support this command, missing function - fireclickdetector()"
 		end
-		
+
 		local Slow = function(Cart)
 			if (Cart:IsA("Model")) then
 				local Button = Cart:FindFirstChild("Down");
@@ -5269,15 +5514,15 @@ Command.Add({
 				end
 			end
 		end
-		
+
 		for _, Cart in next, GetClasses(workspace, "Model", false) do
 			Spawn(Slow, Cart);
 		end
-		
+
 		Cleaner:Add("SlowCarts", Connect(workspace.DescendantAdded, function(Cart)
 			Slow(Cart);
 		end))
-		
+
 		return "Slow Carts", "If you can't open the command bar, your executor is blocking it because of the click detectors"
 	end,
 })
@@ -5662,6 +5907,10 @@ Command.Add({
 	Task = function()
 		Refresh("Flood", true)
 		
+		repeat
+			Wait(1)
+			Chat(Format("%s", ("ㅤ"):rep(66)))
+		until not Get("Flood")
 	end,
 })
 
@@ -5679,11 +5928,12 @@ Command.Add({
 	Description = "Spams your selected message into the chat",
 	Arguments = {
 		{ Name = "Message", Type = "String" },
+		{ Name = "Cooldown", Type = "Number" },
 	},
-	Task = function(Message)
+	Task = function(Message, Cooldown)
 		Add("Spam", true)
 		repeat
-			Wait(0.3)
+			Wait(SetNumber(Cooldown) or 0.3)
 			Chat(Message)
 		until not Get("Spam")
 	end,
@@ -5734,7 +5984,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, BodyPart in next, GetClasses(Character, "BasePart", true) do
-			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(math.huge, 0.5, 0.5)
+			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(100, 0.5, 0.5)
 		end
 		return "Buff", "Buff has been enabled"
 	end,
@@ -6112,7 +6362,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("ClickKillNPC", true);
-		
+
 		Cleaner:Add("ClickKillNPC", Connect(Mouse.Button1Down, function()
 			local Target = Mouse.Target
 			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
@@ -6294,11 +6544,8 @@ Command.Add({
 	Description = "Saves the current game as a file",
 	Arguments = {},
 	Task = function()
-		if saveinstance then
-			saveinstance()
-		else
-			return "Save Instance", "Your executor does not support save instance, missing function saveinstance()", 15
-		end
+		local SynSaveInstance = loadstring(game:HttpGet("https://raw.githubusercontent.com/luau/SynSaveInstance/main/saveinstance.luau", true), "saveinstance")();
+		SynSaveInstance({});
 	end,
 })
 
@@ -7491,8 +7738,9 @@ Command.Add({
 	Description = "Brings your target to you (clientsided)",
 	Arguments = {
 		{ Name = "Target", Type = "Player" },
+		{ Name = "Distance", Type = "Number" },
 	},
-	Task = function(Input)
+	Task = function(Input, Distance)
 		Add("ClientBring", true)
 
 		repeat
@@ -7501,7 +7749,7 @@ Command.Add({
 				local TRoot = GetRoot(Target)
 
 				if TRoot then
-					TRoot.CFrame = Root.CFrame * CFrame.new(0, 0, (Distance and -SetNumber(Distance)) or -3)
+					TRoot.CFrame = Root.CFrame * CFrame.new(0, 0, (Distance and -SetNumber(Distance or 3)))
 				end
 			end
 		until not Get("ClientBring")
@@ -7605,7 +7853,7 @@ Command.Add({
 	Task = function()
 		local NoclipWalls = {}		
 		Refresh("VehicleNoclip", true);
-		
+
 		repeat Wait(0.1)
 			local VehicleSeat = Humanoid.SeatPart
 			local Vehicle = VehicleSeat and VehicleSeat:FindFirstAncestorOfClass("Model");
@@ -7645,7 +7893,7 @@ Command.Add({
 				end
 			end
 		until (not Get("VehicleNoclip"))
-		
+
 		for Wall, Bool in next, NoclipWalls do
 			if (Wall and Wall.Parent) then
 				Wall.CanCollide = true
@@ -7657,7 +7905,7 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "unvehiclenoclip", "unvehiclenc", "unvnc" },
+	Aliases = { "unvehiclenoclip", "unvehiclenc", "unvnc", "vcl" },
 	Description = "Disables the VehicleNoclip command",
 	Arguments = {},
 	Task = function()
@@ -7671,7 +7919,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()		
 		Refresh("BunnyHop", true);
-		
+
 		local IsJumping = false
 		local JumpCount = 0
 		local CurrentlyLanded = true
@@ -7742,11 +7990,11 @@ Command.Add({
 		until (not Get("BunnyHop"))
 
 		Connection:Disconnect();
-		
+
 		if BodyVelocity then 
 			Destroy(BodyVelocity)
 		end
-		
+
 		if Character:FindFirstChild("Animate") then
 			Character:FindFirstChild("Animate").Enabled = true
 		end
@@ -7816,10 +8064,15 @@ Command.Add({
 	Description = "Makes you sit in a Normal seat",
 	Arguments = {},
 	Task = function()
+		local Seats = ({});
+
 		for Index, Seat in next, GetClasses(workspace, "Seat") do
-			Seat:Sit(Humanoid)
-			break
+			if (not Seat.Occupant) then
+				table.insert(Seats, Seat);
+			end
 		end
+
+		Seats[math.random(1, #Seats)]:Sit(Humanoid)
 	end,
 })
 
@@ -7828,10 +8081,15 @@ Command.Add({
 	Description = "Makes you sit in a Vehicle Seat",
 	Arguments = {},
 	Task = function()
+		local Seats = ({});
+		
 		for Index, Seat in next, GetClasses(workspace, "VehicleSeat") do
-			Seat:Sit(Humanoid)
-			break
+			if (not Seat.Occupant) then
+				table.insert(Seats, Seat);
+			end
 		end
+		
+		Seats[math.random(1, #Seats)]:Sit(Humanoid)
 	end,
 })
 
@@ -7845,9 +8103,10 @@ Command.Add({
 		local Length = (SetNumber(Size) or 10);
 		local CharacterConnected
 		local Connection
-		
+
 		Refresh("Reach", true);
-		
+		Humanoid:UnequipTools();
+
 		local Create = function()
 			CharacterConnected = Character
 			Connection = Connect(Character.ChildAdded, function(Tool)
@@ -7872,7 +8131,7 @@ Command.Add({
 						Handle.Size = Vector3.new(Length, Length, Length);
 						Handle.Massless = true
 						Handle.CanCollide = false
-						
+
 						Connect(Tool.Unequipped, function()
 							local _Size = Handle and Handle:FindFirstChild("_Size");
 
@@ -7886,19 +8145,19 @@ Command.Add({
 				end
 			end)
 		end
-		
+
 		Create();
-		
+
 		repeat Wait(0.5)
 			if (CharacterConnected ~= Character) then
 				if (Connection) then
 					Connection:Disconnect();
 				end
-				
+
 				Create()
 			end
 		until (not Get("Reach"))
-		
+
 		if (Connection) then
 			Connection:Disconnect();
 		end
@@ -7915,7 +8174,7 @@ Command.Add({
 		for _, Tool in next, GetClasses(Character, "Tool", true) do
 			local Handle = Tool:FindFirstChild("Handle");
 			local _Size = Handle and Handle:FindFirstChild("_Size");
-			
+
 			if (_Size) then
 				Handle.Size = _Size.Value
 				Destroy(_Size);
@@ -7934,7 +8193,7 @@ Command.Add({
 	Task = function(Size)
 		local Length = (SetNumber(Size) or 10)
 		local Overlap = OverlapParams.new();
-		
+
 		if (firetouchinterest) then
 			Refresh("Reach2", true);
 
@@ -7943,20 +8202,20 @@ Command.Add({
 
 				for _, Tool in next, GetClasses(Character, "Tool", true) do
 					local TouchInterestList = GetClasses(Tool, "TouchTransmitter", false);
-					
+
 					if (TouchInterestList and #TouchInterestList > 0) then
 						Foreach(TouchInterestList, function(_, TouchTransmitter)
 							Insert(TouchInterests, TouchTransmitter);
 						end)
 					end
 				end
-				
+
 				local Objects = workspace:GetPartBoundsInBox(Root.CFrame, Vector3.new(Length, Length, Length), Overlap);
-				
+
 				for _, Object in next, Objects do
 					local Model = Object:FindFirstAncestorOfClass("Model");
 					local Humanoid = Model and Model:FindFirstChildOfClass("Humanoid");
-					
+
 					if (Humanoid and Services.Players:GetPlayerFromCharacter(Model) ~= LocalPlayer and Humanoid.RootPart) then
 						for _, Touch in next, TouchInterests do
 							firetouchinterest(Touch.Parent, Humanoid.RootPart, 1)
@@ -8996,7 +9255,7 @@ end)
 
 Connect(Input.FocusLost, function()
 	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding");
-	
+
 	Command.Parse(false, Input.Text);
 	Tween(BarShadow, 0.2, { Transparency = 1 });
 	Tween(BarInner, 0.2, { Transparency = 1 });
@@ -9032,6 +9291,18 @@ do
 		if Interface then
 			Interface.Parent = nil
 		end
+
+		UI:GetPropertyChangedSignal("Parent"):Connect(function()
+			if (not UI.Parent) then
+				for Name, Objects in next, Cleaner.Objects do
+					Cleaner:Clean(Name);
+				end
+
+				for Global, Value in next, Globals do
+					Globals[Global] = nil
+				end
+			end
+		end)
 	else
 		if Interface and API then
 			UI.Parent = nil
@@ -9053,11 +9324,11 @@ Spawn(function()
 	-- making opening button work
 	Animate.Drag(Button, true)
 	Connect(Button.MouseButton1Click, OpenCommandBar)
-	
+
 	if (Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
 		Button.Visible = Settings.Toggles.CommandBarOpenButtonShown
 	end
-	
+
 	-- loading internal ui
 	if Settings.Toggles.InternalUI then
 		loadstring(GetModule("internal-ui.lua"))()
@@ -9075,11 +9346,11 @@ Spawn(function()
 				Destroy(UI);
 			end
 		end
-		
+
 		for _, UI in next, PlayerGui:GetChildren() do
 			ClearCommandBar(UI);
 		end
-		
+
 		Connect(PlayerGui.ChildAdded, function(UI)
 			ClearCommandBar(UI);
 		end)
@@ -9104,18 +9375,19 @@ Spawn(function()
 
 	for Index, Player in next, ToSearch do
 		Spawn(function() -- since getroleingroup is slow we adding a spawn to make it faster
-			if Player ~= LocalPlayer and IsStaff(Player) and UI.Parent and Settings.Toggles.StaffNotifier then
+			if (Player ~= LocalPlayer and IsStaff(Player) and UI.Parent and Settings.Toggles.StaffNotifier) then
 				Insert(Staff, Player.Name)
 			end
+			
 			Searched += 1
 		end)
 	end
 
 	repeat
 		Wait()
-	until Searched == #ToSearch
+	until (Searched == #ToSearch)
 
-	if #Staff > 0 then
+	if (#Staff > 0) then
 		API:Notify({
 			Title = "Staff Detected!",
 			Description = Format(
@@ -9128,8 +9400,10 @@ Spawn(function()
 		})
 	end
 
-	if not Drawing and not Services.Run:IsStudio() then
-		Drawing = loadstring(GetModule("drawing.lua"))()
+	if (not Drawing and not Services.Run:IsStudio()) then
+		pcall(function()
+			Drawing = loadstring(GetModule("drawing.lua"))();
+		end)
 	end
 end)
 
