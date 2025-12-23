@@ -28,7 +28,7 @@ local Settings = {
 	Seperator = ",",
 	Version = "1.2",
 
-	CustomUI = Cmd().CustomUI or "rbxassetid://86847075545953",
+	CustomUI = Cmd().CustomUI or "rbxassetid://129646501448633",
 
 	Aliases = {},
 	Waypoints = {},
@@ -46,23 +46,23 @@ local Settings = {
 		Transparency = 0,
 
 		-- Frames:
-		Primary = Color3.fromRGB(27, 27, 38),
-		Secondary = Color3.fromRGB(35, 35, 48),
-		Actions = Color3.fromRGB(45, 45, 60),
-		Component = Color3.fromRGB(35, 35, 48),
-		Highlight = Color3.fromRGB(149, 101, 207),
-		ScrollBar = Color3.fromRGB(22, 22, 30),
+		Primary = Color3.fromRGB(18, 22, 30),
+		Secondary = Color3.fromRGB(26, 30, 38),
+		Actions = Color3.fromRGB(36, 40, 48),
+		Component = Color3.fromRGB(26, 30, 38),
+		Highlight = Color3.fromRGB(210, 140, 90),
+		ScrollBar = Color3.fromRGB(12, 14, 18),
 
 		-- Text:
-		Title = Color3.fromRGB(255, 255, 255),
-		Description = Color3.fromRGB(160, 160, 170),
+		Title = Color3.fromRGB(235, 240, 250),
+		Description = Color3.fromRGB(160, 165, 175),
 
 		-- Outlines:
 		Shadow = Color3.fromRGB(0, 0, 0),
-		Outline = Color3.fromRGB(45, 45, 60),
+		Outline = Color3.fromRGB(36, 40, 48),
 
 		-- Image:
-		Icon = Color3.fromRGB(255, 255, 255),
+		Icon = Color3.fromRGB(235, 240, 250),
 	},
 
 	Toggles = {
@@ -118,7 +118,8 @@ local Services = {
 }
 
 local Vuln = {
-	Keywords = { "destroy", "delete", "remove", "clear", "dispose" },
+	Keywords = { "destroy", "delete", "remove", "clear", "hide", "purge", "erase", "despawn", "disable", "dispose", "wipe", "explode" },
+	Abbreviated = { "del", "rm", "clr" },
 	Blocked = { "RemoveStat", "Clear" },
 	FoundRemotes = {},
 }
@@ -179,6 +180,17 @@ local Methods = {
 						end
 					end
 
+					if (not HasKeyword) then
+						for _, Abbreviated in next, Vuln.Abbreviated do
+							local Found = (string.sub(Descendant.Name, 1, #Abbreviated):lower() == Abbreviated:lower())
+
+							if Found then
+								HasKeyword = true
+								break
+							end
+						end
+					end
+
 					if HasKeyword then
 						if Descendant.Name == "DestroySegway" or Settings.Toggles.UnsureVulnDetector then
 							table.insert(Vuln.FoundRemotes, Descendant)
@@ -206,21 +218,39 @@ local Methods = {
 				:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint
 				:InvokeServer(table.unpack(ArgumentTable))
 		else
-			local Arguments = (function()
-				local Return = {}
+			local PossibleArguments = {
+				{ Part },
+				{ { Part } },
+				{ Value = Part },
+				{ Parts = { Part } },
+				{ [1] = { [1] = Part } },
+				{ Part = Part },
+				{ Target = Part },
+				Part,
+				(function()
+					local Return = {}
 
-				for Index = 1, 10 do
-					Return[Index] = Part
-				end
+					for Index = 1, 10 do
+						Return[Index] = Part
+					end
 
-				return Return
-			end)()
+					return Return
+				end)()
+			}
 
 			for Remote, Ignore in next, Vuln.FoundRemotes do
-				if Ignore.Name == "DestroySegway" then
+				if (Ignore.Name == "DestroySegway") then
 					Ignore:FireServer(Part, { Value = Part })
 				else
-					Ignore:FireServer(table.unpack(Arguments))
+					pcall(function()
+						for _, Arg in next, PossibleArguments do
+							Ignore:FireServer(Arg);
+
+							if (typeof(Arg) == "table") then
+								Ignore:FireServer(table.unpack(Arg));
+							end
+						end
+					end)
 				end
 			end
 		end
@@ -1252,7 +1282,7 @@ end
 function Library:CreateWindow(Config: { Title: string })
 	local Window = Clone(Tab)
 	local Animations = {}
-	local Component = {}
+	local Component = { Self = Window }
 
 	local Actions = Window.Actions
 	local Tabs = Window.Tabs
@@ -1850,7 +1880,7 @@ function Library:CreateWindow(Config: { Title: string })
 				Tween(
 					Circle,
 					0.2,
-					{ BackgroundColor3 = Color3.fromRGB(255, 255, 255), Position = UDim2.new(1, -23, 0.5, 0) }
+					{ BackgroundColor3 = Color3.fromRGB(255, 255, 255), Position = UDim2.new(1, -25, 0.5, 0) }
 				)
 			else
 				Tween(Main, 0.2, { BackgroundColor3 = Color(Settings.Theme.Component, 10) })
@@ -1927,7 +1957,7 @@ function Library:CreateWindow(Config: { Title: string })
 			Fill.Size = UDim2.fromScale((Number and Number / Config.MaxValue) or Scale, 1)
 			Config.Callback(Value)
 		end
-
+		
 		local Activate = function()
 			Active = true
 
@@ -2122,7 +2152,7 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 
 			Connect(Interact.MouseButton1Click, Close)
 			Open()
-			Tween(Timer, Duration, { Size = UDim2.fromOffset(0, 3) })
+			Tween(Timer, Duration, { Size = UDim2.fromOffset(0, 4) })
 			Wait(Duration)
 			Close()
 		end
@@ -2260,6 +2290,7 @@ local Themes = {
 		["Highlight"] = { "Frame", "Highlight", "BackgroundColor3" },
 		--["Circle"] = { "Frame", "Highlight", "BackgroundColor3" },
 		["SectionCircle"] = { "Frame", "Title", "BackgroundColor3" },
+		["SectionSeperator"] = { "Frame", "Description", "BackgroundColor3" },
 		["Notification"] = { "CanvasGroup", "Primary", "BackgroundColor3", true },
 		["DropdownExample"] = { "CanvasGroup", "Primary", "BackgroundColor3" },
 	},
@@ -2714,12 +2745,13 @@ Fill.Add = function(Table)
 	local Aliases, Description, Arguments, Plugin, Callback = Unpack(Table)
 	local Button = Clone(Autofill.Example)
 	local Labels = Button.Frame
+
 	local Arg = Concat(Aliases, " / ")
-	local Data = {
+	local Data = ({
 		String = { Color = Color3.fromRGB(137, 171, 251), Icon = { Id = "rbxassetid://91745912881512" }},
 		Number = { Color = Color3.fromRGB(146, 251, 141), Icon = { Id = "rbxassetid://98705931627491" }},
 		Player = { Color = Color3.fromRGB(251, 135, 135), Icon = { Id = "rbxassetid://137385137210594" }},
-	}
+	})
 
 	for _, Argument in next, Arguments do
 		local Name, Type = Argument.Name, Argument.Type
@@ -2918,11 +2950,15 @@ Fill.Search = function(Input)
 							FrameFound = true
 							Amount += 1
 
-							if not FoundFirst then
+							if (not FoundFirst) then
 								Frame.BackgroundColor3 = Settings.Theme.Component
+								Frame.BackgroundIgnore.Transparency = 0.9
+								Frame.GlowIgnore.Transparency = 0.95
 								FoundFirst = true
 							else
 								Frame.BackgroundColor3 = Settings.Theme.Primary
+								Frame.BackgroundIgnore.Transparency = 1
+								Frame.GlowIgnore.Transparency = 1
 							end
 						end
 					end
@@ -2987,7 +3023,6 @@ function Feature:AddEvent(Event, Command)
 			Title = "Events",
 			Description = "Added event successfully",
 			Type = "Success",
-
 			Duration = 10,
 		})
 	else
@@ -2995,7 +3030,6 @@ function Feature:AddEvent(Event, Command)
 			Title = "Events",
 			Description = "Error adding an event, event doesn't exist or command already added in the event.",
 			Type = "Error",
-
 			Duration = 15,
 		})
 	end
@@ -3449,7 +3483,7 @@ Command.Add({
 					end,
 				})
 			end
-			
+
 			Window:AddSection({ Title = "Create", Tab = "Keybinds" })
 
 			Window:AddButton({
@@ -3507,14 +3541,14 @@ Command.Add({
 					Keybind.End = Cmd
 				end,
 			})
-			
+
 			Window:AddSection({ Title = "Keybinds", Tab = "Keybinds" })
 
 			Connect(Services.Input.InputBegan, function(Key, InputFocused)
 				if (InputFocused) then
 					return
 				end
-				
+
 				local Keybind = Keybinds[Key]
 
 				if Keybind then
@@ -3568,36 +3602,8 @@ Command.Add({
 			end
 
 			--> Events
-			Window:AddTab({
-				Title = "Create Event",
-				Description = "Create a event to fire",
-				Tab = "Events",
-			})
-
-			Window:AddTab({
-				Title = "Current Events",
-				Description = "List of active events",
-				Tab = "Events",
-			})
-
-			-- : Create event
 			local SelectedEvent = "Unselected"
 			local EventCommand
-
-			for EventName, SavedEvent in next, Settings.Events do
-				for _, SavedCommand in next, SavedEvent do
-					Window:AddButton({
-						Title = Format("Event for %s", EventName),
-						Description = Format("Click to delete the event\nCommand: %s", SavedCommand),
-						Tab = "Current Events",
-						Callback = function(Button)
-							Settings.Events[EventName][SavedCommand] = nil
-							Destroy(Button)
-							SaveSettings()
-						end,
-					})
-				end
-			end
 
 			local AddEvent = function()
 				if Settings.Events[SelectedEvent] and EventCommand then
@@ -3608,7 +3614,7 @@ Command.Add({
 					Window:AddButton({
 						Title = Format("Event for %s", SelectedEvent),
 						Description = Format("Click to delete the event\nCommand: %s", EventCommand),
-						Tab = "Current Events",
+						Tab = "Events",
 						Callback = function(Button)
 							Settings.Events[OldSelected][OldEvent] = nil
 							Destroy(Button)
@@ -3626,15 +3632,17 @@ Command.Add({
 				end
 			end
 
+			Window:AddSection({ Title = "Create", Tab = "Events" })
+
 			Window:AddButton({
 				Title = "Create Event",
-				Tab = "Create Event",
+				Tab = "Events",
 				Callback = AddEvent,
 			})
 
 			Window:AddDropdown({
 				Title = "Select Event",
-				Tab = "Create Event",
+				Tab = "Events",
 				Options = {
 					["Auto Execute"] = "AutoExecute",
 					["Chatted"] = "Chatted",
@@ -3650,11 +3658,28 @@ Command.Add({
 
 			Window:AddInput({
 				Title = "Event Command",
-				Tab = "Create Event",
+				Tab = "Events",
 				Callback = function(Input)
 					EventCommand = Input
 				end,
 			})
+
+			Window:AddSection({ Title = "Current Events", Tab = "Events" })
+
+			for EventName, SavedEvent in next, Settings.Events do
+				for _, SavedCommand in next, SavedEvent do
+					Window:AddButton({
+						Title = Format("Event for %s", EventName),
+						Description = Format("Click to delete the event\nCommand: %s", SavedCommand),
+						Tab = "Events",
+						Callback = function(Button)
+							Settings.Events[EventName][SavedCommand] = nil
+							Destroy(Button)
+							SaveSettings()
+						end,
+					})
+				end
+			end
 
 			--: Aliases
 			local CommandName = ""
@@ -3684,7 +3709,7 @@ Command.Add({
 			end
 
 			Window:AddSection({ Title = "Add Aliases", Tab = "Aliases" })
-			
+
 			Window:AddButton({
 				Title = "Create Alias",
 				Tab = "Aliases",
@@ -3714,7 +3739,7 @@ Command.Add({
 					end
 				end,
 			})
-			
+
 			Window:AddInput({
 				Title = "Command Name",
 				Description = "The name for the command you are trying to make an alias for",
@@ -4489,7 +4514,7 @@ Command.Add({
 						Description = Message,
 						Tab = "Home",
 					})
-					
+
 					LayoutOrder -= 1
 					Paragraph.Size = UDim2.new(1, -10, 0, 0);
 					Paragraph.LayoutOrder = LayoutOrder
@@ -4652,6 +4677,28 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "tutorial", "tut" },
+	Description = "A simple tutorial to showcase how Cmd works",
+	Arguments = {},
+	Task = function()
+		local Tab = Library.Tabs["Tutorial"]
+				
+		if Tab then
+			Tab.Open()
+		else
+			local Window = Library:CreateWindow({
+				Title = "Tutorial",
+			})
+						
+			local Tutorial = Features.Tutorial:Clone();
+			Tutorial.Visible = true
+			Tutorial.Parent = Window.Self.Tabs.Home.ScrollingFrame
+			Tutorial.Invite.Text = "discord.gg/JSkvFkC9Eq"
+		end
+	end,
+})
+
+Command.Add({
 	Aliases = { "cmds", "commands" },
 	Description = "Displays all the commands Cmd has",
 	Arguments = {},
@@ -4676,7 +4723,7 @@ Command.Add({
 					Description = Description,
 					Tab = "Home",
 				})
-				
+
 				if (Discover(Aliases, "discord")) then
 					Paragraph.LayoutOrder = 0
 				else
@@ -4732,7 +4779,7 @@ Command.Add({
 			LogFunction(request, "Request")
 			LogFunction(Services.Http.PostAsync, "HttpService Post")
 			LogFunction(Services.Http.GetAsync, "HttpService Get")
-			
+
 			return "Http Spy", "Enabled"
 		end
 	end,
@@ -5030,19 +5077,19 @@ Command.Add({
 	},
 	Task = function(EmoteId, EmoteSpeed)
 		Refresh("Emote", true);
-		
+
 		local ID = (function()
 			local Object = Services.Insert:LoadLocalAsset(Format("rbxassetid://%s", EmoteId))
-			
+
 			if (Object) then
 				return Object.AnimationId
 			end
 		end)()
-		
+
 		if (not ID) then
 			return "Emote", "Couldn't find Emote Animation ID"
 		end
-		
+
 		local EmoteTrack = Humanoid:FindFirstChildOfClass("Animator"):LoadAnimation(Create("Animation", {
 			AnimationId = ID,
 		}))
@@ -5208,10 +5255,10 @@ Command.Add({
 	Task = function()
 		local CreatorId = (game.CreatorType == Enum.CreatorType.User and game.CreatorId) or (Services.GroupService:GetGroupInfoAsync(game.CreatorId).Owner.Id);
 		local Username = Services.Players:GetNameFromUserIdAsync(CreatorId);
-		
+
 		LocalPlayer.UserId = (CreatorId or 1);
 		LocalPlayer.Name = (Username or LocalPlayer.Name);
-		
+
 		return "Creator Id", "Set UserId to the CreatorId"
 	end,
 })
@@ -5223,10 +5270,59 @@ Command.Add({
 	Task = function()
 		local InviteLink = Format("roblox://placeId=%d&gameInstanceId=%s", game.PlaceId, game.JobId);
 		setclipboard(InviteLink);
-		
+
 		return "Invite Link", Format("Invite Link copied to your clipboard (%s)", InviteLink);
 	end,
 })
+
+Command.Add({
+	Aliases = { "propertychanged", "changed" },
+	Description = "Fires a command whenever a property gets changed",
+	Arguments = {
+		{ Name = "Object", Type = "String" },
+		{ Name = "Property", Type = "String" },
+		{ Name = "Command Name", Type = "String" },
+		{ Name = "Arguments", Type = "String" },
+	},
+	Task = function(Parent, Property, CommandName, ...)
+		local Arguments = ({ ... });
+		local Object = StringToInstance(Parent);
+
+		Add("Changed", true);
+
+		if (Parent and Property and CommandName) then
+			Command.Run(true, CommandName, Arguments);
+
+			Cleaner:Add("Changed", Connect(Changed(Object, Property), function()
+				Command.Run(true, CommandName, Arguments);
+			end))
+
+			API:Notify({
+				Title = "Property Changed",
+				Description = Format("Listening to %s..", Property),
+				Duration = 10,
+				Info = "Success",
+			})
+		else
+			API:Notify({
+				Title = "Failed",
+				Description = "One or more arguments missing when trying to run command",
+				Duration = 5,
+				Info = "Error",
+			})
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "unpropertychanged", "unchanged" },
+	Description = "Stops all previous property changed signals",
+	Arguments = {},
+	Task = function()
+		Refresh("Changed", false);
+	end,
+})
+
 
 Command.Add({
 	Aliases = { "loop" },
@@ -5906,7 +6002,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("Flood", true)
-		
+
 		repeat
 			Wait(1)
 			Chat(Format("%s", ("ㅤ"):rep(66)))
@@ -8082,13 +8178,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Seats = ({});
-		
+
 		for Index, Seat in next, GetClasses(workspace, "VehicleSeat") do
 			if (not Seat.Occupant) then
 				table.insert(Seats, Seat);
 			end
 		end
-		
+
 		Seats[math.random(1, #Seats)]:Sit(Humanoid)
 	end,
 })
@@ -9131,6 +9227,10 @@ if Check("File") then
 	for Index, Folder in next, { "Cmd", "Cmd/Logs", "Cmd/Plugins" } do
 		if not isfolder(Folder) then
 			makefolder(Folder)
+			
+			if (Folder == "Cmd") then
+				Command.Parse(true, "tutorial");
+			end
 		end
 	end
 
@@ -9378,7 +9478,7 @@ Spawn(function()
 			if (Player ~= LocalPlayer and IsStaff(Player) and UI.Parent and Settings.Toggles.StaffNotifier) then
 				Insert(Staff, Player.Name)
 			end
-			
+
 			Searched += 1
 		end)
 	end
@@ -9445,11 +9545,12 @@ end
 API:Notify({
 	Title = "Welcome (NEW UPDATE)",
 	Description = Format(
-		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'",
+		"Loaded in %.2f seconds (Version %s)\nCommandBarPrefix: '%s'\nChat Prefix: '%s'\n<b>JOIN: %s</b>",
 		tick() - Speed,
 		Settings.Version,
 		Settings.Prefix,
-		Settings.ChatPrefix
+		Settings.ChatPrefix,
+		"discord.gg/JSkvFkC9Eq"
 	),
 	Duration = 15,
 	Type = "Info",
