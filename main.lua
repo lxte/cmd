@@ -17,31 +17,31 @@ if (not game:IsLoaded()) then
 	game.Loaded:Wait();
 end
 
-local Cmd = getgenv or function()
-	return _G
-end
+local Cmd = (getgenv or function()
+	return (_G)
+end)
 
-local Speed, Admins = tick(), ({});
-local Settings = {
-	Prefix = ";",
-	ChatPrefix = "!",
-	Seperator = ",",
-	Version = "1.2",
+local Speed, Admins = (tick()), ({});
+local Settings = ({
+	Prefix = (";"),
+	ChatPrefix = ("!"),
+	Seperator = (","),
+	Version = ("1.2"),
 
-	CustomUI = Cmd().CustomUI or "rbxassetid://129646501448633",
+	CustomUI = (Cmd().CustomUI or "rbxassetid://129646501448633"),
 
-	Aliases = {},
-	Waypoints = {},
-	Events = {
-		["AutoExecute"] = {},
-		["Chatted"] = {},
-		["CharacterAdded"] = {},
-		["Died"] = {},
-		["Damaged"] = {},
-		["PlayerRemoved"] = {},
-	},
+	Aliases = ({}),
+	Waypoints = ({}),
+	Events = ({
+		["AutoExecute"] = ({}),
+		["Chatted"] = ({}),
+		["CharacterAdded"] = ({}),
+		["Died"] = ({}),
+		["Damaged"] = ({}),
+		["PlayerRemoved"] = ({}),
+	}),
 
-	Theme = {
+	Theme = ({
 		Mode = "Dark",
 		Transparency = 0,
 
@@ -63,9 +63,9 @@ local Settings = {
 
 		-- Image:
 		Icon = Color3.fromRGB(235, 240, 250),
-	},
+	}),
 
-	Toggles = {
+	Toggles = ({
 		FillCap = true,
 		Developer = false,
 		ClampWindowDrag = true,
@@ -78,21 +78,23 @@ local Settings = {
 		StaffNotifier = true,
 		IgnoreSeated = true,
 		UnsureVulnDetector = false,
-	},
-}
+		IgnoreVulnerabilityScans = false,
+	}),
+})
 
-local Connect = game.Loaded.Connect
-local CWait = game.Loaded.Wait
-local Clone = game.Clone
-local Destroy = game.Destroy
-local Changed = game.GetPropertyChangedSignal
+local Connect = (game.Loaded.Connect);
+local CWait = (game.Loaded.Wait);
+local Clone = (game.Clone);
+local Destroy = (game.Destroy);
+local Changed = (game.GetPropertyChangedSignal);
+
 local GetService = function(Property)
-	local Service = game.GetService
-	local Reference = cloneref or function(Reference)
+	local Service = (game.GetService);
+	local Reference = (cloneref or function(Reference)
 		return Reference
-	end
+	end)
 
-	return Reference(Service(game, Property))
+	return Reference(Service(game, Property));
 end
 
 local Services = {
@@ -117,12 +119,12 @@ local Services = {
 	GroupService = GetService("GroupService"),
 }
 
-local Vuln = {
-	Keywords = { "destroy", "delete", "remove", "clear", "hide", "purge", "erase", "despawn", "disable", "dispose", "wipe", "explode" },
-	Abbreviated = { "del", "rm", "clr" },
-	Blocked = { "RemoveStat", "Clear" },
-	FoundRemotes = {},
-}
+local Vuln = ({
+	Keywords = ({ "destroy", "delete", "remove", "clear", "hide", "purge", "erase", "despawn", "disable", "dispose", "wipe", "explode" }),
+	Abbreviated = ({ "del", "rm", "clr" }),
+	Blocked = ({ "RemoveStat", "Clear" }),
+	FoundRemotes = ({}),
+})
 
 local UserPlatform do
 	local Successful, Platform = pcall(function()
@@ -139,7 +141,7 @@ end
 local Methods = {
 	Get = function(URL)
 		local Method = game.HttpGet
-		return Method(game, URL)
+		return Method(game, URL);
 	end,
 
 	Parent = function(Child)
@@ -153,18 +155,22 @@ local Methods = {
 	end,
 
 	Check = function()
-		local LocalPlayer = Services.Players.LocalPlayer
-		local Backpack = LocalPlayer:WaitForChild("Backpack")
-		local Character = LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded)
+		if (Settings.Toggles.IgnoreVulnerabilityScans) then
+			return
+		end
 
-		if Services.Replicated:FindFirstChild("DeleteCar") then
+		local LocalPlayer = (Services.Players.LocalPlayer);
+		local Backpack = LocalPlayer:WaitForChild("Backpack");
+		local Character = LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded);
+
+		if (Services.Replicated:FindFirstChild("DeleteCar")) then
 			return true
-		elseif Character:FindFirstChild("HandlessSegway") then
+		elseif (Character:FindFirstChild("HandlessSegway")) then
 			return true
-		elseif Backpack:FindFirstChild("Building Tools") then
+		elseif (Backpack:FindFirstChild("Building Tools")) then
 			return true
 		else
-			for _, Descendant in next, game:GetDescendants() do
+			for _, Descendant in next, game:GetDescendants() do				
 				if
 					(Descendant:IsA("RemoteEvent") or Descendant:IsA("UnreliableRemoteEvent"))
 					and (not table.find(Vuln.Blocked, Descendant.Name))
@@ -172,7 +178,7 @@ local Methods = {
 					local HasKeyword = false
 
 					for _, Keyword in next, Vuln.Keywords do
-						local Found = string.lower(Descendant.Name):find(Keyword)
+						local Found = string.lower(Descendant.Name):find(Keyword);
 
 						if Found then
 							HasKeyword = true
@@ -182,7 +188,7 @@ local Methods = {
 
 					if (not HasKeyword) then
 						for _, Abbreviated in next, Vuln.Abbreviated do
-							local Found = (string.sub(Descendant.Name, 1, #Abbreviated):lower() == Abbreviated:lower())
+							local Found = (string.sub(Descendant.Name, 1, #Abbreviated):lower() == Abbreviated:lower());
 
 							if Found then
 								HasKeyword = true
@@ -191,34 +197,31 @@ local Methods = {
 						end
 					end
 
-					if HasKeyword then
-						if Descendant.Name == "DestroySegway" or Settings.Toggles.UnsureVulnDetector then
-							table.insert(Vuln.FoundRemotes, Descendant)
+					if (HasKeyword) then
+						if (Descendant.Name == "DestroySegway" or Settings.Toggles.UnsureVulnDetector) then
+							table.insert(Vuln.FoundRemotes, Descendant);
 						end	
 					end
 				end
 			end
 
-			if #Vuln.FoundRemotes > 0 then
+			if (#Vuln.FoundRemotes > 0) then
 				return true
 			end
 		end
 	end,
 
 	Destroy = function(Part)
-		local LocalPlayer = Services.Players.LocalPlayer
+		local LocalPlayer = (Services.Players.LocalPlayer);
 
-		if Services.Replicated:FindFirstChild("DeleteCar") then
-			Services.Replicated.DeleteCar:FireServer(Part)
-		elseif Services.Replicated:FindFirstChild("GuiHandler") then
-			Services.Replicated.GuiHandler:FireServer(false, Part)
-		elseif LocalPlayer.Backpack:FindFirstChild("Building Tools") then
-			local ArgumentTable = { [1] = "Remove", [2] = { [1] = Part } }
-			LocalPlayer.Backpack
-				:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint
-				:InvokeServer(table.unpack(ArgumentTable))
+		if (Services.Replicated:FindFirstChild("DeleteCar")) then
+			Services.Replicated.DeleteCar:FireServer(Part);
+		elseif (Services.Replicated:FindFirstChild("GuiHandler")) then
+			Services.Replicated.GuiHandler:FireServer(false, Part);
+		elseif (LocalPlayer.Backpack:FindFirstChild("Building Tools")) then
+			LocalPlayer.Backpack:FindFirstChild("Building Tools").SyncAPI.ServerEndpoint:InvokeServer("Remove", { [1] = Part });
 		else
-			local PossibleArguments = {
+			local PossibleArguments = ({
 				{ Part },
 				{ { Part } },
 				{ Value = Part },
@@ -236,7 +239,7 @@ local Methods = {
 
 					return Return
 				end)()
-			}
+			})
 
 			for Remote, Ignore in next, Vuln.FoundRemotes do
 				if (Ignore.Name == "DestroySegway") then
@@ -257,17 +260,17 @@ local Methods = {
 	end,
 }
 
-local LocalPlayer = Services.Players.LocalPlayer
-local Character = LocalPlayer.Character
-local Backpack: Backpack = LocalPlayer:WaitForChild("Backpack")
-local Humanoid: Humanoid = (Character and Character:FindFirstChildOfClass("Humanoid"))
-local Root: Part = (Character and Character:FindFirstChild("HumanoidRootPart"))
+local LocalPlayer = (Services.Players.LocalPlayer);
+local Character = (LocalPlayer.Character);
+local Backpack: Backpack = LocalPlayer:WaitForChild("Backpack");
+local Humanoid: Humanoid = (Character and Character:FindFirstChildOfClass("Humanoid"));
+local Root: Part = (Character and Character:FindFirstChild("HumanoidRootPart"));
 
 Connect(LocalPlayer.CharacterAdded, function(Char)
-	Character = Char
-	Humanoid = Character:WaitForChild("Humanoid")
-	Root = (Character:WaitForChild("HumanoidRootPart"))
-	Backpack = LocalPlayer.Backpack
+	Character = (Char);
+	Humanoid = Character:WaitForChild("Humanoid");
+	Root = (Character:WaitForChild("HumanoidRootPart"));
+	Backpack = (LocalPlayer.Backpack);
 end)
 
 local Lower, Split, Sub, GSub, Find, Match, Format, Blank =
@@ -287,30 +290,30 @@ local Camera = workspace.CurrentCamera
 local RespectFilteringEnabled = Services.Sound.RespectFilteringEnabled
 
 local GetModule = function(Name)
-	return (Methods.Get(Format("https://raw.githubusercontent.com/lxte/modules/main/cmd/%s", Name)))
+	return (Methods.Get(Format("https://raw.githubusercontent.com/lxte/modules/main/cmd/%s", Name)));
 end
 
 local Check = function(Type)
-	if Type == "File" then
-		return (isfile and isfolder and writefile and readfile)
-	elseif Type == "Hook" then
-		return (hookmetamethod or hookfunction)
+	if (Type == "File") then
+		return (isfile and isfolder and writefile and readfile);
+	elseif (Type == "Hook") then
+		return (hookmetamethod or hookfunction);
 	end
 end
 
 -- another check in case humanoid not found lmao
 if (not Character) or (not Humanoid) or (not Root) then
 	Spawn(function()
-		Character = (LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded))
-		Humanoid = Character:WaitForChild("Humanoid")
-		Root = Character:WaitForChild("HumanoidRootPart")
+		Character = (LocalPlayer.Character or CWait(LocalPlayer.CharacterAdded));
+		Humanoid = Character:WaitForChild("Humanoid");
+		Root = Character:WaitForChild("HumanoidRootPart");
 	end)
 end
 
 -- :: INSERT[UI] :: --
 local UI = (Services.Run:IsStudio() and script.Parent) or (function()
 	if (game.PlaceId == 138747514708608 and not identifyexecutor) then -- testing place
-		return script.Parent
+		return (script.Parent);
 	end
 
 	return Services.Insert:LoadLocalAsset(Settings.CustomUI)
@@ -334,52 +337,52 @@ local Input = Search.TextBox
 local Recommend = Search.Recommend
 local Press = Search.Press
 
-Methods.Parent(UI)
-UI.Name = (GenerateGUID(Services.Http))
-Tab.Name = (GenerateGUID(Services.Http))
+Methods.Parent(UI);
+UI.Name = (GenerateGUID(Services.Http));
+Tab.Name = (GenerateGUID(Services.Http));
 
 -- :: FUNCTIONS :: --
 local Output = function(...)
-	if Settings.Toggles.Developer then
-		warn(...)
+	if (Settings.Toggles.Developer) then
+		warn(...);
 	end
 end
 
 local UDimMultiply = function(UDim, Amount)
-	local Values = {
+	local Values = ({
 		UDim.X.Scale * Amount,
 		UDim.X.Offset * Amount,
 		UDim.Y.Scale * Amount,
 		UDim.Y.Offset * Amount,
-	}
+	})
 
-	return UDim2.new(Unpack(Values))
+	return UDim2.new(Unpack(Values));
 end
 
 local Minimum = function(Table, Minimum)
-	local New = {}
+	local New = ({});
 
-	if Table then
-		for i, v in next, Table do
-			if i == Minimum or i > Minimum then
-				Insert(New, v)
+	if (Table) then
+		for Index, Object in next, Table do
+			if (Index >= Minimum) then
+				Insert(New, v);
 			end
 		end
 	end
 
-	return New
+	return (New)
 end
 
 local ConnectMessaged = function(Target: Player, Function: (string) -> ())
-	if Target and Function and UI then
+	if (Target and Function and UI) then
 		Connect(Services.Chat.MessageReceived, function(Message)
-			local TextSource = Message.TextSource
+			local TextSource = (Message.TextSource);
 
-			if TextSource then
-				local Player = Services.Players:GetPlayerByUserId(TextSource.UserId)
+			if (TextSource) then
+				local Player = Services.Players:GetPlayerByUserId(TextSource.UserId);
 
-				if Player == Target then
-					Function(Message.Text)
+				if (Player == Target) then
+					Function(Message.Text);
 				end
 			end
 		end)
@@ -387,14 +390,14 @@ local ConnectMessaged = function(Target: Player, Function: (string) -> ())
 end
 
 local StringToInstance = function(String)
-	local Path = Split(String, ".")
-	local Current = game
+	local Path = Split(String, ".");
+	local Current = (game);
 
-	if Path[1] == "workspace" then
-		Current = workspace
+	if (Path[1] == "workspace") then
+		Current = (workspace);
 	end
 
-	Remove(Path, 1)
+	Remove(Path, 1);
 
 	for Index, Child in next, Path do
 		Current = Current[Child]
@@ -403,44 +406,44 @@ local StringToInstance = function(String)
 	return Current
 end
 
-Spoof = function(Instance, Property, Value)
+local Spoof = function(Instance, Property, Value)
 	local Hook
 
-	if not Check("Hook") then
+	if (not Check("Hook")) then
 		return
 	end
 
 	Hook = hookmetamethod(game, "__index", newcclosure(function(self, Key)
-		if self == Instance and Key == Property then
+		if (self == Instance and Key == Property) then
 			return Value
 		end
 
-		return Hook(self, Key)
+		return Hook(self, Key);
 	end))
 end
 
 local Chat = function(Message)
-	Services.Chat.TextChannels.RBXGeneral:SendAsync(Message)
+	Services.Chat.TextChannels.RBXGeneral:SendAsync(Message);
 end
 
 local Foreach = function(Table, Func, Loop)
 	for Index, Value in next, Table do
 		pcall(function()
-			if Loop and typeof(Value) == "table" then
+			if (Loop and typeof(Value) == "table") then
 				for Index2, Value2 in next, Value do
-					Func(Index2, Value2)
+					Func(Index2, Value2);
 				end
 			else
-				Func(Index, Value)
+				Func(Index, Value);
 			end
 		end)
 	end
 end
 
-local FindTable = function(Table, Input)
-	for Index, Value in next, Table do
-		if Value == Input then
-			return Value
+local FindTable = function(Table, Target)
+	for Index, Input in next, Table do
+		if (Input == Target) then
+			return Input
 		end
 	end
 end
@@ -454,13 +457,13 @@ local MultiSet = function(Object, Properties)
 end
 
 local Create = function(ClassName, Properties, Children)
-	local Object = Instance.new(ClassName)
+	local Object = Instance.new(ClassName);
 
-	for i, Property in next, Properties or {} do
-		Object[i] = Property
+	for Property, Default in next, (Properties or {}) do
+		Object[Property] = Default
 	end
 
-	for i, Children in next, Children or {} do
+	for _, Children in next, (Children or {}) do
 		Children.Parent = Object
 	end
 
@@ -495,7 +498,7 @@ local SetSRadius = function(Radius, MaxRadius)
 	end)
 end
 
-local AttachName = GenerateGUID(Services.Http)
+local AttachName = GenerateGUID(Services.Http);
 local Attach = function(Part, Target)
 	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
 		local ModelDescendant = Part:FindFirstAncestorOfClass("Model");
@@ -560,8 +563,8 @@ end
 
 local Bring = function(Part, Target)
 	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
-		local ModelDescendant = Part:FindFirstAncestorOfClass("Model")
-		local OldCollide = Part.CanCollide
+		local ModelDescendant = Part:FindFirstAncestorOfClass("Model");
+		local OldCollide = (Part.CanCollide);
 
 		if (ModelDescendant) then
 			if (Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
@@ -572,13 +575,13 @@ local Bring = function(Part, Target)
 		for _, Object in next, Part:GetChildren() do
 			local Blacklisted = ({ "Attachment", "AlignPosition", "AlignOrientation", "Attachment", "BodyPosition", "BodyGyro", "BodyThrust", "BodyForce", "BodyAngularVelocity", "BodyVelocity", "RocketPropulsion" });
 
-			if Discover(Blacklisted, Object.ClassName) then
+			if (Discover(Blacklisted, Object.ClassName)) then
 				Object:Destroy();
 			end
 		end
 
-		SetSRadius(9e9, 9e9)
-		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0)
+		SetSRadius(9e9, 9e9);
+		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0);
 		Part.CanCollide = false
 		Part.Massless = true
 		Part.Velocity = Vector3.zero
@@ -603,8 +606,8 @@ local Bring = function(Part, Target)
 		Position.Attachment1 = Attachment2
 		Position.Attachment0 = Attachment
 
-		Part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		Part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+		Part.AssemblyLinearVelocity = Vector3.new(0, 0, 0);
+		Part.AssemblyAngularVelocity = Vector3.new(0, 0, 0);
 
 		Delay(1, function()
 			Destroy(Attachment);
@@ -617,36 +620,28 @@ local Bring = function(Part, Target)
 end
 
 local IsStaff = function(Player)
-	local StaffRoles = { "owner", "admin", "staff", "mod", "founder", "manager", "dev", "president", "leader", "supervisor", "chairman", "supervising" }
-	local CurrentRole = Player:GetRoleInGroup(game.CreatorId)
+	local StaffRoles = ({ "owner", "admin", "staff", "mod", "founder", "manager", "dev", "president", "leader", "supervisor", "chairman", "supervising" });
+	local CurrentRole = Player:GetRoleInGroup(game.CreatorId);
 
 	for Index, Role in next, StaffRoles do
-		if Lower(CurrentRole):find(Role) then
+		if (Lower(CurrentRole):find(Role)) then
 			return true, CurrentRole
 		end
 	end
 end
 
 local Tween = function(Object, Speed, Properties, Info)
-	local Info = Info or {}
+	local Info = (Info or {});
 	local Style, Direction = (Info.EasingStyle or Enum.EasingStyle.Sine), (Info.EasingDirection or Enum.EasingDirection.Out)
-	return Services.Tween:Create(Object, TweenInfo.new(Speed, Style, Direction), Properties):Play()
-end
-
-local SetRig = function(Type)
-	local Avatar = GetService("AvatarEditorService")
-
-	Avatar:PromptSaveAvatar(Humanoid.HumanoidDescription, Enum.HumanoidRigType[Type])
-	CWait(Avatar.PromptSaveAvatarCompleted)
-	Command.Parse(true, "respawn")
+	return Services.Tween:Create(Object, TweenInfo.new(Speed, Style, Direction), Properties):Play();
 end
 
 local GetClasses = function(Ancestor, Class, GetChildren)
-	local Results = {}
+	local Results = ({});
 
-	for Index, Descendant in next, (GetChildren and Ancestor:GetChildren()) or Ancestor:GetDescendants() do
-		if Descendant:IsA(Class) then
-			Insert(Results, Descendant)
+	for Index, Descendant in next, (GetChildren and Ancestor:GetChildren()) or (Ancestor:GetDescendants()) do
+		if (Descendant:IsA(Class)) then
+			Insert(Results, Descendant);
 		end
 	end
 
@@ -654,190 +649,221 @@ local GetClasses = function(Ancestor, Class, GetChildren)
 end
 
 local SetNumber = function(Input, Minimum, Max)
-	Minimum = tonumber(Minimum) or -math.huge
-	Max = tonumber(Max) or math.huge
+	Minimum = (tonumber(Minimum) or -math.huge);
+	Max = (tonumber(Max) or math.huge);
 
-	if Input then
-		local Numbered = tonumber(Input)
+	if (Input) then
+		local Selected = tonumber(Input);
 
-		if Numbered and (Numbered == (Minimum or Max) or (Numbered < Max) or (Numbered > Minimum)) then
-			return Numbered
-		elseif Lower(Input) == "inf" then
-			return Max
+		if (Selected) then
+			return math.clamp(Selected, Minimum, Max);
+		elseif (Lower(Input) == "inf") then
+			return (Max);
 		else
-			return 0
+			return (0);
 		end
 	else
-		return 0
+		return (0);
 	end
 end
 
 local GetCharacter = function(Player)
-	return (Player and Player.Character)
+	return (Player and Player.Character);
 end
 
 local GetRoot = function(Player)
-	local Char = GetCharacter(Player)
-	return (Char and Char:FindFirstChild("HumanoidRootPart"))
+	local Char = GetCharacter(Player);
+	return (Char and Char:FindFirstChild("HumanoidRootPart"));
 end
 
 local GetHumanoid = function(Player)
-	local Char = GetCharacter(Player)
-	return (Char and Char:FindFirstChildOfClass("Humanoid"))
+	local Char = GetCharacter(Player);
+	return (Char and Char:FindFirstChildOfClass("Humanoid"));
 end
 
 local PlayerArguments = {
 	["all"] = function()
-		return (Services.Players:GetPlayers())
+		return (Services.Players:GetPlayers());
 	end,
 
 	["others"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		Foreach(Services.Players:GetPlayers(), function(Index, Player)
-			if Player ~= LocalPlayer then
-				Insert(Targets, Player)
+			if (Player ~= LocalPlayer) then
+				Insert(Targets, Player);
 			end
 		end)
+		
 		return Targets
 	end,
 
 	["me"] = function()
-		return { LocalPlayer }
+		return ({ LocalPlayer });
 	end,
 
 	["random"] = function()
-		local Amount = Services.Players:GetPlayers()
-		return { Amount[math.random(1, #Amount)] }
+		local Amount = Services.Players:GetPlayers();
+		
+		return ({ Amount[math.random(1, #Amount)] })
 	end,
 
-	["npc"] = function()
-		local Targets = {}
+	--[[["npc"] = function()
+		local Targets = ({})
+		
 		for Index, Model in next, GetClasses(workspace, "Model") do
 			if Model:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Model) then
 				Insert(Targets, Model)
 			end
 		end
+		
 		return Targets
-	end,
+	end,]]
 
 	["seated"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			local PHumanoid = GetHumanoid(Player)
-			if PHumanoid and PHumanoid.Sit then
-				Insert(Targets, Player)
+			local PlayerHumanoid = GetHumanoid(Player);
+			
+			if (PlayerHumanoid and PlayerHumanoid.Sit) then
+				Insert(Targets, Player);
 			end
 		end
+		
 		return Targets
 	end,
 
 	["stood"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			local PHumanoid = GetHumanoid(Player)
-			if PHumanoid and not PHumanoid.Sit then
-				Insert(Targets, Player)
+			local PlayerHumanoid = GetHumanoid(Player);
+			
+			if (PlayerHumanoid and not PlayerHumanoid.Sit) then
+				Insert(Targets, Player);
 			end
 		end
+		
 		return Targets
 	end,
 
 	["closest"] = function()
-		local Targets = {}
-		local ClosestDistance = 9e9
-		local ClosestPlayer
+		local Targets = ({});
+		local ClosestDistance, ClosestPlayer = (9e9), (nil);
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			local Distance = Player:DistanceFromCharacter(Root.Position)
+			local Distance = Player:DistanceFromCharacter(Root.Position);
+			
 			if (Player ~= LocalPlayer) and (Distance < ClosestDistance) then
 				ClosestDistance = Distance
 				ClosestPlayer = Player
 			end
 		end
-		return { ClosestPlayer }
+		
+		return ({ ClosestPlayer })
 	end,
 
 	["farthest"] = function()
-		local Targets = {}
-		local FurthestDistance, FurthestPlayer = 0, nil
+		local Targets = ({});
+		local FurthestDistance, FurthestPlayer = (0), (nil);
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			local Distance = Player:DistanceFromCharacter(Root.Position)
+			local Distance = Player:DistanceFromCharacter(Root.Position);
+			
 			if (Player ~= LocalPlayer) and (Distance > FurthestDistance) then
 				FurthestDistance = Distance
 				FurthestPlayer = Player
 			end
 		end
-		return { FurthestPlayer }
+		
+		return ({ FurthestPlayer })
 	end,
 
 	["enemies"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			if Player.Team ~= LocalPlayer.Team then
-				Insert(Targets, Player)
+			if (Player.Team ~= LocalPlayer.Team) then
+				Insert(Targets, Player);
 			end
 		end
+		
 		return Targets
 	end,
 
 	["dead"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			local PHumanoid = GetHumanoid(Player)
-			if PHumanoid and PHumanoid.Health == 0 then
-				Insert(Targets, Player)
+			local PlayerHumanoid = GetHumanoid(Player);
+			
+			if (PlayerHumanoid and PlayerHumanoid.Health == 0) then
+				Insert(Targets, Player);
 			end
 		end
+		
 		return Targets
 	end,
 
 	["alive"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
-			local PHumanoid = GetHumanoid(Player)
-			if PHumanoid and PHumanoid.Health > 0 then
-				Insert(Targets, Player)
+			local PlayerHumanoid = GetHumanoid(Player);
+			
+			if (PlayerHumanoid and PlayerHumanoid.Health > 0) then
+				Insert(Targets, Player);
 			end
 		end
+		
 		return Targets
 	end,
 
 	["friends"] = function()
-		local Targets = {}
+		local Targets = ({});
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			if (Player:IsFriendsWith(LocalPlayer.UserId)) and (LocalPlayer ~= Player) then
-				Insert(Targets, Player)
+				Insert(Targets, Player);
 			end
 		end
+		
 		return Targets
 	end,
 
 	["nonfriends"] = function()
-		local Targets = {}
+		local Targets = ({})
+		
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			if (not Player:IsFriendsWith(LocalPlayer.UserId)) and (LocalPlayer ~= Player) then
 				Insert(Targets, Player)
 			end
 		end
+		
 		return Targets
 	end,
 }
 
 local GetPlayer = function(Target)
-	local Target = Lower(Target)
-	local PlayerType = PlayerArguments[Target]
+	local Target = Lower(Target);
+	local PlayerType = (PlayerArguments[Target]);
 
-	if PlayerType then
-		return PlayerType()
+	if (PlayerType) then
+		return PlayerType();
 	else
-		local Specific = {}
+		local Specific = ({});
+		
 		Foreach(Services.Players:GetPlayers(), function(Index, Player)
-			local Name, Display = Lower(Player.Name), Lower(Player.DisplayName)
-			if Sub(Name, 1, #Target) == Target then
-				Insert(Specific, Player)
-			elseif Sub(Display, 1, #Target) == Target then
-				Insert(Specific, Player)
+			local Name, Display = Lower(Player.Name), Lower(Player.DisplayName);
+			
+			if (Sub(Name, 1, #Target) == Target) then
+				Insert(Specific, Player);
+			elseif (Sub(Display, 1, #Target) == Target) then
+				Insert(Specific, Player);
 			end
 		end)
+		
 		return Specific
 	end
 end
@@ -862,13 +888,14 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 
 		repeat Wait()
 			Velocity = Root.Velocity
+			
 			Root.Velocity = Velocity * 10000 + Vector3.new(0, 10000, 0);
 			CWait(Services.Run.RenderStepped);
 			Root.Velocity = Velocity
 			CWait(Services.Run.Stepped);
 			Root.Velocity = Velocity + Vector3.new(0, Movel, 0);
 			Movel = (Movel * -1);
-		until not Flinging
+		until (not Flinging)
 	end)
 
 	for _, Player in next, Targets do
@@ -1061,7 +1088,7 @@ Spawn(function()
 end)
 
 Tab.Visible = false
-CommandBar.Actions.Description.Text = Format("Version %s", Settings.Version)
+CommandBar.Actions.Description.Text = Format("Version %s", Settings.Version);
 CommandBar.Visible = false
 CommandBar.GroupTransparency = 1
 
@@ -1083,17 +1110,17 @@ local Add = function(Global, Value)
 end
 
 local Get = function(Global)
-	return Globals[Global]
+	return (Globals[Global]);
 end
 
 local Refresh = function(Global, NewValue)
-	Add(Global, false); Wait(0.2)
-	Add(Global, NewValue)
+	Add(Global, false); Wait(0.2);
+	Add(Global, NewValue);
 end
 
 Cleaner.Check = function(Name)
 	if (not Cleaner.Objects[Name]) then
-		Cleaner.Objects[Name] = {}
+		Cleaner.Objects[Name] = ({});
 	end
 end
 
@@ -1124,39 +1151,39 @@ Cleaner.Clean = function(self, Name)
 	end
 end
 
-local Animate = {
+local Animate = ({
 	Set = function(Component, Title, Description)
-		local Labels = Component.Frame
-		local TLabel, DLabel = Labels.Title, Labels.Description
+		local Labels = (Component.Frame);
+		local TitleLabel, DescriptionLabel = (Labels.Title), (Labels.Description);
 
-		if Title then
-			TLabel.Text = Title
+		if (Title) then
+			TitleLabel.Text = Title
 		else
-			Destroy(TLabel)
+			Destroy(TitleLabel);
 		end
 
-		if Description then
-			DLabel.Text = Description
+		if (Description) then
+			DescriptionLabel.Text = Description
 		else
-			Destroy(DLabel)
+			Destroy(DescriptionLabel);
 		end
 	end,
 
 	Open = function(Window, Transparency, Size, CheckVisible, Center, Amount)
-		if (CheckVisible and not Window.Visible) or not CheckVisible then
-			local Size = (Size or Window.Size)
-			local NewSize = UDimMultiply(Size, Amount or 1.1)
-			local Outline = Window:FindFirstChild("Shadow")
+		if (CheckVisible and not Window.Visible) or (not CheckVisible) then
+			local Size = (Size or Window.Size);
+			local NewSize = UDimMultiply(Size, Amount or 1.1);
+			local Outline = Window:FindFirstChild("Shadow");
 
-			MultiSet(Outline, { Transparency = 1 })
+			MultiSet(Outline, { Transparency = 1 });
 			MultiSet(Window, {
 				Size = NewSize,
 				GroupTransparency = 1,
 				Visible = true,
-				Position = (Center and UDim2.fromScale(0.5, 0.5)) or Window.Position,
+				Position = (Center and UDim2.fromScale(0.5, 0.5)) or (Window.Position),
 			})
 
-			Tween(Outline, 0.25, { Transparency = 0 })
+			Tween(Outline, 0.25, { Transparency = 0 });
 			Tween(Window, 0.25, {
 				Size = Size,
 				GroupTransparency = Transparency or 0,
@@ -1166,38 +1193,35 @@ local Animate = {
 
 	Close = function(Window, Amount, Invisible)
 		Spawn(function()
-			local Size = Window.Size
-			local NewSize = UDimMultiply(Size, Amount or 1.1)
-			local Outline = Window:FindFirstChild("Shadow")
+			local Size = (Window.Size);
+			local NewSize = UDimMultiply(Size, Amount or 1.1);
+			local Outline = Window:FindFirstChild("Shadow");
 
-			Tween(Outline, 0.25, { Transparency = 1 })
+			Tween(Outline, 0.25, { Transparency = 1 });
 			Tween(Window, 0.25, {
 				Size = NewSize,
 				GroupTransparency = 1,
 			})
 
-			if Invisible then
-				Wait(0.25)
+			if (Invisible) then
+				Wait(0.25);
 				Window.Visible = false
 			end
 		end)
 	end,
 
 	Drag = function(Window, UseAlternative, AllowOffScreen)
-		if Window then
+		if (Window) then
 			local Dragging
 			local DragInput
 			local Start
 			local StartPosition
 
-			if
-				not UseAlternative
-				and Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)
-			then
+			if (not UseAlternative and Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
 				AllowOffScreen = true
 			end
 
-			local function Update(Input)
+			local Update = function(Input)
 				local Delta = Input.Position - Start
 				local Screen = UI.AbsoluteSize
 				local Absolute = Window.AbsoluteSize
@@ -1230,21 +1254,16 @@ local Animate = {
 				Tween(Window, 0.05, {
 					Position = UDim2.new(StartPosition.X.Scale, PosX, StartPosition.Y.Scale, PosY)
 				})
-
-				--Window.Position = UDim2.new(StartPosition.X.Scale, PosX, StartPosition.Y.Scale, PosY)
 			end
 
 			Connect(Window.InputBegan, function(Input)
-				if
-					Input.UserInputType == Enum.UserInputType.MouseButton1
-					or Input.UserInputType == Enum.UserInputType.Touch and not Type
-				then
+				if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) and (not Type) then
 					Dragging = true
 					Start = Input.Position
 					StartPosition = Window.Position
 
 					Connect(Input.Changed, function()
-						if Input.UserInputState == Enum.UserInputState.End then
+						if (Input.UserInputState == Enum.UserInputState.End) then
 							Dragging = false
 						end
 					end)
@@ -1252,37 +1271,36 @@ local Animate = {
 			end)
 
 			Connect(Window.InputChanged, function(Input)
-				if
-					Input.UserInputType == Enum.UserInputType.MouseMovement
-					or Input.UserInputType == Enum.UserInputType.Touch and not Type
-				then
+				if (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) and (not Type) then
 					DragInput = Input
 				end
 			end)
 
 			Connect(Services.Input.InputChanged, function(Input)
-				if Input == DragInput and Dragging and not Type then
-					Update(Input)
+				if (Input == DragInput and Dragging) and (not Type) then
+					Update(Input);
 				end
 			end)
 		end
 	end,
-}
+})
 
 local Color = function(Color, Factor, Mode)
-	Mode = Mode or Settings.Theme.Mode
+	Mode = (Mode or Settings.Theme.Mode);
 
-	if Mode == "Light" then
-		return Color3.fromRGB((Color.R * 255) - Factor, (Color.G * 255) - Factor, (Color.B * 255) - Factor)
+	if (Mode == "Light") then
+		return Color3.fromRGB((Color.R * 255) - Factor, (Color.G * 255) - Factor, (Color.B * 255) - Factor);
 	else
-		return Color3.fromRGB((Color.R * 255) + Factor, (Color.G * 255) + Factor, (Color.B * 255) + Factor)
+		return Color3.fromRGB((Color.R * 255) + Factor, (Color.G * 255) + Factor, (Color.B * 255) + Factor);
 	end
 end
 
-function Library:CreateWindow(Config: { Title: string })
-	local Window = Clone(Tab)
-	local Animations = {}
-	local Component = { Self = Window }
+function Library:CreateWindow(Config: { 
+	Title: string 
+})
+	local Window = Clone(Tab);
+	local Animations = ({});
+	local Component = ({ Self = Window });
 
 	local Actions = Window.Actions
 	local Tabs = Window.Tabs
@@ -1293,28 +1311,28 @@ function Library:CreateWindow(Config: { Title: string })
 	local WindowName = Topbar.Description
 	local SearchBox = Topbar.SearchBox
 
-	local Previous = "Home"
-	local Current = "Home"
+	local Previous = ("Home");
+	local Current = ("Home");
 
 	local Maximized = false
-	local Minimzied = false
+	local Minimized = false
 
-	local Minimum, Maximum = Vector2.new(204, 220), Vector2.new(9e9, 9e9)
+	local Minimum, Maximum = Vector2.new(204, 220), Vector2.new(9e9, 9e9);
 
-	local List = {
-		BottomLeft = { X = Vector2.new(-1, 0), Y = Vector2.new(0, 1) },
-		BottomRight = { X = Vector2.new(1, 0), Y = Vector2.new(0, 1) },
-	}
+	local List = ({
+		BottomLeft = ({ X = Vector2.new(-1, 0), Y = Vector2.new(0, 1) }),
+		BottomRight = ({ X = Vector2.new(1, 0), Y = Vector2.new(0, 1) }),
+	})
 
 	Spawn(function()
 		local MousePos, Size, UIPos = nil, nil, nil
 
-		if Window and Window:FindFirstChild("Background") then
-			local Positions = Window:FindFirstChild("Background")
+		if (Window and Window:FindFirstChild("Background")) then
+			local Positions = Window:FindFirstChild("Background");
 
 			for Index, Types in next, Positions:GetChildren() do
 				Connect(Types.InputBegan, function(Input)
-					if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+					if (Input.UserInputType == Enum.UserInputType.MouseButton1) then
 						Type = Types
 						MousePos = Vector2.new(Mouse.X, Mouse.Y)
 						Size = Window.AbsoluteSize
@@ -1328,7 +1346,7 @@ function Library:CreateWindow(Config: { Title: string })
 				end)
 
 				Connect(Types.InputEnded, function(Input)
-					if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+					if (Input.UserInputType == Enum.UserInputType.MouseButton1) then
 						Type = nil
 						Tween(Types.Icon, 0.25, {
 							ImageTransparency = 0.85,
@@ -1340,67 +1358,59 @@ function Library:CreateWindow(Config: { Title: string })
 		end
 
 		local Resize = function(Delta)
-			if Type and MousePos and Size and UIPos and Window:FindFirstChild("Background")[Type.Name] == Type then
-				local Mode = List[Type.Name]
-				local NewSize = Vector2.new(Size.X + Delta.X * Mode.X.X, Size.Y + Delta.Y * Mode.Y.Y)
-				NewSize = Vector2.new(
-					math.clamp(NewSize.X, Minimum.X, Maximum.X),
-					math.clamp(NewSize.Y, Minimum.Y, Maximum.Y)
-				)
+			if (Type and MousePos and Size and UIPos) and (Window:FindFirstChild("Background")[Type.Name] == Type) then
+				local Mode = (List[Type.Name]);
+				local DeltaSize = Vector2.new(Size.X + Delta.X * Mode.X.X, Size.Y + Delta.Y * Mode.Y.Y);
+				local NewSize = Vector2.new(math.clamp(DeltaSize.X, Minimum.X, Maximum.X), math.clamp(DeltaSize.Y, Minimum.Y, Maximum.Y));
 
-				local AnchorOffset = Vector2.new(Window.AnchorPoint.X * Size.X, Window.AnchorPoint.Y * Size.Y)
-				local NewAnchorOffset = Vector2.new(Window.AnchorPoint.X * NewSize.X, Window.AnchorPoint.Y * NewSize.Y)
-				local DeltaAnchorOffset = NewAnchorOffset - AnchorOffset
+				local AnchorOffset = Vector2.new(Window.AnchorPoint.X * Size.X, Window.AnchorPoint.Y * Size.Y);
+				local NewAnchorOffset = Vector2.new(Window.AnchorPoint.X * NewSize.X, Window.AnchorPoint.Y * NewSize.Y);
+				local DeltaAnchorOffset = (NewAnchorOffset - AnchorOffset);
 
 				Window.Size = UDim2.new(0, NewSize.X, 0, NewSize.Y)
-
-				local NewPosition = UDim2.new(
-					UIPos.X.Scale,
-					UIPos.X.Offset + DeltaAnchorOffset.X * Mode.X.X,
-					UIPos.Y.Scale,
-					UIPos.Y.Offset + DeltaAnchorOffset.Y * Mode.Y.Y
-				)
-				Window.Position = NewPosition
+				Window.Position = UDim2.new(UIPos.X.Scale, UIPos.X.Offset + DeltaAnchorOffset.X * Mode.X.X, UIPos.Y.Scale, UIPos.Y.Offset + DeltaAnchorOffset.Y * Mode.Y.Y)
 			end
 		end
 
 		Connect(Mouse.Move, function()
-			if Type then
+			if (Type) then
 				pcall(function()
-					Resize(Vector2.new(Mouse.X, Mouse.Y) - MousePos)
+					Resize(Vector2.new(Mouse.X, Mouse.Y) - MousePos);
 				end)
 			end
 		end)
 	end)
 
-	WindowName.Text = Config.Title
-	Window.Parent = UI
-	Window.Name = (GenerateGUID(Services.Http))
+	WindowName.Text = (Config.Title);
+	Window.Parent = (UI);
+	Window.Name = (GenerateGUID(Services.Http));
 
-	Library.Tabs[Config.Title] = {
+	Library.Tabs[Config.Title] = ({
 		Open = function()
-			Animate.Open(Window, Settings.Theme.Transparency, UDim2.fromOffset(345, 418), false, true)
+			Animate.Open(Window, Settings.Theme.Transparency, UDim2.fromOffset(345, 418), false, true);
 		end,
-	}
+	})
 
-	Library.Tabs[Config.Title].Open()
-	Animate.Drag(Window)
-
+	Library.Tabs[Config.Title].Open();
+	Animate.Drag(Window);
+	
 	local SetShadow = function(Bool)
 		Spawn(function()
 			Shadow.Visible = true
+			
 			Tween(Shadow, 0.5, {
-				BackgroundTransparency = Bool and 0.7 or 1
+				BackgroundTransparency = (Bool and 0.7 or 1)
 			}); Wait(0.5)
+			
 			Shadow.Visible = Bool
 		end)
 	end
 
 	local UpdateIcon = function()
 		if (Current == "Home") then
-			Topbar.Back.ImageLabel.Image = "rbxassetid://97330543812984"
+			Topbar.Back.ImageLabel.Image = ("rbxassetid://97330543812984");
 		else
-			Topbar.Back.ImageLabel.Image = "rbxassetid://119847346739313"
+			Topbar.Back.ImageLabel.Image = ("rbxassetid://119847346739313");
 		end
 	end
 
@@ -1411,23 +1421,23 @@ function Library:CreateWindow(Config: { Title: string })
 		UpdateIcon();
 
 		for Index, Main in next, Tabs:GetChildren() do
-			if Main:IsA("CanvasGroup") then
-				local Opened, SameName = Main.Value, (Main.Name == Name)
-				local Scroll = Main.ScrollingFrame
-				local Padding = Scroll.UIPadding
+			if (Main:IsA("CanvasGroup")) then
+				local Opened, SameName = (Main.Value), (Main.Name == Name)
+				local Scroll = (Main.ScrollingFrame);
+				local Padding = (Scroll.UIPadding);
 
-				if SameName and not Opened.Value then
+				if (SameName and not Opened.Value) then
 					Opened.Value = true
 					Main.Visible = true
 
-					Tween(Main, 0.3, { GroupTransparency = 0 })
-					Tween(Padding, 0.3, { PaddingTop = UDim.new(0, 8) })
-				elseif not SameName and Opened.Value then
+					Tween(Main, 0.3, { GroupTransparency = 0 });
+					Tween(Padding, 0.3, { PaddingTop = UDim.new(0, 8) });
+				elseif (not SameName and Opened.Value) then
 					Previous = Main.Name
 					Opened.Value = false
 
-					Tween(Main, 0.15, { GroupTransparency = 1 })
-					Tween(Padding, 0.15, { PaddingTop = UDim.new(0, 18) })
+					Tween(Main, 0.15, { GroupTransparency = 1 });
+					Tween(Padding, 0.15, { PaddingTop = UDim.new(0, 18) });
 
 					Delay(0.2, function()
 						Main.Visible = false
@@ -1441,125 +1451,128 @@ function Library:CreateWindow(Config: { Title: string })
 		local Size = Button.Size
 
 		Connect(Button.InputBegan, function()
-			if Custom then
-				Tween(Button, 0.25, { Transparency = 0, Size = UDimMultiply(Size, 1.1) })
+			if (Custom) then
+				Tween(Button, 0.25, { Transparency = 0, Size = UDimMultiply(Size, 1.1) });
 			else
-				Tween(
-					Button,
-					0.25,
-					{ BackgroundColor3 = Color(Settings.Theme.Component, 5), Size = UDimMultiply(Size, 1.015) }
-				)
+				Tween(Button, 0.25, { BackgroundColor3 = Color(Settings.Theme.Component, 5), Size = UDimMultiply(Size, 1.015) });
 			end
 		end)
 
 		Connect(Button.InputEnded, function()
-			if Custom then
-				Tween(Button, 0.25, { Transparency = 1, Size = Size })
+			if (Custom) then
+				Tween(Button, 0.25, { Transparency = 1, Size = Size });
 			else
-				Tween(Button, 0.25, { BackgroundColor3 = Settings.Theme.Component, Size = Size })
+				Tween(Button, 0.25, { BackgroundColor3 = Settings.Theme.Component, Size = Size });
 			end
 		end)
 	end
 
 	--> Components
 	function Component:Set(Component, Title, Description)
-		local Labels = Component.Frame
-		local TLabel, DLabel = Labels.Title, Labels.Description
+		local Labels = (Component.Frame);
+		local TitleLabel, DescriptionLabel = (Labels.Title), (Labels.Description);
 
-		if Title then
-			TLabel.Text = Title
+		if (Title) then
+			TitleLabel.Text = Title
 		else
-			Destroy(TLabel)
+			Destroy(TitleLabel);
 		end
 
-		if Description then
-			DLabel.Text = Description
+		if (Description) then
+			DescriptionLabel.Text = Description
 		else
-			Destroy(DLabel)
+			Destroy(DescriptionLabel);
 		end
 	end
 
 	function Component:GetTab(Name)
-		return Tabs[Name].ScrollingFrame
+		return (Tabs[Name].ScrollingFrame);
 	end
 
-	function Component:AddTab(Config: { Title: string, Description: string, Tab: string })
-		local Button = Clone(Components.Section)
-		local Tab = Clone(Components.SectionExample)
+	function Component:AddTab(Config: { 
+		Title: string, 
+		Description: string, 
+		Tab: string 
+	})
+		local Button = Clone(Components.Section);
+		local Tab = Clone(Components.SectionExample);
 
-		Connect(Button.MouseButton1Click, function()
-			Animations:SetTab(Config.Title)
-		end)
-
-		Animations:Component(Button)
-		Component:Set(Button, Config.Title, Config.Description)
-		MultiSet(Tab, { Parent = Tabs, Name = Config.Title })
+		Animations:Component(Button);
+		Component:Set(Button, Config.Title, Config.Description);
+		
+		MultiSet(Tab, { Parent = Tabs, Name = Config.Title });
 		MultiSet(Button, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
 		})
+		
+		Connect(Button.MouseButton1Click, function()
+			Animations:SetTab(Config.Title);
+		end)
 	end
 
-	function Component:AddDropdown(
-		Config: { Title: string, Description: string, Options: {}, Tab: Instance, Callback: any }
-	)
-		local Dropdown = Clone(Components.Dropdown)
+	function Component:AddDropdown(Config: { 
+		Title: string, 
+		Description: string, 
+		Options: {}, 
+		Tab: Instance, 
+		Callback: any 
+	})
+		local Dropdown = Clone(Components.Dropdown);
 		local Background = Window.Background
 		local Text = Dropdown.Holder.Main.Title
 
 		Connect(Dropdown.MouseButton1Click, function()
-			local Example = Clone(Features.DropdownExample)
+			local Example = Clone(Features.DropdownExample);
 			local Buttons = Example.Actions
 
-			Tween(Background, 0.25, { BackgroundTransparency = 0.6 })
-
+			Tween(Background, 0.25, { BackgroundTransparency = 0.6 });
+			Animate.Open(Example, 0);
 			Example.Parent = Window
-			Animate.Open(Example, 0)
-
+			
 			for Index, Button in next, Buttons:GetChildren() do
-				if Button:IsA("TextButton") then
-					Animations:Component(Button, true)
+				if (Button:IsA("TextButton")) then
+					Animations:Component(Button, true);
 
 					Connect(Button.MouseButton1Click, function()
-						Tween(Background, 0.25, { BackgroundTransparency = 1 })
-						Animate.Close(Example)
+						Tween(Background, 0.25, { BackgroundTransparency = 1 });
+						Animate.Close(Example);
 
-						Wait(0.25)
-						Destroy(Example)
+						Wait(0.25);
+						Destroy(Example);
 					end)
 				end
 			end
 
 			for Index, Option in next, Config.Options do
-				local Button = Clone(Features.DropdownButtonExample)
+				local Button = Clone(Features.DropdownButtonExample);
 
-				Animations:Component(Button)
-				Component:Set(Button, Index)
-				MultiSet(Button, { Parent = Example.ScrollingFrame, Visible = true })
+				Animations:Component(Button);
+				Component:Set(Button, Index);
+				MultiSet(Button, { Parent = Example.ScrollingFrame, Visible = true });
 
 				Connect(Button.MouseButton1Click, function()
-					Tween(Button, 0.25, { BackgroundColor3 = Settings.Theme.Component })
-					Config.Callback(Option, Dropdown)
-
+					Tween(Button, 0.25, { BackgroundColor3 = Settings.Theme.Component });
+					Config.Callback(Option, Dropdown);
 					Text.Text = Index
 
 					for Index, Others in next, Example:GetChildren() do
-						if Others:IsA("TextButton") and Others ~= Button then
+						if (Others:IsA("TextButton") and Others ~= Button) then
 							Others.BackgroundColor3 = Settings.Theme.Component
 						end
 					end
 
-					Tween(Background, 0.25, { BackgroundTransparency = 1 })
-					Animate.Close(Example)
+					Tween(Background, 0.25, { BackgroundTransparency = 1 });
+					Animate.Close(Example);
 
-					Wait(0.25)
-					Destroy(Example)
+					Wait(0.25);
+					Destroy(Example);
 				end)
 			end
 		end)
 
-		Component:Set(Dropdown, Config.Title, Config.Description)
-		Animations:Component(Dropdown)
+		Component:Set(Dropdown, Config.Title, Config.Description);
+		Animations:Component(Dropdown);
 
 		MultiSet(Dropdown, {
 			Name = Config.Title,
@@ -1568,14 +1581,19 @@ function Library:CreateWindow(Config: { Title: string })
 		})
 	end
 
-	function Component:AddButton(Config: { Title: string, Description: string, Tab: string, Callback: any })
-		local Button = Clone(Components.Button)
+	function Component:AddButton(Config: { 
+		Title: string, 
+		Description: string, 
+		Tab: string, 
+		Callback: any 
+	})
+		local Button = Clone(Components.Button);
 
-		Component:Set(Button, Config.Title, Config.Description)
-		Animations:Component(Button)
+		Component:Set(Button, Config.Title, Config.Description);
+		Animations:Component(Button);
 
 		Connect(Button.MouseButton1Click, function()
-			Config.Callback(Button)
+			Config.Callback(Button);
 		end)
 
 		MultiSet(Button, {
@@ -1584,12 +1602,20 @@ function Library:CreateWindow(Config: { Title: string })
 		})
 	end
 
-	function Component:AddMultiActions(Config: { Title: string, Description: string, Tab: string, Direction: string, Callback: (string, TextButton) -> (), Actions: { string } })
-		local MultiActions = Clone(Components.MultiActions)
-		local Holder = MultiActions.Holder
+	function Component:AddMultiActions(Config: { 
+		Title: string, 
+		Description: string, 
+		Tab: string, 
+		Direction: string, 
+		Callback: (string, TextButton) -> (), 
+		Actions: { string } 
+	})
+		local MultiActions = Clone(Components.MultiActions);
+		local Holder = (MultiActions.Holder);
 
-		Component:Set(MultiActions, Config.Title, Config.Description)
-		Holder.UIListLayout.FillDirection = Enum.FillDirection[Config.Direction or "Vertical"]
+		Component:Set(MultiActions, Config.Title, Config.Description);
+		Holder.UIListLayout.FillDirection = (Enum.FillDirection[Config.Direction or "Vertical"]);
+		
 		MultiSet(MultiActions, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
@@ -1597,11 +1623,12 @@ function Library:CreateWindow(Config: { Title: string })
 
 		for _, Action in next, Config.Actions do
 			local Button = Holder.ActionTemplate:Clone();
+			
 			Button.Parent = Holder
 			Button.Visible = true
 			Button.Title.Text = Action
-			Animations:Component(Button)
-
+			
+			Animations:Component(Button);
 			Connect(Button.MouseButton1Click, function()
 				Config.Callback(Action, MultiActions)
 			end)
@@ -1609,22 +1636,27 @@ function Library:CreateWindow(Config: { Title: string })
 	end
 
 	function Component:AddInput(
-		Config: { Title: string, Description: string, Tab: string, Default: string, Callback: any }
-	)
-		local Button = Clone(Components.Input)
-		local Box = Button.Main.TextBox
+		Config: { 
+			Title: string, 
+			Description: string, 
+			Tab: string, 
+			Default: string, 
+			Callback: any 
+	})
+		local Button = Clone(Components.Input);
+		local Box = (Button.Main.TextBox);
 
-		Box.Text = Config.Default or Blank
-		Component:Set(Button, Config.Title, Config.Description)
-		Animations:Component(Button)
+		Box.Text = (Config.Default or Blank);
+		Component:Set(Button, Config.Title, Config.Description);
+		Animations:Component(Button);
 
 		Connect(Button.MouseButton1Click, function()
-			Box:CaptureFocus()
+			Box:CaptureFocus();
 		end)
 
 		Connect(Box.FocusLost, function()
-			Config.Callback(Box.Text)
-			Box.PlaceholderText = Box.Text
+			Config.Callback(Box.Text);
+			Box.PlaceholderText = (Box.Text);
 		end)
 
 		MultiSet(Button, {
@@ -1633,21 +1665,27 @@ function Library:CreateWindow(Config: { Title: string })
 		})
 	end
 
-	function Component:AddSection(Config: { Title: string, Tab: string })
-		local Section = Clone(Components.TabSection)
+	function Component:AddSection(Config: { 
+		Title: string, 
+		Tab: string 
+	})
+		local Section = Clone(Components.TabSection);
 
-		Section.Title.Text = Config.Title
+		Section.Title.Text = (Config.Title);
 		MultiSet(Section, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
 		})
 	end
 
-	function Component:AddParagraph(Config: { Title: string, Description: string, Tab: string })
-		local Paragraph = Clone(Components.Paragraph)
-
-		Component:Set(Paragraph, Config.Title, Config.Description)
-
+	function Component:AddParagraph(Config: { 
+		Title: string, 
+		Description: string, 
+		Tab: string 
+	})
+		local Paragraph = Clone(Components.Paragraph);
+		
+		Component:Set(Paragraph, Config.Title, Config.Description);
 		MultiSet(Paragraph, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
@@ -1656,43 +1694,49 @@ function Library:CreateWindow(Config: { Title: string })
 		return Paragraph
 	end
 
-	function Component:AddKeybind(Config: { Title: string, Description: string, Tab: string, Callback: any, Default: Enum.KeyCode })
-		local Dropdown = Clone(Components.Keybind)
-		local Bind = Dropdown.Holder.Main.Title
+	function Component:AddKeybind(Config: { 
+		Title: string,
+		Description: string, 
+		Tab: string, 
+		Callback: any, 
+		Default: Enum.KeyCode 
+	})
+		local Dropdown = Clone(Components.Keybind);
+		local Bind = (Dropdown.Holder.Main.Title);
 
-		local Mouse = { Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3 }
-		local Types = {
+		local Mouse = ({ Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3 });
+		local Types = ({
 			Mouse = ("Enum.UserInputType.MouseButton"),
 			Key = ("Enum.KeyCode."),
-		}
+		})
 
 		local SetKey = function(InputType, KeyCode)
-			if Discover(Mouse, InputType) then
+			if (Discover(Mouse, InputType)) then
 				MultiSet(Bind, {
 					Text = tostring(InputType):gsub(Types.Mouse, "MB"),
 				})
-			elseif InputType == Enum.UserInputType.Keyboard then
+			elseif (InputType == Enum.UserInputType.Keyboard) then
 				MultiSet(Bind, {
 					Text = tostring(KeyCode):gsub(Types.Key, Blank),
 				})
 			end
 		end
 
-		Animations:Component(Dropdown)
-		Component:Set(Dropdown, Config.Title, Config.Description)
+		Animations:Component(Dropdown);
+		Component:Set(Dropdown, Config.Title, Config.Description);
 
 		Connect(Dropdown.MouseButton1Click, function()
-			local Time = tick()
+			local Time = tick();
 			local Detect, Finished
 
-			MultiSet(Bind, { Text = "press key" })
+			MultiSet(Bind, { Text = "press key" });
 			Detect = Connect(Services.Input.InputBegan, function(Key, Focused)
-				local InputType = Key.UserInputType
+				local InputType = (Key.UserInputType);
 
 				if (not Finished and not Focused) then
 					Finished = true
-					Config.Callback(Key)
-					SetKey(InputType, Key.KeyCode)
+					Config.Callback(Key);
+					SetKey(InputType, Key.KeyCode);
 				end
 			end)
 		end)
@@ -1702,19 +1746,19 @@ function Library:CreateWindow(Config: { Title: string })
 			Visible = true,
 		})
 
-		if Config.Default then
-			SetKey(Enum.UserInputType.Keyboard, Config.Default)
+		if (Config.Default) then
+			SetKey(Enum.UserInputType.Keyboard, Config.Default);
 		else
-			MultiSet(Bind, { Text = "none" })
+			MultiSet(Bind, { Text = "none" });
 		end
 	end
 
 	function Component:AddColorPickerWindow(Callback: (Color3) -> (), H, S, V)
-		local ColorPopup = Clone(Components.ColorPopup)
+		local ColorPopup = Clone(Components.ColorPopup);
 
 		ColorPopup.Parent = Window
-		Animate.Open(ColorPopup, 0)
-		SetShadow(true)
+		Animate.Open(ColorPopup, 0);
+		SetShadow(true);
 
 		local HueSatFrame = ColorPopup.HueSaturationFrame
 		local ValueSlider = ColorPopup.ValueFrame
@@ -1723,50 +1767,50 @@ function Library:CreateWindow(Config: { Title: string })
 		local ValuePointer = ValueSlider.Pointer
 
 		local HexInput = ColorPopup.Hex
-		local RgbInputs = {
+		local RgbInputs = ({
 			R = ColorPopup.RGB.R.Input,
 			G = ColorPopup.RGB.G.Input,
 			B = ColorPopup.RGB.B.Input
-		}
+		})
 
 		local ColorPreview = ColorPopup.ColorDisplay
 		local CloseButton = ColorPopup.Buttons.CloseColorPicker
 		local DoneButton = ColorPopup.Buttons.Done
 
-		local Hue = H or 0
-		local Saturation = S or 1
-		local Brightness = V or 1
+		local Hue = (H or 0);
+		local Saturation = (S or 1);
+		local Brightness = (V or 1);
 
 		local UpdateColor = function()
-			local FinalColor = Color3.fromHSV(Hue, Saturation, Brightness)
-			local SliderColor = Color3.fromHSV(Hue, Saturation, 1)
+			local FinalColor = Color3.fromHSV(Hue, Saturation, Brightness);
+			local SliderColor = Color3.fromHSV(Hue, Saturation, 1);
 
 			ColorPreview.BackgroundColor3 = FinalColor
 			ValueSlider.BackgroundColor3 = SliderColor
 
-			local R, G, B = FinalColor.R * 255, FinalColor.G * 255, FinalColor.B * 255
-			HexInput.Text = string.format("#%02X%02X%02X", R, G, B)
-			RgbInputs.R.Text = math.floor(R)
-			RgbInputs.G.Text = math.floor(G)
-			RgbInputs.B.Text = math.floor(B)
+			local R, G, B = (FinalColor.R * 255), (FinalColor.G * 255), (FinalColor.B * 255);
+			HexInput.Text = string.format("#%02X%02X%02X", R, G, B);
+			RgbInputs.R.Text = math.floor(R);
+			RgbInputs.G.Text = math.floor(G);
+			RgbInputs.B.Text = math.floor(B);
 
-			HueSatPointer.Position = UDim2.new(Hue, 0, 1 - Saturation, 0) - UDim2.fromOffset(HueSatPointer.AbsoluteSize.X / 2, 0)
-			ValuePointer.Position = UDim2.new(Brightness, 0, 0.5, 0) - UDim2.fromOffset(ValuePointer.AbsoluteSize.X / 2, 0)
+			HueSatPointer.Position = UDim2.new(Hue, 0, 1 - Saturation, 0) - UDim2.fromOffset(HueSatPointer.AbsoluteSize.X / 2, 0);
+			ValuePointer.Position = UDim2.new(Brightness, 0, 0.5, 0) - UDim2.fromOffset(ValuePointer.AbsoluteSize.X / 2, 0);
 		end
 
 		local Handle = function(Element, Callback)
 			Connect(Element.InputBegan, function(Input)
-				if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+				if (Input.UserInputType == Enum.UserInputType.MouseButton1) then
 					local Connection
 
 					Connection = Connect(Services.Input.InputChanged, function(Change)
-						if Change.UserInputType == Enum.UserInputType.MouseMovement then
+						if (Change.UserInputType == Enum.UserInputType.MouseMovement) then
 							Callback(Change.Position);
 						end
 					end)
 
 					Connect(Services.Input.InputEnded, function(End)
-						if End.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (End.UserInputType == Enum.UserInputType.MouseButton1) then
 							Connection:Disconnect();
 						end
 					end)
@@ -1775,34 +1819,36 @@ function Library:CreateWindow(Config: { Title: string })
 		end
 
 		Handle(HueSatFrame, function(MousePosition)
-			local RelX = math.clamp((MousePosition.X - HueSatFrame.AbsolutePosition.X) / HueSatFrame.AbsoluteSize.X, 0, 1)
-			local RelY = math.clamp((MousePosition.Y - HueSatFrame.AbsolutePosition.Y) / HueSatFrame.AbsoluteSize.Y, 0, 1)
+			local RelX = math.clamp((MousePosition.X - HueSatFrame.AbsolutePosition.X) / HueSatFrame.AbsoluteSize.X, 0, 1);
+			local RelY = math.clamp((MousePosition.Y - HueSatFrame.AbsolutePosition.Y) / HueSatFrame.AbsoluteSize.Y, 0, 1);
 
 			Hue = RelX
 			Saturation = 1 - RelY
 
-			UpdateColor()
+			UpdateColor();
 		end)
 
 		Handle(ValueSlider, function(MousePosition)
-			local RelX = math.clamp((MousePosition.X - ValueSlider.AbsolutePosition.X) / ValueSlider.AbsoluteSize.X, 0, 1)
-
+			local RelX = math.clamp((MousePosition.X - ValueSlider.AbsolutePosition.X) / ValueSlider.AbsoluteSize.X, 0, 1);
 			Brightness = RelX
-			UpdateColor()
+			
+			UpdateColor();
 		end)
 
 		Connect(HexInput.FocusLost, function(EnterPressed)
-			if EnterPressed then
-				local Hex = HexInput.Text:gsub("#", "")
-				if #Hex == 6 then
-					local R = tonumber(Hex:sub(1, 2), 16)
-					local G = tonumber(Hex:sub(3, 4), 16)
-					local B = tonumber(Hex:sub(5, 6), 16)
+			if (EnterPressed) then
+				local Hex = HexInput.Text:gsub("#", "");
+				
+				if (#Hex == 6) then
+					local R = tonumber(Hex:sub(1, 2), 16);
+					local G = tonumber(Hex:sub(3, 4), 16);
+					local B = tonumber(Hex:sub(5, 6), 16);
 
 					if (R and G and B) then
-						local H, S, V = Color3.fromRGB(R, G, B):ToHSV()
+						local H, S, V = Color3.fromRGB(R, G, B):ToHSV();
 						Hue, Saturation, Brightness = H, S, V
-						UpdateColor()
+						
+						UpdateColor();
 					end
 				end
 			end
@@ -1810,46 +1856,54 @@ function Library:CreateWindow(Config: { Title: string })
 
 		for Key, Box in next, RgbInputs do
 			Connect(Box.FocusLost, function(EnterPressed)
-				if EnterPressed then
-					local R = tonumber(RgbInputs.R.Text) or 0
-					local G = tonumber(RgbInputs.G.Text) or 0
-					local B = tonumber(RgbInputs.B.Text) or 0
+				if (EnterPressed) then
+					local R = (tonumber(RgbInputs.R.Text) or 0);
+					local G = (tonumber(RgbInputs.G.Text) or 0);
+					local B = (tonumber(RgbInputs.B.Text) or 0);
 
-					R = math.clamp(R, 0, 255)
-					G = math.clamp(G, 0, 255)
-					B = math.clamp(B, 0, 255)
+					R = math.clamp(R, 0, 255);
+					G = math.clamp(G, 0, 255);
+					B = math.clamp(B, 0, 255);
 
-					local H, S, V = Color3.fromRGB(R, G, B):ToHSV()
+					local H, S, V = Color3.fromRGB(R, G, B):ToHSV();
 					Hue, Saturation, Brightness = H, S, V
-					UpdateColor()
+					
+					UpdateColor();
 				end
 			end)
 		end
 
 		Connect(CloseButton.MouseButton1Click, function()
-			SetShadow(false)
-			Animate.Close(ColorPopup, 0.9, true); Wait(0.5)
+			SetShadow(false);
+			Animate.Close(ColorPopup, 0.9, true); Wait(0.5);
 			Destroy(ColorPopup);
 		end)
 
 		Connect(DoneButton.MouseButton1Click, function()
-			Callback(ColorPreview.BackgroundColor3)
-			SetShadow(false)
-			Animate.Close(ColorPopup, 0.9, true); Wait(0.5)
+			Callback(ColorPreview.BackgroundColor3);
+			SetShadow(false);
+			Animate.Close(ColorPopup, 0.9, true); Wait(0.5);
 			Destroy(ColorPopup);
 		end)
 
 
-		UpdateColor()
+		UpdateColor();
 	end
 
-	function Component:AddColorPicker(Config: { Title: string, Description: string, Tab: string, Default: Color3, Callback: (Color3) -> () })
-		local ColorPicker = Clone(Components.ColorPicker)
+	function Component:AddColorPicker(Config: { 
+		Title: string, 
+		Description: string, 
+		Tab: string, 
+		Default: Color3, 
+		Callback: (Color3) -> () 
+	})
+		local ColorPicker = Clone(Components.ColorPicker);
 		local Current = ColorPicker.CurrentColor
 
-		Component:Set(ColorPicker, Config.Title, Config.Description)
-		Animations:Component(ColorPicker)
-		Current.BackgroundColor3 = Config.Default or Color3.fromRGB(255, 255, 255)
+		Current.BackgroundColor3 = (Config.Default or Color3.fromRGB(255, 255, 255));
+		Component:Set(ColorPicker, Config.Title, Config.Description);
+		Animations:Component(ColorPicker);		
+		
 		MultiSet(ColorPicker, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
@@ -1857,52 +1911,48 @@ function Library:CreateWindow(Config: { Title: string })
 
 		Connect(ColorPicker.MouseButton1Click, function()
 			Component:AddColorPickerWindow(function(Color)
-				Current.BackgroundColor3 = Color
-				Config.Callback(Color)
+				Current.BackgroundColor3 = (Color);
+				Config.Callback(Color);
 			end, Current.BackgroundColor3:ToHSV());
 		end)
 
 		return ColorPicker
 	end
 
-	function Component:AddToggle(
-		Config: { Title: string, Description: string, Tab: string, Default: boolean, Callback: any }
-	)
-		local Toggle = Clone(Components.Toggle)
+	function Component:AddToggle(Config: {
+		Title: string,
+		Description: string,
+		Tab: string,
+		Default: boolean,
+		Callback: any 
+	})
+		local Toggle = Clone(Components.Toggle);
 
 		local On = Toggle.Value
 		local Main = Toggle.Main
 		local Circle = Main.ToggleLabel
 
 		local Set = function(Value)
-			if Value then
-				Tween(Main, 0.2, { BackgroundColor3 = Settings.Theme.Highlight })
-				Tween(
-					Circle,
-					0.2,
-					{ BackgroundColor3 = Color3.fromRGB(255, 255, 255), Position = UDim2.new(1, -25, 0.5, 0) }
-				)
+			if (Value) then
+				Tween(Main, 0.2, { BackgroundColor3 = Settings.Theme.Highlight });
+				Tween(Circle, 0.2, { BackgroundColor3 = Color3.fromRGB(255, 255, 255), Position = UDim2.new(1, -25, 0.5, 0) });
 			else
-				Tween(Main, 0.2, { BackgroundColor3 = Color(Settings.Theme.Component, 10) })
-				Tween(
-					Circle,
-					0.2,
-					{ BackgroundColor3 = Color(Settings.Theme.Component, 15), Position = UDim2.new(0, 3, 0.5, 0) }
-				)
+				Tween(Main, 0.2, { BackgroundColor3 = Color(Settings.Theme.Component, 10) });
+				Tween(Circle, 0.2, { BackgroundColor3 = Color(Settings.Theme.Component, 15), Position = UDim2.new(0, 3, 0.5, 0) });
 			end
 
 			On.Value = Value
 		end
 
-		Set(Config.Default)
-		Animations:Component(Toggle)
-		Component:Set(Toggle, Config.Title, Config.Description)
+		Set(Config.Default);
+		Animations:Component(Toggle);
+		Component:Set(Toggle, Config.Title, Config.Description);
 
 		Connect(Toggle.MouseButton1Click, function()
-			local Value = not On.Value
+			local Value = (not On.Value);
 
-			Set(Value)
-			Config.Callback(Value)
+			Set(Value);
+			Config.Callback(Value);
 		end)
 
 		MultiSet(Toggle, {
@@ -1920,8 +1970,8 @@ function Library:CreateWindow(Config: { Title: string })
 		AllowDecimals: boolean,
 		DecimalAmount: number,
 		Callback: any,
-		})
-		local Slider = Clone(Components.Slider)
+	})
+		local Slider = Clone(Components.Slider);
 
 		local Main = Slider.Slider
 		local Amount = Main.Main.Input
@@ -1934,54 +1984,51 @@ function Library:CreateWindow(Config: { Title: string })
 		local Value = 0
 
 		local SetNumber = function(Number)
-			if Config.AllowDecimals then
-				local Power = 10 ^ (Config.DecimalAmount or 2)
-				Number = math.floor(Number * Power + 0.5) / Power
+			if (Config.AllowDecimals) then
+				local Power = 10 ^ (Config.DecimalAmount or 2);
+				Number = (math.floor(Number * Power + 0.5) / Power);
 			else
-				Number = math.round(Number)
+				Number = math.round(Number);
 			end
 
 			return Number
 		end
 
 		local Update = function(Number)
-			local Scale = (Mouse.X - Slide.AbsolutePosition.X) / Slide.AbsoluteSize.X
-			Scale = (Scale > 1 and 1) or (Scale < 0 and 0) or Scale
+			local Scale = ((Mouse.X - Slide.AbsolutePosition.X) / Slide.AbsoluteSize.X);
+			Scale = math.clamp(Scale, 0, 1);
 
-			if Number then
-				Number = (Number > Config.MaxValue and Config.MaxValue) or (Number < 0 and 0) or Number
+			if (Number) then
+				Number = math.clamp(Number, 0, Config.MaxValue);
 			end
 
-			Value = SetNumber(Number or (Scale * Config.MaxValue))
-			Amount.Text = Value
-			Fill.Size = UDim2.fromScale((Number and Number / Config.MaxValue) or Scale, 1)
-			Config.Callback(Value)
+			Value = SetNumber(Number or (Scale * Config.MaxValue));
+			Fill.Size = UDim2.fromScale((Number and Number / Config.MaxValue) or Scale, 1);
+			Amount.Text = (Value);
+
+			Config.Callback(Value);
 		end
-		
+
 		local Activate = function()
 			Active = true
 
-			repeat
-				Wait()
-				Update()
-			until not Active
+			repeat Wait()
+				Update();
+			until (not Active)
 		end
 
-		Fill.Size = UDim2.fromScale(Value, 1)
-		Animations:Component(Slider)
-		Update(Config.Default or 0)
-		Component:Set(Slider, Config.Title, Config.Description)
+		Fill.Size = UDim2.fromScale(Value, 1);
+		Animations:Component(Slider);
+		Update(Config.Default or 0);
+		Component:Set(Slider, Config.Title, Config.Description);
 
 		Connect(Amount.FocusLost, function()
-			Update(tonumber(Amount.Text) or 0)
+			Update(tonumber(Amount.Text) or 0);
 		end)
 
 		Connect(Fire.MouseButton1Down, Activate)
 		Connect(Services.Input.InputEnded, function(Input)
-			if
-				Input.UserInputType == Enum.UserInputType.MouseButton1
-				or Input.UserInputType == Enum.UserInputType.Touch
-			then
+			if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
 				Active = false
 			end
 		end)
@@ -1993,66 +2040,67 @@ function Library:CreateWindow(Config: { Title: string })
 		})
 	end
 
-	Animations:Component(Topbar.Back, true)
-	Animations:Component(Topbar.Search, true)
+	Animations:Component(Topbar.Back, true);
+	Animations:Component(Topbar.Search, true);
+	
 	for Index, Button in next, Actions:GetChildren() do
 		local Type = Button.Name
 
-		if Button:IsA("GuiButton") then
-			Animations:Component(Button, true)
+		if (Button:IsA("GuiButton")) then
+			Animations:Component(Button, true);
 
 			Connect(Button.MouseButton1Click, function()
-				if Type == "Close" then
-					Animate.Close(Window)
-					Wait(0.25)
+				if (Type == "Close") then
+					Animate.Close(Window); Wait(0.25);
 					Window.Visible = false
-				elseif Type == "Minimize" then
-					Minimzied = not Minimzied
+				elseif (Type == "Minimize") then
+					Minimized = (not Minimized)
 
-					if Minimzied then
-						Tween(Window, 0.25, { Size = UDim2.fromOffset(345, 60) })
+					if (Minimized) then
+						Tween(Window, 0.25, { Size = UDim2.fromOffset(345, 60) });
 					else
-						Tween(Window, 0.25, { Size = UDim2.fromOffset(345, 394) })
+						Tween(Window, 0.25, { Size = UDim2.fromOffset(345, 394) });
 					end
-				elseif Type == "Maximize" then
-					Maximized = not Maximized
+				elseif (Type == "Maximize") then
+					Maximized = (not Maximized)
 
-					if Maximized then
-						Tween(Window, 0.15, { Size = UDim2.fromScale(1, 1), Position = UDim2.fromScale(0.5, 0.5) })
+					if (Maximized) then
+						Tween(Window, 0.15, { Size = UDim2.fromScale(1, 1), Position = UDim2.fromScale(0.5, 0.5) });
 					else
-						Tween(Window, 0.15, { Size = UDim2.fromOffset(345, 394), Position = UDim2.fromScale(0.5, 0.5) })
+						Tween(Window, 0.15, { Size = UDim2.fromOffset(345, 394), Position = UDim2.fromScale(0.5, 0.5) });
 					end
 				end
 			end)
 		end
 	end
 
-	Animations:SetTab("Home")
+	Animations:SetTab("Home");
+	
 	Connect(Topbar.Back.MouseButton1Click, function()
 		if (Topbar.Back.ImageLabel.Image == "rbxassetid://97330543812984") then
 			Animate.Close(Window); Wait(0.25)
 			Window.Visible = false
 		end
 
-		Animations:SetTab(Previous or "Home")
+		Animations:SetTab(Previous or "Home");
 		Previous = nil
 		UpdateIcon();
 	end)
 
 	local SearchEnabled = true
 	local TweenTexts = function(Bool, Speed)
-		local Transparency = (Bool and 0) or 1
-		local Speed = Speed or 0.1
+		local Transparency = ((Bool and 0) or 1)
+		local Speed = (Speed or 0.1);
 
-		Tween(TabName, Speed, { TextTransparency = Transparency })
-		Tween(WindowName, Speed, { TextTransparency = Transparency })
+		Tween(TabName, Speed, { TextTransparency = Transparency });
+		Tween(WindowName, Speed, { TextTransparency = Transparency });
 	end
 
 	Connect(Changed(SearchBox, "Text"), function()
 		for Index, Button in next, Tabs[Current].ScrollingFrame:GetChildren() do
-			if Button:FindFirstChild("Frame") then
+			if (Button:FindFirstChild("Frame")) then
 				local Title = Button.Frame.Title
-				Button.Visible = Lower(Title.Text):find(Lower(SearchBox.Text))
+				Button.Visible = Lower(Title.Text):find(Lower(SearchBox.Text));
 			end
 		end
 	end)
@@ -2060,17 +2108,17 @@ function Library:CreateWindow(Config: { Title: string })
 	Connect(SearchBox.FocusLost, function()
 		SearchEnabled = true
 		SearchBox.Visible = false
-		TweenTexts(true, 0.3)
+		TweenTexts(true, 0.3);
 	end)
 
 	Connect(Topbar.Search.MouseButton1Click, function()
-		SearchEnabled = not SearchEnabled
+		SearchEnabled = (not SearchEnabled)
 
-		SearchBox.Visible = not SearchEnabled
-		TweenTexts(SearchEnabled)
+		SearchBox.Visible = (not SearchEnabled)
+		TweenTexts(SearchEnabled);
 
-		if not SearchEnabled then
-			SearchBox:CaptureFocus()
+		if (not SearchEnabled) then
+			SearchBox:CaptureFocus();
 		end
 	end)
 
@@ -2079,38 +2127,36 @@ end
 
 function API:Notify(Config: { Title: string, Description: string, Duration: number, Type: string })
 	Spawn(function()
-		local Info = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		local Info = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out);
 		local SetShadow = function(Box, Boolean)
-			Tween(Box.Shadow, 0, {
-				Transparency = (Boolean and 0) or 1,
-			})
+			Tween(Box.Shadow, 0, { Transparency = ((Boolean and 0) or 1) });
 		end
 
-		if Settings.Toggles.Notify then
-			local Notification = Clone(Features.Notification)
-			local Box = Notification.CanvasGroup
+		if (Settings.Toggles.Notify) then
+			local Notification = Clone(Features.Notification);
+			local Box = (Notification.CanvasGroup);
 
 			local Timer = Box.Timer
 			local Interact = Box.Interact
 			local None = Enum.AutomaticSize.None
 
 			local Methods = {
-				["warn"] = { icon = "rbxassetid://18797417802", color = Color3.fromRGB(246, 233, 107) },
-				["info"] = { icon = "rbxassetid://18754976792", color = Color3.fromRGB(110, 158, 246) },
-				["success"] = { icon = "rbxassetid://18797434345", color = Color3.fromRGB(126, 246, 108) },
-				["error"] = { icon = "rbxassetid://18797440055", color = Color3.fromRGB(246, 109, 104) },
+				["warn"] = ({ icon = "rbxassetid://18797417802", color = Color3.fromRGB(246, 233, 107) }),
+				["info"] = ({ icon = "rbxassetid://18754976792", color = Color3.fromRGB(110, 158, 246) }),
+				["success"] = ({ icon = "rbxassetid://18797434345", color = Color3.fromRGB(126, 246, 108) }),
+				["error"] = ({ icon = "rbxassetid://18797440055", color = Color3.fromRGB(246, 109, 104) }),
 			}
 
-			local Information = (Methods[Lower(Config.Type or "info")] or Methods.info)
-			local Opposite = (Settings.Theme.Mode == "Dark" and "Light") or "Dark"
+			local Information = (Methods[Lower(Config.Type or "info")] or Methods.info);
+			local Opposite = ((Settings.Theme.Mode == "Dark" and "Light") or "Dark");
 
-			Timer.BackgroundColor3 = Information.color
-			Timer.Outline.Color = Color(Information.color, 25, Opposite)
-
+			Timer.BackgroundColor3 = (Information.color);
+			Timer.Outline.Color = Color(Information.color, 25, Opposite);
 			Box.Gradient.BackgroundColor3 = Information.color
 			Box.Frame.Title.Notify.ImageColor3 = Information.color
 			Box.Frame.Title.Notify.Image = Information.icon
 			Notification.Parent = UI.Frame
+			
 			Animate.Set(Box, Config.Title, Config.Description)
 			MultiSet(Box, {
 				AutomaticSize = None,
@@ -2123,38 +2169,29 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 			local Closed = false
 
 			-- very sorry for the ugly code
-			local Open, Close =
-				function()
-					SetShadow(Box, true)
-					Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 70) })
-					Wait(0.1)
-					Services.Tween
-					:Create(Box, Info, {
+			local Open, Close = function()
+					SetShadow(Box, true);
+					Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 70) }); Wait(0.1)
+					Services.Tween:Create(Box, Info, {
 						Size = UDim2.fromOffset(229, 70),
 						GroupTransparency = Settings.Theme.Transparency,
-					})
-					:Play()
-					Wait(0.3)
+					}):Play(); Wait(0.3)
 					Box.AutomaticSize = Enum.AutomaticSize.Y
-				end, function()
-				if not Closed then
+			end, function()
+				if (not Closed) then
 					Closed = true
 
-					SetShadow(Box, false)
-					Tween(Box, 0.3, { GroupTransparency = 1 })
-					Notification.AutomaticSize = None
-					Tween(Notification, 0.35, { Size = UDim2.fromOffset(199, 0) })
-					Tween(Notification.UIPadding, 0.3, { PaddingLeft = UDim.new(0, 600) })
-					Wait(0.35)
-					Destroy(Notification)
+					SetShadow(Box, false);
+					Tween(Box, 0.3, { GroupTransparency = 1 });
+					Notification.AutomaticSize = (None);
+					Tween(Notification, 0.35, { Size = UDim2.fromOffset(199, 0) });
+					Tween(Notification.UIPadding, 0.3, { PaddingLeft = UDim.new(0, 600) }); Wait(0.35);
+					Destroy(Notification);
 				end
 			end
 
-			Connect(Interact.MouseButton1Click, Close)
-			Open()
-			Tween(Timer, Duration, { Size = UDim2.fromOffset(0, 4) })
-			Wait(Duration)
-			Close()
+			Connect(Interact.MouseButton1Click, Close); Open();
+			Tween(Timer, Duration, { Size = UDim2.fromOffset(0, 4) }); Wait(Duration); Close();
 		end
 	end)
 end
@@ -2541,7 +2578,7 @@ local SetTheme = function(Table)
 	for Type, Button in next, ThemeButtons do
 		local Color = Settings.Theme[Type]
 
-		if typeof(Color) == "Color3" then
+		if (typeof(Color) == "Color3") then
 			Button.CurrentColor.BackgroundColor3 = Color
 		end
 	end
@@ -2576,55 +2613,55 @@ end
 
 -- :: IMPORTANT :: --
 local EncodedSettings = function()
-	local NewSettings = { Theme = {} }
+	local NewSettings = ({ Theme = {} })
 
 	for Index, Theme in next, Settings.Theme do
-		if typeof(Theme) == "Color3" then
-			NewSettings.Theme[Index] = tostring(Theme)
+		if (typeof(Theme) == "Color3") then
+			NewSettings.Theme[Index] = tostring(Theme);
 		else
-			NewSettings.Theme[Index] = tostring(Theme)
+			NewSettings.Theme[Index] = tostring(Theme);
 		end
 	end
 
 	for Index, Theme in next, Settings do
-		if Index ~= "Theme" then
+		if (Index ~= "Theme") then
 			NewSettings[Index] = Theme
 		end
 	end
 
-	return JSONEncode(Services.Http, NewSettings)
+	return JSONEncode(Services.Http, NewSettings);
 end
 
 local GetSavedSettings = function()
-	local OldToggles = Settings.Toggles
-	local Themed = JSONDecode(Services.Http, (Check("File") and readfile("Cmd/Settings.json")) or EncodedSettings())
-	local Theming = { Theme = {} }
+	local OldToggles = (Settings.Toggles);
+	local Themed = JSONDecode(Services.Http, (Check("File") and readfile("Cmd/Settings.json")) or EncodedSettings());
+	local Theming = ({ Theme = {} });
 
 	for Index, Theme in next, Themed.Theme do
-		if typeof(Theme) == "string" and Find(Theme, ",") then
-			local Clr = Color3.new(Unpack(Split(Theme, ",")))
-			Theming.Theme[Index] = Color3.fromRGB(Clr.R * 255, Clr.G * 255, Clr.B * 255)
-		elseif Index == "Transparency" then
-			Theming.Theme[Index] = tonumber(Theme)
-		elseif Index == "Mode" then
-			Theming.Theme.Mode = tostring(Theme)
+		if (typeof(Theme) == "string" and Find(Theme, ",")) then
+			local Clr = Color3.new(Unpack(Split(Theme, ",")));
+			Theming.Theme[Index] = Color3.fromRGB(Clr.R * 255, Clr.G * 255, Clr.B * 255);
+		elseif (Index == "Transparency") then
+			Theming.Theme[Index] = tonumber(Theme);
+		elseif (Index == "Mode") then
+			Theming.Theme.Mode = tostring(Theme);
 		end
 	end
 
 	for Index, Theme in next, Themed do
-		if Index ~= "Theme" then
+		if (Index ~= "Theme") then
 			Theming[Index] = Theme
 		end
 	end
 
 	for Type, Default in next, Settings do
-		if not Theming[Type] then
+		if (not Theming[Type]) then
 			Theming[Type] = Default
 		end
 	end
 
 	for Name, Value in next, OldToggles do
-		if (not Themed.Toggles[Name]) then
+		if (Themed.Toggles[Name] == nil) then
 			Themed.Toggles[Name] = Value
 		end
 	end
@@ -2633,26 +2670,26 @@ local GetSavedSettings = function()
 end
 
 local SaveSettings = function()
-	if Check("File") then
-		writefile("Cmd/Settings.json", EncodedSettings())
+	if (Check("File")) then
+		writefile("Cmd/Settings.json", EncodedSettings());
 	end
 end
 
 local UpdateSettings = function(Data)
-	if Check("File") then
-		writefile("Cmd/Settings.json", (Data and JSONEncode(Services.Http, Data)) or EncodedSettings())
+	if (Check("File")) then
+		writefile("Cmd/Settings.json", (Data and JSONEncode(Services.Http, Data)) or EncodedSettings());
 	end
 end
 
 local SetSetting = function(Table, Config, Data)
-	local S = (Table and Settings[Table]) or Settings
-	S[Config] = Data
+	local Setting = (Table and Settings[Table]) or Settings
+	Setting[Config] = Data
 	UpdateSettings()
 end
 
 -- :: LIBRARY[CMD] :: --
-local Command = {}
-local Commands = {}
+local Command = ({});
+local Commands = ({});
 
 Command.Add = function(Information)
 	local Aliases = Information.Aliases
@@ -2662,18 +2699,18 @@ Command.Add = function(Information)
 	local Task = Information.Task
 
 	for Index, Value in next, Aliases do
-		Index = Lower(Value)
+		Index = Lower(Value);
 	end
 
-	Commands[Lower(Aliases[1])] = { Aliases, Description, Arguments, Plugin, Task }
+	Commands[Lower(Aliases[1])] = ({ Aliases, Description, Arguments, Plugin, Task });
 end
 
 Command.Find = function(Input)
 	for Index, Table in next, Commands do
 		local Aliases = Table[1]
-		local Found = FindTable(Aliases, Input)
+		local Found = FindTable(Aliases, Input);
 
-		if Found then
+		if (Found) then
 			return Table
 		end
 	end
@@ -2681,14 +2718,15 @@ end
 
 Command.Run = function(IgnoreNotifications, Name, Callbacks)
 	Spawn(function()
-		local Table = Command.Find(Name)
+		local Table = Command.Find(Name);
 
-		if Table and Name ~= Blank then
+		if (Table and Name ~= Blank) then
 			local Callback = Table[5]
 
 			xpcall(function()
-				local Title, Description, Duration, Type = Callback(Unpack(Callbacks))
-				if Title and Description and not IgnoreNotifications then
+				local Title, Description, Duration, Type = Callback(Unpack(Callbacks));
+				
+				if (Title and Description and not IgnoreNotifications) then
 					API:Notify({
 						Title = Title,
 						Description = Description,
@@ -2697,11 +2735,9 @@ Command.Run = function(IgnoreNotifications, Name, Callbacks)
 					})
 				end
 			end, function(Result)
-				Output(
-					Format("[COMMAND ERROR] : Error occured trying to run the command - %s\nERROR: %s\n%s", Name, Result, debug.traceback())
-				)
+				Output(Format("[CMD ERROR] : Error occured trying to run the command - %s\nERROR: %s\n%s", Name, Result, debug.traceback()))
 			end)
-		elseif Name ~= Blank then
+		elseif (Name ~= Blank) then
 			API:Notify({
 				Title = "Command not found!",
 				Description = Format("<b>%s</b> is not a valid command", Name),
@@ -2713,49 +2749,50 @@ Command.Run = function(IgnoreNotifications, Name, Callbacks)
 end
 
 Command.Parse = function(IgnoreNotifications, Input)
-	local Name, ArgsString = GSub(Input, Settings.Prefix, Blank):match("^%s*([^%s]+)%s*(.*)$")
+	local Name, ArgsString = GSub(Input, Settings.Prefix, Blank):match("^%s*([^%s]+)%s*(.*)$");
 
-	if Name then
-		local Arguments = {}
+	if (Name) then
+		local Arguments = ({});
 
-		for arg in ArgsString:gmatch("%s*([^" .. Settings.Seperator .. "]+)") do
-			Insert(Arguments, arg)
+		for Arg in ArgsString:gmatch("%s*([^" .. Settings.Seperator .. "]+)") do
+			Insert(Arguments, Arg)
 		end
 
 		FullArgs = Arguments
-		Command.Run(IgnoreNotifications, Lower(Name), Arguments)
+		Command.Run(IgnoreNotifications, Lower(Name), Arguments);
 	end
 end
 
 Command.Whitelist = function(Player)
 	Admins[Player.UserId] = true
+	
 	ConnectMessaged(Player, function(Message)
-		if Find(Message, Settings.ChatPrefix) then
-			Command.Parse(false, Split(Message, Settings.ChatPrefix)[2])
+		if (Find(Message, Settings.ChatPrefix)) then
+			Command.Parse(false, Split(Message, Settings.ChatPrefix)[2]);
 		end
 	end)
 end
 
 Command.RemoveWhitelist = function(Player)
-	Admins[Player.UserId] = false
+	Admins[Player.UserId] = nil
 end
 
 -- :: LIBRARY[AUTOFILL] :: --
 Fill.Add = function(Table)
-	local Aliases, Description, Arguments, Plugin, Callback = Unpack(Table)
-	local Button = Clone(Autofill.Example)
-	local Labels = Button.Frame
+	local Aliases, Description, Arguments, Plugin, Callback = Unpack(Table);
+	local Button = Clone(Autofill.Example);
+	local Labels = (Button.Frame);
 
-	local Arg = Concat(Aliases, " / ")
+	local Arg = Concat(Aliases, " / ");
 	local Data = ({
-		String = { Color = Color3.fromRGB(137, 171, 251), Icon = { Id = "rbxassetid://91745912881512" }},
-		Number = { Color = Color3.fromRGB(146, 251, 141), Icon = { Id = "rbxassetid://98705931627491" }},
-		Player = { Color = Color3.fromRGB(251, 135, 135), Icon = { Id = "rbxassetid://137385137210594" }},
+		String = ({ Color = Color3.fromRGB(137, 171, 251), Icon = { Id = "rbxassetid://91745912881512" } }),
+		Number = ({ Color = Color3.fromRGB(146, 251, 141), Icon = { Id = "rbxassetid://98705931627491" } }),
+		Player = ({ Color = Color3.fromRGB(251, 135, 135), Icon = { Id = "rbxassetid://137385137210594" } }),
 	})
 
 	for _, Argument in next, Arguments do
+		local ArgumentFrame = Clone(Button.Arguments.TemplateArg);
 		local Name, Type = Argument.Name, Argument.Type
-		local ArgumentFrame = Clone(Button.Arguments.TemplateArg)
 		local ArgTitle = ArgumentFrame.ArgTitle
 		local Icon = ArgumentFrame.ArgIcon
 		local Info = Data[Type]
@@ -2779,7 +2816,7 @@ Fill.Add = function(Table)
 		local ArgumentWidth = Button.Arguments.AbsoluteSize.X
 		local ButtonWidth = Button.AbsoluteSize.X
 
-		Button.Frame.Size = UDim2.new(0, ButtonWidth - ArgumentWidth - 5, 1, 0)
+		Button.Frame.Size = UDim2.new(0, ButtonWidth - ArgumentWidth - 5, 1, 0);
 	end)
 
 	MultiSet(Button, {
@@ -2803,8 +2840,8 @@ Fill.Recommend = function(Input)
 		for Index, Table in Commands do
 			for Index, Name in Table[1] do
 				if (Find(Sub(Name, 1, #Lowered), Lower(Lowered)) or Name == Lowered) and not Found then
-					Press.Title.Text = "Tab"
-					Recommend.Text = GSub(Name, Lowered, Split(Input, " ")[1])
+					Press.Title.Text = ("Tab");
+					Recommend.Text = GSub(Name, Lowered, Split(Input, " ")[1]);
 					Found = true
 				end
 			end
@@ -2812,21 +2849,22 @@ Fill.Recommend = function(Input)
 	end
 
 	if #Split(Input, " ") > 1 and UI.Parent then
-		local Command = Command.Find(Lowered)
-		if Command then
-			local Arguments = Command[3]
-			local New = Split(Input, " ")
+		local Command = Command.Find(Lowered);
+		
+		if (Command) then
+			local Arguments = Command[3];
+			local New = Split(Input, " ");
 
-			if #Arguments > 0 then
-				if Arguments[#New - 1] and Arguments[#New - 1].Type == "Player" then
+			if (#Arguments > 0) then
+				if (Arguments[#New - 1] and Arguments[#New - 1].Type == "Player") then
 					local PlayerFound = false
 					local Player = New[#New]
 
 					--> Display Name Recommendation
-
 					for Index, Plr in next, Services.Players:GetPlayers() do
-						if Find(Sub(Lower(Plr.DisplayName), 1, #Player), Lower(Player)) then
-							local Name = Format(" %s", GSub(Lower(Plr.DisplayName), Lower(Player), Player))
+						if (Find(Sub(Lower(Plr.DisplayName), 1, #Player), Lower(Player))) then
+							local Name = Format(" %s", GSub(Lower(Plr.DisplayName), Lower(Player), Player));
+							
 							Recommend.Text = Sub(Input, 1, #Input - #Player - 1) .. Name
 							Found = true
 							PlayerFound = true
@@ -2834,11 +2872,11 @@ Fill.Recommend = function(Input)
 					end
 
 					--> Username Recommendation
-
 					if not PlayerFound then
 						for Index, Plr in next, Services.Players:GetPlayers() do
-							if Find(Sub(Lower(Plr.Name), 1, #Player), Lower(Player)) then
-								local Name = Format(" %s", GSub(Lower(Plr.Name), Lower(Player), Player))
+							if (Find(Sub(Lower(Plr.Name), 1, #Player), Lower(Player))) then
+								local Name = Format(" %s", GSub(Lower(Plr.Name), Lower(Player), Player));
+								
 								Recommend.Text = Sub(Input, 1, #Input - #Player - 1) .. Name
 								Found = true
 								PlayerFound = true
@@ -2847,9 +2885,8 @@ Fill.Recommend = function(Input)
 					end
 
 					--> Player Argument Recommendation
-
-					if not PlayerFound then
-						local GetPlayerArguments = {
+					if (not PlayerFound) then
+						local GetPlayerArguments = ({
 							"all",
 							"random",
 							"others",
@@ -2863,11 +2900,12 @@ Fill.Recommend = function(Input)
 							"alive",
 							"friends",
 							"nonfriends",
-						}
+						})
 
 						for Index, Arg in next, GetPlayerArguments do
 							if Find(Sub(Arg, 1, #Player), Lower(Player)) then
-								local Name = Format(" %s", GSub(Lower(Arg), Lower(Player), Player))
+								local Name = Format(" %s", GSub(Lower(Arg), Lower(Player), Player));
+								
 								Recommend.Text = Sub(Input, 1, #Input - #Player - 1) .. Name
 								Found = true
 								PlayerFound = true
@@ -2879,19 +2917,19 @@ Fill.Recommend = function(Input)
 		end
 	end
 
-	if not Found then
-		local Amount = #Input
-		local Spaces = Split(Input, " ")
-		local Arguments = Split(Input, Settings.Seperator)
+	if (not Found) then
+		local Amount = (#Input);
+		local Spaces = Split(Input, " ");
+		local Arguments = Split(Input, Settings.Seperator);
 
-		local Cmd, Args = false, false
-		local Check = (Sub(Input, Amount - 1) == Format("%s ", Settings.Seperator))
+		local Cmd, Args = (false), (false);
+		local Check = (Sub(Input, Amount - 1) == Format("%s ", Settings.Seperator));
 
-		if #Spaces >= 1 then
-			if Check or (#Spaces == 2 and Sub(Input, Amount) == " ") then
+		if (#Spaces >= 1) then
+			if (Check) or (#Spaces == 2 and Sub(Input, Amount) == " ") then
 				for Index, Table in Commands do
 					for Index, Name in Table[1] do
-						if Lower(Name) == Lower(Spaces[1]) then
+						if (Lower(Name) == Lower(Spaces[1])) then
 							Cmd = Name
 							Args = Table[3]
 
@@ -2900,13 +2938,13 @@ Fill.Recommend = function(Input)
 					end
 				end
 
-				if Cmd then
-					local Amount = (#Spaces == 2 and 1) or #Arguments
-					local Argument = Args[Amount]
+				if (Cmd) then
+					local Amount = ((#Spaces == 2 and 1) or #Arguments);
+					local Argument = (Args[Amount]);
 
-					if Argument then
-						Recommend.Text = Format("%s%s", Input, Lower(Argument.Name))
-						Press.Title.Text = "Enter"
+					if (Argument) then
+						Recommend.Text = Format("%s%s", Input, Lower(Argument.Name));
+						Press.Title.Text = ("Enter");
 						Found = true
 					end
 				end
@@ -2914,25 +2952,25 @@ Fill.Recommend = function(Input)
 		end
 	end
 
-	if not Found then
-		Press.Title.Text = "Enter"
-		Recommend.Text = Blank
+	if (not Found) then
+		Press.Title.Text = ("Enter");
+		Recommend.Text = (Blank);
 	end
 end
 
 Fill.Search = function(Input)
 	Spawn(function()
-		local Lowered = GSub(Lower(Split(Input, " ")[1]), Settings.Prefix, Blank)
+		local Lowered = GSub(Lower(Split(Input, " ")[1]), Settings.Prefix, Blank);
 		local FoundFirst = false
 		local Amount = 0
 		local Found = false
 
-		if #Split(Input, " ") == 1 then
+		if (#Split(Input, " ") == 1) then
 			for Index, Table in Commands do
 				for Index, Name in Table[1] do
-					if Find(Sub(Name, 1, #Lowered), Lower(Lowered)) or Name == Lowered then
-						Press.Title.Text = "Tab"
-						Recommend.Text = GSub(Name, Lowered, Split(Input, " ")[1])
+					if (Find(Sub(Name, 1, #Lowered), Lower(Lowered)) or Name == Lowered) then
+						Press.Title.Text = ("Tab");
+						Recommend.Text = GSub(Name, Lowered, Split(Input, " ")[1]);
 						Found = true
 					end
 				end
@@ -2940,13 +2978,13 @@ Fill.Search = function(Input)
 		end
 
 		for Index, Frame in next, Autofill:GetChildren() do
-			if Frame.Name == "AutofillButton" then
+			if (Frame.Name == "AutofillButton") then
 				if (not Settings.Toggles.FillCap) or (Amount < 4) then
 					local Commands = Frame.Frame.Title
 					local FrameFound = false
 
 					for Index, Name in Split(Commands.Text, " / ") do
-						if (Find(Sub(Name, 1, #Lowered), Lower(Lowered)) or Name == Lowered) and not FrameFound then
+						if (Find(Sub(Name, 1, #Lowered), Lower(Lowered)) or Name == Lowered) and (not FrameFound) then
 							FrameFound = true
 							Amount += 1
 
@@ -2971,16 +3009,15 @@ Fill.Search = function(Input)
 		end
 
 		-- Resizing Command Bar
-		local Sizes = {
+		local Sizes = ({
 			[1] = { Size = UDim2.new(1, -4, 0, 67) },
 			[2] = { Size = UDim2.new(1, -4, 0, 125) },
 			[3] = { Size = UDim2.new(1, -4, 0, 183) },
 			[4] = { Size = UDim2.new(1, -4, 0, 240) },
-		}
-
-		local Size = Sizes[Amount] or Sizes[4]
-		Tween(Autofill, 0.25, { Size = Size.Size })
-		Tween(CommandBar, 0.25, { Position = Size.Position })
+		}); local Size = (Sizes[Amount] or Sizes[4]);
+		
+		Tween(Autofill, 0.25, { Size = Size.Size });
+		Tween(CommandBar, 0.25, { Position = Size.Position });
 	end)
 end
 
@@ -2989,15 +3026,14 @@ end
 function Feature:AddWaypoint(Name, CFrame)
 	CFrame = tostring(CFrame)
 
-	if Name and CFrame then
-		Settings.Waypoints[Name] = CFrame
-		SaveSettings()
+	if (Name and CFrame) then
+		Settings.Waypoints[Name] = (CFrame);
+		SaveSettings();
 
 		API:Notify({
 			Title = "Waypoints",
 			Description = "Added waypoint successfully!",
 			Type = "Success",
-
 			Duration = 10,
 		})
 	else
@@ -3005,7 +3041,6 @@ function Feature:AddWaypoint(Name, CFrame)
 			Title = "Waypoints",
 			Description = "Error adding waypoint, is one of the arguments missing?",
 			Type = "Error",
-
 			Duration = 15,
 		})
 	end
@@ -3013,11 +3048,11 @@ end
 
 --> Events
 function Feature:AddEvent(Event, Command)
-	local info = Settings.Events[Event]
+	local Info = (Settings.Events[Event]);
 
-	if info and not info[Command] then
-		info[Command] = Command
-		SaveSettings()
+	if (Info and not Info[Command]) then
+		Info[Command] = (Command);
+		SaveSettings();
 
 		API:Notify({
 			Title = "Events",
@@ -3038,48 +3073,56 @@ end
 function Feature:ConnectEvent(Event, Connection, UseHumanoid, Check)
 	local RunEvent = function(Event)
 		Foreach(Settings.Events[Event] or (Output(Event) and {}), function(_, EventCommand)
-			Command.Parse(false, EventCommand)
+			Command.Parse(false, EventCommand);
 		end)
 	end
 
-	if Event == "AutoExecute" then
-		RunEvent(Event)
-	elseif Event == "PlayerRemoved" then
+	if (Event == "AutoExecute") then
+		RunEvent(Event);
+	elseif (Event == "PlayerRemoved") then
 		Connect(Services.Players.PlayerRemoving, function(Plr)
-			if Plr == LocalPlayer then
-				RunEvent("PlayerRemoved")
+			if (Plr == LocalPlayer) then
+				RunEvent("PlayerRemoved");
 			end
 		end)
-	elseif UseHumanoid and typeof(Event) == "string" then
+	elseif (UseHumanoid and typeof(Event) == "string") then
 		local CCharacter
+		
 		local CDetect = function(CHumanoid)
-			if Event == "Damaged" then
+			if (Event == "Damaged") then
 				Connect(Changed(CHumanoid, "Health"), function()
-					if not Check or (Check and Check(CHumanoid)) then
-						RunEvent("Damaged")
+					if (not Check or (Check and Check(CHumanoid))) then
+						RunEvent("Damaged");
 					end
 				end)
 			else
 				Connect(CHumanoid[Event], function()
-					if not Check or (Check and Check(CHumanoid)) then
-						RunEvent(Event)
+					if (not Check or (Check and Check(CHumanoid))) then
+						RunEvent(Event);
 					end
 				end)
 			end
 		end
 
-		CCharacter = (Character) or (LocalPlayer.Character) or (CWait(LocalPlayer.CharacterAdded))
-		CDetect(CCharacter:WaitForChild("Humanoid"))
+		CCharacter = (Character) or (LocalPlayer.Character) or (CWait(LocalPlayer.CharacterAdded));
+		CDetect(CCharacter:WaitForChild("Humanoid"));
 
 		Connect(LocalPlayer.CharacterAdded, function(NewCharacter)
-			CCharacter = NewCharacter
-			CDetect(CCharacter:WaitForChild("Humanoid"))
+			CCharacter = (NewCharacter);
+			CDetect(CCharacter:WaitForChild("Humanoid"));
 		end)
 	else
 		Connect(Connection, function()
-			RunEvent(Event)
+			RunEvent(Event);
 		end)
 	end
+end
+
+local SetRig = function(Type)
+	local Avatar = GetService("AvatarEditorService");
+	
+	Avatar:PromptSaveAvatar(Humanoid.HumanoidDescription, Enum.HumanoidRigType[Type]); CWait(Avatar.PromptSaveAvatarCompleted);
+	Command.Parse(true, "respawn");
 end
 
 -- :: COMMANDS :: --
@@ -3183,7 +3226,7 @@ Command.Add({
 
 			Window:AddParagraph({
 				Title = "Invite",
-				Description = "https://discord.gg/JSkvFkC9Eq",
+				Description = "https://discord.gg/pBDqEj4BSP",
 				Tab = "About",
 			})
 
@@ -3306,6 +3349,17 @@ Command.Add({
 				Default = Settings.Toggles.IgnoreSeated,
 				Callback = function(Toggle)
 					Settings.Toggles.IgnoreSeated = Toggle
+					SaveSettings()
+				end,
+			})
+
+			Window:AddToggle({
+				Title = "Ignore Vulnerability Scans",
+				Description = "Doesn't search for game vulnerabilities on startup, turning this off could cause lag on startup",
+				Tab = "Toggles",
+				Default = Settings.Toggles.IgnoreVulnerabilityScans,
+				Callback = function(Toggle)
+					Settings.Toggles.IgnoreVulnerabilityScans = Toggle
 					SaveSettings()
 				end,
 			})
@@ -4262,7 +4316,7 @@ Command.Add({
 										Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
 									end
 								end
-							until not AimbotSettings.Held or not TargetPart
+							until (not AimbotSettings.Held or not TargetPart)
 						end
 					end
 				end)
@@ -4289,7 +4343,7 @@ Command.Add({
 								Circle.Visible = false
 							end
 
-						until not Circle
+						until (not Circle)
 					end
 				end)
 
@@ -4388,21 +4442,15 @@ Command.Add({
 			})
 
 			local LoadServers = function()
-				local Servers = Methods.Get(
-					Format(
-						"https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Desc&excludeFullGames=true&limit=100&cursor=",
-						game.PlaceId
-					)
-				)
+				local Servers = Methods.Get(Format("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Desc&excludeFullGames=true&limit=100&cursor=", game.PlaceId));
 				local Found = false
 
-				repeat
-					Wait()
-					local Decode = JSONDecode(Services.Http, Servers)
+				repeat Wait()
+					local Decode = JSONDecode(Services.Http, Servers);
+					
 					for Index, Server in next, Decode.data do
-						if typeof(Server) == "table" and (not PlayerCount or Server.playing == PlayerCount) then
+						if (typeof(Server) == "table") and (not PlayerCount or Server.playing == PlayerCount) then
 							Found = true
-
 							Window:AddButton({
 								Title = Server.id,
 								Description = Format("Playing: %s\nPing: %s", Server.playing, Server.ping),
@@ -4414,7 +4462,7 @@ Command.Add({
 						end
 					end
 
-					if not Decode.nextPageCursor and not Found then
+					if (not Decode.nextPageCursor and not Found) then
 						API:Notify({
 							Title = "Could not find server",
 							Description = "Try a different player count!",
@@ -4425,16 +4473,10 @@ Command.Add({
 						Found = true
 					end
 
-					if not Found then
-						Servers = Methods.Get(
-							Format(
-								"https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Desc&excludeFullGames=true&limit=100&cursor=%s",
-								tostring(game.PlaceId),
-								Decode.nextPageCursor or ""
-							)
-						)
+					if (not Found) then
+						Servers = Methods.Get(Format("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Desc&excludeFullGames=true&limit=100&cursor=%s", tostring(game.PlaceId), Decode.nextPageCursor or ""));
 					end
-				until Found or Refreshed
+				until (Found or Refreshed)
 
 				Refreshed = false
 			end
@@ -4446,12 +4488,12 @@ Command.Add({
 				Tab = "Home",
 				Callback = function()
 					for Index, Server in next, Window:GetTab("Home"):GetChildren() do
-						if Server:IsA("TextButton") and Server.Frame.Title.Text:find("-") then
-							Destroy(Server)
+						if (Server:IsA("TextButton") and Server.Frame.Title.Text:find("-")) then
+							Destroy(Server);
 						end
 					end
 
-					LoadServers()
+					LoadServers();
 					Refreshed = true
 				end,
 			})
@@ -4462,7 +4504,7 @@ Command.Add({
 				Tab = "Home",
 				MaxValue = Services.Players.MaxPlayers,
 				Callback = function(Amount)
-					if Amount == 0 then
+					if (Amount == 0) then
 						PlayerCount = nil
 					else
 						PlayerCount = Amount
@@ -4470,8 +4512,8 @@ Command.Add({
 				end,
 			})
 
-			Window:AddSection({ Title = "Servers", Tab = "Home" })
-			LoadServers()
+			Window:AddSection({ Title = "Servers", Tab = "Home" });
+			LoadServers();
 		end
 	end,
 })
@@ -4484,7 +4526,7 @@ Command.Add({
 		local Tab = Library.Tabs["Chat Logs"]
 
 		if Tab then
-			Tab.Open()
+			Tab.Open();
 		else
 			local LayoutOrder = 100000
 			local Messages = {}
@@ -4499,9 +4541,12 @@ Command.Add({
 				Tab = "Home",
 				Callback = function()
 					LayoutOrder = 100000
+					
 					for _, Message in next, Messages do
-						Destroy(Message)
+						Destroy(Message);
 					end
+					
+					Messages = nil
 				end,
 			})
 
@@ -4518,13 +4563,13 @@ Command.Add({
 					LayoutOrder -= 1
 					Paragraph.Size = UDim2.new(1, -10, 0, 0);
 					Paragraph.LayoutOrder = LayoutOrder
-					Insert(Messages, Paragraph)
+					Insert(Messages, Paragraph);
 				end)
 			end
 
-			Connect(Services.Players.PlayerAdded, Detect)
+			Connect(Services.Players.PlayerAdded, Detect);
 			for _, Player in next, Services.Players:GetPlayers() do
-				Detect(Player)
+				Detect(Player);
 			end
 		end
 	end,
@@ -4538,7 +4583,7 @@ Command.Add({
 		local Tab = Library.Tabs.Game
 
 		if Tab then
-			Tab.Open()
+			Tab.Open();
 		else
 			local Window = Library:CreateWindow({
 				Title = "Game",
@@ -4558,8 +4603,7 @@ Command.Add({
 			})
 
 			-- Universe Id
-			local UniverseData =
-				Methods.Get(Format("https://apis.roblox.com/universes/v1/places/%d/universe", game.PlaceId))
+			local UniverseData = Methods.Get(Format("https://apis.roblox.com/universes/v1/places/%d/universe", game.PlaceId))
 			local Decoded = UniverseData and JSONDecode(Services.Http, UniverseData)
 			local UniverseId = Decoded and Decoded.universeId
 
@@ -4568,27 +4612,28 @@ Command.Add({
 			local DecodedData = Data and JSONDecode(Services.Http, Data)
 
 			for Name, Info in next, DecodedData.data[1] or {} do
-				if typeof(Info) == "table" then
-					local String = ""
-					local Added = 0
+				if (typeof(Info) == "table") then
+					local String = ("");
+					local Added = (0);
 
 					for Name, Value in next, Info do
-						if typeof(Name) == "number" then
+						if (typeof(Name) == "number") then
 							Name = ""
 						else
 							Name ..= ": "
 						end
 
 						Added += 1
-						String ..= Format("%s%s%s", Name, tostring(Value), (Added == #Info and "") or "\n")
+						String ..= Format("%s%s%s", Name, tostring(Value), (Added == #Info and "") or "\n");
 					end
 
 					Info = String
 				end
 
 				Info = tostring(Info)
-				if Info == "" then
-					Info = "empty (no information)"
+				
+				if (Info == "") then
+					Info = ("empty (no information)");
 				end
 
 				Window:AddParagraph({
@@ -4599,8 +4644,8 @@ Command.Add({
 			end
 
 			-- Subplaces
-			local SubplacePages = Services.AssetService:GetGamePlacesAsync()
-			local Subplaces = {}
+			local SubplacePages = Services.AssetService:GetGamePlacesAsync();
+			local Subplaces = ({});
 
 			repeat
 				for _, Place in SubplacePages:GetCurrentPage() do
@@ -4612,10 +4657,10 @@ Command.Add({
 				end
 
 				SubplacePages:AdvanceToNextPageAsync()
-			until false
+			until (false)
 
 			for _, Place in next, Subplaces do
-				if Place.PlaceId ~= game.PlaceId then
+				if (Place.PlaceId ~= game.PlaceId) then
 					Window:AddButton({
 						Title = Place.Name,
 						Description = Format("PlaceId: %d\nClick to join subplace", Place.PlaceId),
@@ -4638,27 +4683,25 @@ Command.Add({
 		local Tab = Library.Tabs.Chat
 
 		if Tab then
-			Tab.Open()
+			Tab.Open();
 		else
-			local Disguise, Username, Message = "Hello", "Roblox", "whats up"
+			local Username, Message = "Builderman", "Hello!"
 			local Window = Library:CreateWindow({
 				Title = "Chat",
 			})
 
-			local Send = function()
-				Chat(Format("%s%s: %s", ("ㅤ"):rep(37), Username, Message))
-			end
-
 			Window:AddButton({
 				Title = "Send",
 				Tab = "Home",
-				Callback = Send,
+				Callback = function()
+					Chat(Format("%s%s: %s", ("ㅤ"):rep(37), Username, Message));
+				end,
 			})
 
 			Window:AddInput({
 				Title = "Player",
 				Tab = "Home",
-				Default = "Roblox",
+				Default = Username,
 				Callback = function(Input)
 					Username = Input
 				end,
@@ -4667,7 +4710,7 @@ Command.Add({
 			Window:AddInput({
 				Title = "Message",
 				Tab = "Home",
-				Default = "whats up",
+				Default = Message,
 				Callback = function(Input)
 					Message = Input
 				end,
@@ -4682,18 +4725,18 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Tab = Library.Tabs["Tutorial"]
-				
+
 		if Tab then
 			Tab.Open()
 		else
 			local Window = Library:CreateWindow({
 				Title = "Tutorial",
 			})
-						
+
 			local Tutorial = Features.Tutorial:Clone();
 			Tutorial.Visible = true
 			Tutorial.Parent = Window.Self.Tabs.Home.ScrollingFrame
-			Tutorial.Invite.Text = "discord.gg/JSkvFkC9Eq"
+			Tutorial.Invite.Text = "discord.gg/pBDqEj4BSP"
 		end
 	end,
 })
@@ -4715,7 +4758,7 @@ Command.Add({
 			Window:AddSection({ Title = Format("Displaying %d commands", GetTableLength(Commands)), Tab = "Home" })
 
 			for Index, Command in next, Commands do
-				local Aliases, Description, Arguments = Unpack(Command)
+				local Aliases, Description, Arguments = Unpack(Command);
 				local Args = "Arguments: "
 
 				local Paragraph = Window:AddParagraph({
@@ -4739,7 +4782,7 @@ Command.Add({
 	Description = "Displays all HTTP requests from other scripts",
 	Arguments = {},
 	Task = function()
-		if not Check("Hook") then
+		if (not hookfunction) then
 			return "Http Spy", "Your executor doesn't support hooking, this command won't work."
 		end
 
@@ -4774,11 +4817,11 @@ Command.Add({
 				end)
 			end
 
-			LogFunction(game.HttpGet, "HttpGet Request")
-			LogFunction(game.HttpPost, "HttpPost Request")
-			LogFunction(request, "Request")
-			LogFunction(Services.Http.PostAsync, "HttpService Post")
-			LogFunction(Services.Http.GetAsync, "HttpService Get")
+			LogFunction(game.HttpGet, "HttpGet Request");
+			LogFunction(game.HttpPost, "HttpPost Request");
+			LogFunction(request, "Request");
+			LogFunction(Services.Http.PostAsync, "HttpService Post");
+			LogFunction(Services.Http.GetAsync, "HttpService Get");
 
 			return "Http Spy", "Enabled"
 		end
@@ -4793,10 +4836,11 @@ Command.Add({
 		local Tab = Library.Tabs.Highlight
 
 		if Tab then
-			Tab.Open()
+			Tab.Open();
 		else
-			local HighlightName = GenerateGUID(Services.Http)
-			local Highlights = {}
+			local HighlightName = GenerateGUID(Services.Http);
+			local Highlights = ({});
+			
 			local SetParent = false
 			local Name = nil
 			local Class = nil
@@ -4807,12 +4851,11 @@ Command.Add({
 
 			local SetHighlight = function(Show)
 				if Show then
-					if not Name and not Class then
+					if (not Name and not Class) then
 						API:Notify({
 							Title = "Highlighter",
 							Description = "Unable to set highlight since class nor name have been set (Must have at least one set)",
 							Type = "Error",
-
 							Duration = 10,
 						})
 
@@ -4820,10 +4863,10 @@ Command.Add({
 					end
 
 					for Index, Part in next, workspace:GetDescendants() do
-						if not Name or (Lower(Part.Name) == Lower(Name)) then
-							if not Class or (Lower(Part.ClassName) == Lower(Class)) then
-								if not Highlights[Part] then
-									local NewHighlight = Instance.new("Highlight", (SetParent and Part.Parent) or Part)
+						if (not Name or (Lower(Part.Name) == Lower(Name))) then
+							if (not Class or (Lower(Part.ClassName) == Lower(Class))) then
+								if (not Highlights[Part]) then
+									local NewHighlight = Instance.new("Highlight", (SetParent and Part.Parent) or Part);
 									Highlights[Part] = NewHighlight
 								end
 							end
@@ -4831,10 +4874,10 @@ Command.Add({
 					end
 				else
 					for Index, Highlight in next, Highlights do
-						Destroy(Highlight)
+						Destroy(Highlight);
 					end
 
-					Highlights = {}
+					Highlights = ({});
 				end
 			end
 
@@ -4844,7 +4887,7 @@ Command.Add({
 				Title = "Add Highlight",
 				Tab = "Home",
 				Callback = function()
-					SetHighlight(true)
+					SetHighlight(true);
 				end,
 			})
 
@@ -4852,17 +4895,17 @@ Command.Add({
 				Title = "Remove Highlights",
 				Tab = "Home",
 				Callback = function()
-					SetHighlight(false)
+					SetHighlight(false);
 				end,
 			})
 
 			Window:AddSection({ Title = "Settings", Tab = "Home" })
 
 			Window:AddInput({
-				Title = "Part Name",
+				Title = "Object Name",
 				Tab = "Home",
 				Callback = function(Input)
-					if GSub(Input, " ", Blank) == Blank then
+					if (GSub(Input, " ", Blank) == Blank) then
 						Input = nil
 					end
 
@@ -4871,10 +4914,10 @@ Command.Add({
 			})
 
 			Window:AddInput({
-				Title = "Part Classname",
+				Title = "Object Class Name",
 				Tab = "Home",
 				Callback = function(Input)
-					if GSub(Input, " ", Blank) == Blank then
+					if (GSub(Input, " ", Blank) == Blank) then
 						Input = nil
 					end
 
@@ -4909,10 +4952,7 @@ Command.Add({
 			})
 
 			local Search = function(Input)
-				local Scripts = JSONDecode(
-					Services.Http,
-					Methods.Get(Format("https://scriptblox.com/api/script/search?q=%s&max=200&mode=free", Input))
-				)
+				local Scripts = JSONDecode(Services.Http, Methods.Get(Format("https://scriptblox.com/api/script/search?q=%s&max=200&mode=free", Input)))
 
 				for Index, Script in next, Scripts.result.scripts do
 					local Game = Script.game.name
@@ -4930,7 +4970,7 @@ Command.Add({
 								Description = Format("Running %s...", Title),
 							})
 
-							loadstring(Main)()
+							loadstring(Main)();
 						end,
 					})
 				end
@@ -4944,17 +4984,16 @@ Command.Add({
 				Callback = function(Input)
 					for Index, Script in next, Window:GetTab("Home"):GetChildren() do
 						if Script:IsA("TextButton") and Script.Frame:FindFirstChild("Description") then
-							Destroy(Script)
+							Destroy(Script);
 						end
 					end
 
-					Search(Input)
+					Search(Input);
 				end,
 			})
 
-			Window:AddSection({ Title = "Results", Tab = "Home" })
-
-			Search("Universal")
+			Window:AddSection({ Title = "Results", Tab = "Home" });
+			Search("Universal");
 		end
 	end,
 })
@@ -4966,7 +5005,7 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		Camera.FieldOfView = SetNumber(Amount, 0, 120)
+		Camera.FieldOfView = SetNumber(Amount, 0, 120);
 	end,
 })
 
@@ -4981,7 +5020,7 @@ Command.Add({
 		Humanoid.Health = 0
 		Connection = Connect(LocalPlayer.CharacterAdded, function(Char)
 			Char:WaitForChild("HumanoidRootPart").CFrame = Position
-			Connection:Disconnect()
+			Connection:Disconnect();
 		end)
 	end,
 })
@@ -4994,17 +5033,17 @@ Command.Add({
 		{ Name = "Value", Type = "String" },
 	},
 	Task = function(Flag, Value)
-		if Flag or Value then
-			local Method = setfflag or function(flag, value)
-				game:DefineFastFlag(flag, value)
-			end
-
-			local Success, Result = pcall(function()
-				Method(Flag, Value)
+		if (Flag or Value) then
+			local Method = (setfflag or function(Flag, Value)
+				game:DefineFastFlag(Flag, Value);
 			end)
 
-			if Success then
-				return "Set Fast Flag", Format("Set %s's value to %s", Flag, Value)
+			local Success, Result = pcall(function()
+				Method(Flag, Value);
+			end)
+
+			if (Success) then
+				return "Set Fast Flag", Format("Set %s's value to %s", Flag, Value);
 			else
 				return "Error occured setting fast flag", Result, 10
 			end
@@ -5019,14 +5058,13 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Speed)
-		Refresh("Walk", true)
+		Refresh("Walk", true);
 
-		repeat
-			Wait()
-			if Humanoid.MoveDirection.Magnitude > 0 then
-				Character:TranslateBy(Humanoid.MoveDirection * SetNumber(Speed) * CWait(Services.Run.Heartbeat) * 10)
+		repeat Wait()
+			if (Humanoid.MoveDirection.Magnitude > 0) then
+				Character:TranslateBy(Humanoid.MoveDirection * SetNumber(Speed) * CWait(Services.Run.Heartbeat) * 10);
 			end
-		until not Get("Walk") or not Character
+		until (not Get("Walk") or not Character)
 	end,
 })
 
@@ -5035,7 +5073,7 @@ Command.Add({
 	Description = "Stops the tpwalk command",
 	Arguments = {},
 	Task = function()
-		Refresh("Walk", false)
+		Refresh("Walk", false);
 	end,
 })
 
@@ -5079,7 +5117,7 @@ Command.Add({
 		Refresh("Emote", true);
 
 		local ID = (function()
-			local Object = Services.Insert:LoadLocalAsset(Format("rbxassetid://%s", EmoteId))
+			local Object = Services.Insert:LoadLocalAsset(Format("rbxassetid://%s", EmoteId));
 
 			if (Object) then
 				return Object.AnimationId
@@ -5115,10 +5153,10 @@ Command.Add({
 	Arguments = {},
 	Task = function(EmoteId, EmoteSpeed)
 		if (setclipboard) then
-			setclipboard("https://discord.gg/JSkvFkC9Eq");
-			return "Cmd", "Set discord invite to clipboard (discord.gg/JSkvFkC9Eq)"
+			setclipboard("https://discord.gg/pBDqEj4BSP");
+			return "Cmd", "Set discord invite to clipboard (discord.gg/pBDqEj4BSP)"
 		else
-			return "Cmd", "Couldn't set to clipboard, join discord.gg/JSkvFkC9Eq", 30
+			return "Cmd", "Couldn't set to clipboard, join discord.gg/pBDqEj4BSP", 30
 		end
 	end,
 })
@@ -5128,7 +5166,7 @@ Command.Add({
 	Description = "Clientside building tools",
 	Arguments = {},
 	Task = function()
-		local System = game:GetObjects("rbxassetid://6695644299")[1]
+		local System = (game:GetObjects("rbxassetid://6695644299")[1]);
 
 		if (System) then
 			loadstring(System.Source)();
@@ -5143,21 +5181,55 @@ Command.Add({
 	Task = function()
 		Refresh("AntiFling", true);
 
-		Cleaner:Add("AntiFling", Connect(Services.Run.Heartbeat, function()
-			for _, Player in next, Services.Players:GetPlayers() do
+		local AntiFling = function(Player)
+			Spawn(function()
 				if (Player ~= LocalPlayer) then
-					pcall(function()
-						for _, BasePart: BasePart in next, GetClasses(Player.Character, "BasePart") do
-							BasePart.CanCollide = false
-							BasePart.Velocity = Vector3.zero
-							BasePart.RotVelocity = Vector3.zero
-							BasePart.AssemblyLinearVelocity = Vector3.zero
-							BasePart.AssemblyAngularVelocity = Vector3.zero
+					local Properties = ({
+						CanCollide = false,
+						Velocity = Vector3.zero,
+						RotVelocity = Vector3.zero,
+						AssemblyLinearVelocity = Vector3.zero,
+						AssemblyAngularVelocity = Vector3.zero,
+					})
+
+					local Character = Player.Character or Player.CharacterAdded:Wait();
+					local Root = Character:WaitForChild("HumanoidRootPart", 5)
+					local Init = function(BasePart)
+						for Property, Default in next, Properties do
+							BasePart[Property] = Default
+
+							Cleaner:Add("AntiFling", Connect(Changed(BasePart, Property), function()
+								BasePart[Property] = Default
+							end))
 						end
-					end)
+					end
+
+					for _, BasePart: BasePart in next, GetClasses(Character, "BasePart") do
+						Init(BasePart);
+					end
+
+					Cleaner:Add("AntiFling", Connect(Character.DescendantAdded, function(BasePart)
+						if (BasePart:IsA("BasePart")) then
+							Init(BasePart);
+						end
+					end))
 				end
-			end
-		end))
+			end)
+		end
+
+		local AddPlayer = function(Target: Player)
+			AntiFling(Target);
+
+			Cleaner:Add("AntiFling", Connect(Target.CharacterAdded, function()
+				AntiFling(Target);
+			end))
+		end
+
+		for _, Player in next, Services.Players:GetPlayers() do
+			AddPlayer(Player);
+		end
+
+		Cleaner:Add("AntiFling", Connect(Services.Players.PlayerAdded, AddPlayer));
 
 		return "Anti Fling", "Enabled"
 	end,
@@ -5183,13 +5255,13 @@ Command.Add({
 		for _, Player in next, GetPlayer(Target) do
 			if (Player.Backpack) then
 				for _, Tool in next, GetClasses(Player.Backpack, "Tool", true) do
-					Tool:Clone().Parent = LocalPlayer.Backpack
+					Tool:Clone().Parent = (LocalPlayer.Backpack);
 				end
 			end
 
 			if (Player.Character) then
 				for _, Tool in next, GetClasses(Player.Character, "Tool", true) do
-					Tool:Clone().Parent = LocalPlayer.Backpack
+					Tool:Clone().Parent = (LocalPlayer.Backpack);
 				end
 			end
 		end
@@ -5204,7 +5276,7 @@ Command.Add({
 	Arguments = {},
 	Task = function(Target)
 		if (Get("HideGUIs")) then
-			Command.Parse(true, "showguis")
+			Command.Parse(true, "showguis");
 		end
 
 		Refresh("HideGUIs", {});
@@ -5333,19 +5405,19 @@ Command.Add({
 		{ Name = "Arguments", Type = "String" },
 	},
 	Task = function(Delay, Name, Argumemts)
-		local Arguments = nil
-		Add("Loop", true)
+		Add("Loop", true);
 
-		if tonumber(Delay) then
-			Arguments = Minimum(FullArgs, 3)
+		local Arguments
+
+		if (tonumber(Delay)) then
+			Arguments = Minimum(FullArgs, 3);
 		else
-			Name, Delay, Arguments = Delay, 0.05, Minimum(FullArgs, 2)
+			Name, Delay, Arguments = (Delay), (0.05), (Minimum(FullArgs, 2));
 		end
 
-		repeat
-			Wait(Delay or 0)
-			Command.Run(true, Name, Arguments)
-		until not Get("Loop")
+		repeat Wait(Delay or 0)
+			Command.Run(true, Name, Arguments);
+		until (not Get("Loop"))
 	end,
 })
 
@@ -5354,7 +5426,7 @@ Command.Add({
 	Description = "Stops all the commands that are being repeated",
 	Arguments = {},
 	Task = function()
-		Refresh("Loop", false)
+		Refresh("Loop", false);
 		return "Loop", "Every looped command has been disabled"
 	end,
 })
@@ -5369,22 +5441,23 @@ Command.Add({
 		{ Name = "Arguments", Type = "String" },
 	},
 	Task = function(RepeatAmount, Delay, Name, Arguments)
-		if tonumber(RepeatAmount) and tonumber(Delay) then
-			Arguments = Minimum(FullArgs, 4)
-		elseif tonumber(RepeatAmount) and not tonumber(Delay) then
-			Name, Delay, Arguments = Delay, 0, Minimum(FullArgs, 3)
-		elseif not tonumber(RepeatAmount) and not tonumber(Delay) then
-			Name, RepeatAmount, Delay, Arguments = RepeatAmount, 1, 0, Minimum(FullArgs, 2)
-		elseif RepeatAmount and Delay then
-			Name, RepeatAmount, Delay, Arguments = RepeatAmount, 1, 0, Minimum(FullArgs, 2)
+		if (tonumber(RepeatAmount) and tonumber(Delay)) then
+			Arguments = Minimum(FullArgs, 4);
+		elseif (tonumber(RepeatAmount) and not tonumber(Delay)) then
+			Name, Delay, Arguments = Delay, 0, Minimum(FullArgs, 3);
+		elseif (not tonumber(RepeatAmount) and not tonumber(Delay)) then
+			Name, RepeatAmount, Delay, Arguments = RepeatAmount, 1, 0, Minimum(FullArgs, 2);
+		elseif (RepeatAmount and Delay) then
+			Name, RepeatAmount, Delay, Arguments = RepeatAmount, 1, 0, Minimum(FullArgs, 2);
 		end
 
-		local Amount = tonumber(RepeatAmount) or 1
+		local Amount = (tonumber(RepeatAmount) or 1);
+		
 		for Index = 1, Amount do
-			Command.Run(true, Name, Arguments or {})
-			Wait(Delay or 0)
+			Command.Run(true, Name, Arguments or {}); Wait(Delay or 0);
 		end
-		return Name, Format("Repeated %s times", Amount)
+		
+		return Name, Format("Repeated %s times", Amount);
 	end,
 })
 
@@ -5394,7 +5467,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, Point in next, GetClasses(workspace, "SpawnLocation") do
-			Root.CFrame = Point.CFrame * CFrame.new(0, 5, 0)
+			Root.CFrame = Point.CFrame * CFrame.new(0, 5, 0);
 		end
 	end,
 })
@@ -5430,7 +5503,7 @@ Command.Add({
 	Description = "Opens Dex Explorer - by Moon",
 	Arguments = {},
 	Task = function()
-		loadstring(GetModule("dex.lua"))()
+		loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))();
 	end,
 })
 
@@ -5477,8 +5550,8 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		LocalPlayer.CameraMaxZoomDistance = SetNumber(Amount)
-		return "Maximum Zoom", Format("Set maximum zoom to %s", Amount)
+		LocalPlayer.CameraMaxZoomDistance = SetNumber(Amount);
+		return "Maximum Zoom", Format("Set maximum zoom to %s", Amount);
 	end,
 })
 
@@ -5489,8 +5562,8 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		LocalPlayer.CameraMinZoomDistance = SetNumber(Amount)
-		return "Minimum Zoom", Format("Set minimum zoom to %s", Amount)
+		LocalPlayer.CameraMinZoomDistance = SetNumber(Amount);
+		return "Minimum Zoom", Format("Set minimum zoom to %s", Amount);
 	end,
 })
 
@@ -5503,22 +5576,20 @@ Command.Add({
 
 		local Teleport = function()
 			Spawn(function()
-				local Character = LocalPlayer.Character
+				local Character = (LocalPlayer.Character);
 
-				if Character and Get("AutoRespawn") then
-					local Humanoid = Character:WaitForChild("Humanoid")
-					local Pos
+				if (Character and Get("AutoRespawn")) then
+					local Humanoid = Character:WaitForChild("Humanoid");
+					local Coordinate
 
 					Connect(Humanoid.Died, function()
-						if Get("AutoRespawn") then
-							Pos = Humanoid.RootPart.CFrame
+						if (Get("AutoRespawn")) then
+							Coordinate = Humanoid.RootPart.CFrame
 						end
-					end)
-
-					CWait(LocalPlayer.CharacterAdded)
-					local Root = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-
-					Root.CFrame = (Pos or Root.CFrame)
+					end); CWait(LocalPlayer.CharacterAdded);
+					
+					local Root = LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+					Root.CFrame = (Coordinate or Root.CFrame)
 				end
 			end)
 		end
@@ -5535,7 +5606,7 @@ Command.Add({
 	Description = "Disables the autorespawn command",
 	Arguments = {},
 	Task = function()
-		Refresh("AutoRespawn", false)
+		Refresh("AutoRespawn", false);
 		return "Auto Respawn", "Auto Respawn has been disabled"
 	end,
 })
@@ -5557,8 +5628,7 @@ Command.Add({
 				local ClickDetector = Button and Button:FindFirstChildOfClass("ClickDetector");
 
 				if (ClickDetector) then
-					repeat
-						Wait(0.1)
+					repeat Wait(0.1)
 						task.spawn(fireclickdetector, ClickDetector);
 					until (not Button) or (not ClickDetector) or (not Get("FastCarts"))
 				end
@@ -5603,8 +5673,7 @@ Command.Add({
 				local ClickDetector = Button and Button:FindFirstChildOfClass("ClickDetector");
 
 				if (ClickDetector) then
-					repeat
-						Wait(0.1)
+					repeat Wait(0.1)
 						task.spawn(fireclickdetector, ClickDetector);
 					until (not Button) or (not ClickDetector) or (not Get("SlowCarts"))
 				end
@@ -5637,7 +5706,7 @@ Command.Add({
 	Description = "Enables the default chat UI",
 	Arguments = {},
 	Task = function()
-		Services.Starter:SetCoreGuiEnabled(2, true)
+		Services.Starter:SetCoreGuiEnabled(2, true);
 	end,
 })
 
@@ -5646,7 +5715,7 @@ Command.Add({
 	Description = "Enables the default inventory UI",
 	Arguments = {},
 	Task = function()
-		Services.Starter:SetCoreGuiEnabled(2, true)
+		Services.Starter:SetCoreGuiEnabled(2, true);
 	end,
 })
 
@@ -5655,7 +5724,7 @@ Command.Add({
 	Description = "Disables the default inventory UI",
 	Arguments = {},
 	Task = function()
-		Services.Starter:SetCoreGuiEnabled(2, false)
+		Services.Starter:SetCoreGuiEnabled(2, false);
 	end,
 })
 
@@ -5700,28 +5769,25 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local SetInstance = function(Instance)
-			if Instance then
-				if Instance:IsA("Texture") or Instance:IsA("Decal") then
-					Destroy(Instance)
-				elseif Instance:IsA("BasePart") then
-					Instance.Material = Enum.Material.Plastic
-					Instance.Reflectance = 0
-				elseif Instance:IsA("ParticleEmitter") or Instance:IsA("Trail") then
-					Instance.Lifetime = NumberRange.new(0)
-				elseif
-					Instance:IsA("Fire")
-					or Instance:IsA("SpotLight")
-					or Instance:IsA("Smoke")
-					or Instance:IsA("Sparkles")
-				then
-					Instance.Enabled = false
+			if (Instance) then
+				if (Instance:IsA("Texture") or Instance:IsA("Decal")) then
+					Destroy(Instance);
+				elseif (Instance:IsA("BasePart")) then
+					Instance.Material = (Enum.Material.Plastic);
+					Instance.Reflectance = (0);
+					Instance.CastShadow = (false);
+				elseif (Instance:IsA("ParticleEmitter") or Instance:IsA("Trail")) then
+					Instance.Lifetime = NumberRange.new(0);
+				elseif (Instance:IsA("Fire") or Instance:IsA("SpotLight") or Instance:IsA("Smoke") or Instance:IsA("Sparkles")) then
+					Instance.Enabled = (false);
 				end
 			end
 		end
 
-		Connect(workspace.DescendantAdded, SetInstance)
+		Connect(workspace.DescendantAdded, SetInstance);
+		
 		for Index, Instance in next, (workspace:GetDescendants()) do
-			SetInstance(Instance)
+			SetInstance(Instance);
 		end
 
 		return "FPS Booster", "Rejoin to undo the command"
@@ -5733,16 +5799,13 @@ Command.Add({
 	Description = "Prevents the game from teleporting your character",
 	Arguments = {},
 	Task = function()
-		local Allowed
-		local Old
+		Refresh("AntiCFrame", true);
+		local Allowed, Old = (nil), (nil);
 
-		Refresh("AntiCFrame", true)
 		Connect(Changed(Root, "CFrame"), function()
-			if Get("AntiCFrame") then
+			if (Get("AntiCFrame")) then
 				Allowed = true
-				Root.CFrame = Old
-
-				Wait()
+				Root.CFrame = Old; Wait();
 				Allowed = false
 			end
 		end)
@@ -5752,10 +5815,9 @@ Command.Add({
 			Description = "Anti CFrame Teleport has been enabled",
 		})
 
-		repeat
-			Wait()
-			Old = Root.CFrame
-		until not Root
+		repeat Wait()
+			Old = (Root.CFrame);
+		until (not Root)
 	end,
 })
 
@@ -5764,7 +5826,7 @@ Command.Add({
 	Description = "Disables the anticframeteleport command",
 	Arguments = {},
 	Task = function()
-		Add("AntiCFrame", false)
+		Add("AntiCFrame", false);
 		return "Anti Teleport", "Anti CFrame Teleport has been disabled"
 	end,
 })
@@ -5777,37 +5839,37 @@ Command.Add({
 	},
 	Task = function(Input)
 		local Sword
+		
 		for Index, Target in next, GetPlayer(Input) do
-			if Target ~= LocalPlayer then
-				local TCharacter = GetCharacter(Target)
-				local TRoot = GetRoot(Target)
-				local THumanoid = GetHumanoid(Target)
-				local Timer = tick()
+			if (Target ~= LocalPlayer) then
+				local TargetCharacter = GetCharacter(Target);
+				local TRoot = GetRoot(Target);
+				local THumanoid = GetHumanoid(Target);
+				local Timer = tick();
 
-				if TCharacter and (not TCharacter:FindFirstChildOfClass("ForceField")) then
+				if TargetCharacter and (not TargetCharacter:FindFirstChildOfClass("ForceField")) then
 					for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
-						if Find(Lower(Tool.Name), "sword") then
+						if (Find(Lower(Tool.Name), "sword")) then
 							Sword = Tool
 						end
 					end
 
-					repeat
-						Wait()
+					repeat Wait()
 						Sword.Parent = Character
-						Sword:Activate()
-						if firetouchinterest then
-							firetouchinterest(TRoot, Sword.Handle, 0)
-							Wait()
-							firetouchinterest(TRoot, Sword.Handle, 1)
+						Sword:Activate();
+						
+						if (firetouchinterest) then
+							firetouchinterest(TRoot, Sword.Handle, 0); Wait();
+							firetouchinterest(TRoot, Sword.Handle, 1);
 						else
-							TRoot.CFrame = Root.CFrame * CFrame.new(2, 0, -3)
+							TRoot.CFrame = (Root.CFrame * CFrame.new(2, 0, -3));
 						end
 					until (THumanoid.Health == 0) or (tick() - Timer >= 5)
 				end
 			end
 		end
 
-		Humanoid:UnequipTools()
+		Humanoid:UnequipTools();
 		return "Sword Kill", "Killed the target(s)"
 	end,
 })
@@ -5820,10 +5882,9 @@ Command.Add({
 	},
 	Task = function(Input)
 		for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
-			if Find(Lower(Tool.Name), Lower(Input)) then
+			if (Find(Lower(Tool.Name), Lower(Input))) then
 				Tool.Parent = Character
-				Tool:Activate()
-				Wait()
+				Tool:Activate(); Wait()
 				Tool.Parent = Backpack
 			end
 		end
@@ -5837,8 +5898,7 @@ Command.Add({
 	Task = function()
 		for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
 			Tool.Parent = Character
-			Tool:Activate()
-			Wait()
+			Tool:Activate(); Wait()
 			Tool.Parent = Backpack
 		end
 	end,
@@ -5862,7 +5922,7 @@ Command.Add({
 	Description = "Removes all tools in your inventory",
 	Arguments = {},
 	Task = function()
-		Backpack:ClearAllChildren()
+		Backpack:ClearAllChildren();
 		return "Delete Tools", "Cleared all children"
 	end,
 })
@@ -5876,16 +5936,16 @@ Command.Add({
 		{ Name = "Value", Type = "String" },
 	},
 	Task = function(Parent, Property, Value)
-		local Instance = StringToInstance(Parent)
+		local Instance = StringToInstance(Parent);
 
-		if Value == "nil" then
+		if (Value == "nil") then
 			Value = nil
-		elseif Value == "false" then
+		elseif (Value == "false") then
 			Value = false
 		end
 
-		if Instance and Property and Value then
-			Spoof(Instance, Property, Value)
+		if (Instance and Property and Value) then
+			Spoof(Instance, Property, Value);
 			API:Notify({
 				Title = "Spoofing",
 				Description = Format("Spoofing %s and setting the value to %s", Property, tostring(Value)),
@@ -5910,9 +5970,9 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		local Number = tonumber(Amount) or 16
-		Spoof(GetHumanoid(LocalPlayer), "WalkSpeed", Number)
-		return "Walkspeed", Format("Spoofed to %d", Number)
+		local Number = (SetNumber(Amount) or 16);
+		Spoof(Humanoid, "WalkSpeed", Number);
+		return "Walkspeed", Format("Spoofed to %d", Number);
 	end,
 })
 
@@ -5923,9 +5983,9 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		local Number = tonumber(Amount) or 16
-		Spoof(GetHumanoid(LocalPlayer), "JumpPower", Number)
-		return "Jump Power", Format("Spoofed to %d", Number)
+		local Number = (SetNumber(Amount) or 16)
+		Spoof(Humanoid, "JumpPower", Number);
+		return "Jump Power", Format("Spoofed to %d", Number);
 	end,
 })
 
@@ -5934,17 +5994,18 @@ Command.Add({
 	Description = "Makes your character invisible",
 	Arguments = {},
 	Task = function()
-		local OriginalPlayer = Services.Lighting:FindFirstChild(LocalPlayer.Name)
+		local OriginalPlayer = Services.Lighting:FindFirstChild(LocalPlayer.Name);
 		Character.Archivable = true
-		if not OriginalPlayer then
-			local Clone = Clone(Character)
-			local Animate = Clone.Animate
+		
+		if (not OriginalPlayer) then
+			local Clone = Clone(Character);
+			local Animate = (Clone.Animate);
+			
 			for Index, BodyPart in next, GetClasses(Clone, "BasePart", true) do
-				BodyPart.Transparency = 0.7
+				BodyPart.Transparency = (0.7);
 			end
 
-			Root.CFrame = CFrame.new(1000, 1000, 1000)
-			Wait(0.1)
+			Root.CFrame = CFrame.new(1000, 1000, 1000); Wait(0.1)
 			Root.Anchored = true
 			Clone.Parent = Character.Parent
 			Character.Parent = Services.Lighting
@@ -5954,8 +6015,8 @@ Command.Add({
 			Animate.Disabled = false
 
 			Character = Clone
-			Root = GetRoot(LocalPlayer)
-			Humanoid = GetHumanoid(LocalPlayer)
+			Root = GetRoot(LocalPlayer);
+			Humanoid = GetHumanoid(LocalPlayer);
 			Camera.CameraSubject = Humanoid
 		end
 	end,
@@ -5966,8 +6027,9 @@ Command.Add({
 	Description = "Makes your character visible (disables invisible)",
 	Arguments = {},
 	Task = function()
-		local OriginalPlayer = Services.Lighting:FindFirstChild(LocalPlayer.Name)
-		if OriginalPlayer then
+		local OriginalPlayer = Services.Lighting:FindFirstChild(LocalPlayer.Name);
+		
+		if (OriginalPlayer) then
 			local Invisible = LocalPlayer.Character
 			local Parent = Invisible.Parent
 			local Position = Root.CFrame
@@ -5975,10 +6037,8 @@ Command.Add({
 			LocalPlayer.Character = OriginalPlayer
 			LocalPlayer.Character.Parent = Parent
 			Character = OriginalPlayer
-			Root = GetRoot(LocalPlayer)
-			Humanoid = GetHumanoid(LocalPlayer)
-
-			Wait(0.1)
+			Root = GetRoot(LocalPlayer);
+			Humanoid = GetHumanoid(LocalPlayer); Wait(0.1);
 			Root.Anchored = false
 			Root.CFrame = Position
 			Camera.CameraSubject = Humanoid
@@ -6001,12 +6061,11 @@ Command.Add({
 	Description = "Floods the chat with spam",
 	Arguments = {},
 	Task = function()
-		Refresh("Flood", true)
+		Refresh("Flood", true);
 
-		repeat
-			Wait(1)
-			Chat(Format("%s", ("ㅤ"):rep(66)))
-		until not Get("Flood")
+		repeat Wait(1)
+			Chat(Format("%s", ("ㅤ"):rep(66)));
+		until (not Get("Flood"))
 	end,
 })
 
@@ -6015,7 +6074,7 @@ Command.Add({
 	Description = "Stops the flood command",
 	Arguments = {},
 	Task = function()
-		Refresh("Flood", false)
+		Refresh("Flood", false);
 	end,
 })
 
@@ -6027,11 +6086,11 @@ Command.Add({
 		{ Name = "Cooldown", Type = "Number" },
 	},
 	Task = function(Message, Cooldown)
-		Add("Spam", true)
-		repeat
-			Wait(SetNumber(Cooldown) or 0.3)
-			Chat(Message)
-		until not Get("Spam")
+		Add("Spam", true);
+		
+		repeat Wait(SetNumber(Cooldown) or 0.3)
+			Chat(Message);
+		until (not Get("Spam"))
 	end,
 })
 
@@ -6040,7 +6099,7 @@ Command.Add({
 	Description = "Disables the spam command",
 	Arguments = {},
 	Task = function()
-		Refresh("Spam", false)
+		Refresh("Spam", false);
 		return "Spam", "Stopped the spamming"
 	end,
 })
@@ -6050,17 +6109,17 @@ Command.Add({
 	Description = "Plays every sound in-game in sync",
 	Arguments = {},
 	Task = function()
-		Refresh("Sync", true)
-		if RespectFilteringEnabled then
+		Refresh("Sync", true);
+		
+		if (RespectFilteringEnabled) then
 			return "Sync", "Couldn't sync since RFE is turned on"
 		else
-			repeat
-				Wait()
+			repeat Wait()
 				for Index, Sound in next, GetClasses(game, "Sound") do
 					Sound.Volume = 10
 					Sound:Play()
 				end
-			until not Get("Sync")
+			until (not Get("Sync"))
 		end
 	end,
 })
@@ -6070,7 +6129,7 @@ Command.Add({
 	Description = "Disables the sync command",
 	Arguments = {},
 	Task = function()
-		Refresh("Sync", false)
+		Refresh("Sync", false);
 	end,
 })
 
@@ -6080,8 +6139,9 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, BodyPart in next, GetClasses(Character, "BasePart", true) do
-			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(100, 0.5, 0.5)
+			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(100, 0.5, 0.5);
 		end
+		
 		return "Buff", "Buff has been enabled"
 	end,
 })
@@ -6092,8 +6152,9 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, BodyPart in next, GetClasses(Character, "BasePart", true) do
-			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(1, 0.5, 0.5)
+			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(1, 0.5, 0.5);
 		end
+		
 		return "Buff", "Buff has been disabled"
 	end,
 })
@@ -6105,13 +6166,14 @@ Command.Add({
 		{ Name = "Amount", Type = "String" },
 	},
 	Task = function(Amount)
-		local BodyForces = {}		
-		local Gravity = SetNumber(Amount)
+		local BodyForces = ({});		
+		local Gravity = SetNumber(Amount);
+		
 		local Set = function(Part)
-			local Model = Part:FindFirstAncestorOfClass("Model")
-			local Character = Model and Services.Players:GetPlayerFromCharacter(Model)
+			local Model = Part:FindFirstAncestorOfClass("Model");
+			local Character = Model and Services.Players:GetPlayerFromCharacter(Model);
 
-			if Part and Part:IsA("BasePart") and not Part.Anchored and not Character then
+			if (Part and Part:IsA("BasePart") and not Part.Anchored and not Character) then
 				Insert(BodyForces, Create("BodyForce", {
 					Force = Part:GetMass() * Vector3.new(Gravity, workspace.Gravity, Gravity),
 					Parent = Part,
@@ -6119,19 +6181,18 @@ Command.Add({
 			end
 		end
 
-		for _, BodyForce in next, Get("SUG") or {} do
+		for _, BodyForce in next, (Get("SUG") or {}) do
 			Destroy(BodyForce);
 		end
 
-		SetSRadius(9e9, 9e9)
-		Connect(workspace.DescendantAdded, Set)
+		SetSRadius(9e9, 9e9);
+		Connect(workspace.DescendantAdded, Set);
 
 		for Index, Part in next, GetClasses(workspace, "BasePart") do
-			Set(Part)
+			Set(Part);
 		end
 
-		Refresh("SUG", BodyForces)
-
+		Refresh("SUG", BodyForces);
 		return "Gravity", Format("Set unanchored gravity to %s", Amount)
 	end,
 })
@@ -6141,7 +6202,7 @@ Command.Add({
 	Description = "Disables the SetUnanchoredGravity command",
 	Arguments = {},
 	Task = function()
-		for _, BodyForce in next, Get("SUG") or {} do
+		for _, BodyForce in next, (Get("SUG") or {}) do
 			Destroy(BodyForce);
 		end
 
@@ -6154,7 +6215,7 @@ Command.Add({
 	Description = "UI for viewing fired remotes",
 	Arguments = {},
 	Task = function(Amount)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpySource.lua"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpySource.lua"))();
 	end,
 })
 
@@ -6170,9 +6231,10 @@ Command.Add({
 		})
 
 		for Index, Part in next, GetClasses(workspace, "BasePart") do
-			local Model = Part:FindFirstAncestorOfClass("Model")
-			local isPlayer = (Model and Services.Players:GetPlayerFromCharacter(Model))
-			if (not Part.Anchored) and not isPlayer then
+			local Model = Part:FindFirstAncestorOfClass("Model");
+			local PlayerObject = (Model and Services.Players:GetPlayerFromCharacter(Model));
+			
+			if (not Part.Anchored) and (not PlayerObject) then
 				Bring(Part, Target);
 			end
 		end
@@ -6187,8 +6249,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Connect(Mouse.Button1Down, function()
-			local Target = Mouse.Target
-			Attach(Target)
+			Attach(Mouse.Target);
 		end)
 
 		return "Part Attach", "Loaded successfully!"
@@ -6201,8 +6262,9 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, Part in next, GetClasses(workspace, "BasePart") do
-			Attach(Part)
+			Attach(Part);
 		end
+		
 		return "Part Attach", "Attached to every part in game"
 	end,
 })
@@ -6212,27 +6274,23 @@ Command.Add({
 	Description = "Click an NPC to start controlling it",
 	Arguments = {},
 	Task = function()
-		Refresh("ControlNPC", true)
+		Refresh("ControlNPC", true);
+		
 		Cleaner:Add("ControlNPC", Connect(Mouse.Button1Down, function()
 			local Target = Mouse.Target
 			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
 			local HasHumanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"))
 
-			if
-				ModelDescendant
-				and HasHumanoid
-				and (not Services.Players:GetPlayerFromCharacter(ModelDescendant))
-			then
-				local RootPart = ModelDescendant:FindFirstChild("HumanoidRootPart")
-					or ModelDescendant:FindFirstChild("Torso")
+			if (ModelDescendant and HasHumanoid) and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
+				local RootPart = (ModelDescendant:FindFirstChild("HumanoidRootPart") or ModelDescendant:FindFirstChild("Torso"));
 
-				Attach(RootPart)
-				repeat
-					Wait()
+				Attach(RootPart);
+				
+				repeat Wait()
 					for Index, BodyPart in next, GetClasses(ModelDescendant, "BasePart") do
 						BodyPart.CanCollide = false
 					end
-				until not Get("ControlNPC") or not ModelDescendant
+				until (not Get("ControlNPC") or not ModelDescendant)
 			end
 		end))
 
@@ -6245,7 +6303,7 @@ Command.Add({
 	Description = "Disables the ControlNPC command",
 	Arguments = {},
 	Task = function()
-		Refresh("ControlNPC", false)
+		Refresh("ControlNPC", false);
 		return "NPC", "Control NPC has been disabled"
 	end,
 })
@@ -6255,7 +6313,8 @@ Command.Add({
 	Description = "Creates a black hole that grabs unanchored parts",
 	Arguments = {},
 	Task = function()
-		Refresh("Blackhole", true)
+		Refresh("Blackhole", true);
+		
 		local Blackhole = Create("Part", {
 			Parent = workspace,
 			Transparency = 0.5,
@@ -6264,13 +6323,13 @@ Command.Add({
 			Anchored = true,
 		})
 
-		repeat
-			Wait(1)
+		repeat Wait(1)
 			for Index, Part in next, GetClasses(workspace, "BasePart") do
-				Bring(Part, Blackhole)
+				Bring(Part, Blackhole);
 			end
-		until not Get("Blackhole")
-		Destroy(Blackhole)
+		until (not Get("Blackhole"))
+		
+		Destroy(Blackhole);
 	end,
 })
 
@@ -6279,7 +6338,7 @@ Command.Add({
 	Description = "Disables the blackhole command",
 	Arguments = {},
 	Task = function()
-		Refresh("Blackhole", false)
+		Refresh("Blackhole", false);
 	end,
 })
 
@@ -6289,10 +6348,11 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, Attachment in next, workspace:GetDescendants() do
-			if Attachment.Name == AttachName then
-				Destroy(Attachment)
+			if (Attachment.Name == AttachName) then
+				Destroy(Attachment);
 			end
 		end
+		
 		return "Part Attach", "Unattached every part"
 	end,
 })
@@ -6304,12 +6364,12 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Player)
-		local Players = GetPlayer(Player or "me")
-		local Target = Players[1] or LocalPlayer
+		local Players = GetPlayer(Player or "me");
+		local Target = (Players[1] or LocalPlayer);
 
 		for _, Part in next, GetClasses(workspace, "BasePart") do
-			if not Part.Anchored then
-				Bring(Part, GetRoot(Target))
+			if (not Part.Anchored) then
+				Bring(Part, GetRoot(Target));
 			end
 		end
 
@@ -6324,32 +6384,32 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Player)
-		local Targets = GetPlayer(Player)
-		Refresh("Stand", true)
+		local Targets = GetPlayer(Player);
+		Refresh("Stand", true);
 
 		for _, Target in next, Targets do
-			local Anim = Create("Animation", { AnimationId = "rbxassetid://3337994105" })
-			local Load = GetHumanoid(LocalPlayer):LoadAnimation(Anim)
+			local Anim = Create("Animation", { AnimationId = "rbxassetid://3337994105" });
+			local Load = GetHumanoid(LocalPlayer):LoadAnimation(Anim);
 
-			Camera.CameraSubject = GetHumanoid(Target)
-			Load:Play()
-			Command.Parse(true, "airwalk")
+			Camera.CameraSubject = GetHumanoid(Target);
+			Load:Play();
+			Command.Parse(true, "airwalk");
 
-			repeat
-				Wait()
+			repeat Wait()
 				local Root = GetRoot(Target)
 
 				if Root then
-					GetRoot(LocalPlayer).CFrame = GetRoot(Target).CFrame * CFrame.new(2.2, 1.2, 2.3)
+					GetRoot(LocalPlayer).CFrame = GetRoot(Target).CFrame * CFrame.new(2.2, 1.2, 2.3);
 				else
 					break
 				end
-			until not Get("Stand") or not Target
+			until (not Get("Stand") or not Target)
 
-			Load:Stop()
-			Add("Stand", false)
-			Command.Parse(true, "unairwalk")
-			Camera.CameraSubject = GetHumanoid(LocalPlayer)
+			Load:Stop();
+			Add("Stand", false);
+			Command.Parse(true, "unairwalk");
+			Camera.CameraSubject = GetHumanoid(LocalPlayer);
+			
 			break
 		end
 	end,
@@ -6360,7 +6420,7 @@ Command.Add({
 	Description = "Disables the Stand command",
 	Arguments = {},
 	Task = function()
-		Add("Stand", false)
+		Add("Stand", false);
 	end,
 })
 
@@ -6370,11 +6430,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
-			local Humanoid = NPC:FindFirstChildOfClass("Humanoid")
-			if Humanoid then
+			local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
+			
+			if (Humanoid) then
 				Humanoid.Health = 0
 			end
 		end
+		
 		return "NPC", "Killed all NPCs"
 	end,
 })
@@ -6385,11 +6447,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
-			local Humanoid = NPC:FindFirstChildOfClass("Humanoid")
-			if Humanoid then
+			local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
+			
+			if (Humanoid) then
 				Humanoid.HipHeight = 1024
 			end
 		end
+		
 		return "NPC", "Flinged all NPCs"
 	end,
 })
@@ -6400,11 +6464,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
-			local Humanoid = NPC:FindFirstChildOfClass("Humanoid")
-			if Humanoid then
+			local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
+			
+			if (Humanoid) then
 				Humanoid.HipHeight = -1024
 			end
 		end
+		
 		return "NPC", "Voided all NPCs"
 	end,
 })
@@ -6415,11 +6481,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
-			local RootPart = (NPC:FindFirstChild("HumanoidRootPart") or NPC:FindFirstChild("Torso"))
-			if RootPart then
+			local RootPart = (NPC:FindFirstChild("HumanoidRootPart") or NPC:FindFirstChild("Torso"));
+			
+			if (RootPart) then
 				RootPart.CFrame = Root.CFrame
 			end
 		end
+		
 		return "NPC", "Brought all NPCs"
 	end,
 })
@@ -6431,15 +6499,15 @@ Command.Add({
 	Task = function()
 		Refresh("FollowNPCs", true)
 
-		repeat
-			Wait(0.1)
+		repeat Wait(0.1)
 			for Index, NPC in next, GetPlayer("NPC") do
-				local Humanoid = NPC:FindFirstChildOfClass("Humanoid")
-				if Humanoid then
-					Humanoid:MoveTo(Root.Position)
+				local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
+				
+				if (Humanoid) then
+					Humanoid:MoveTo(Root.Position);
 				end
 			end
-		until not Get("FollowNPCs")
+		until (not Get("FollowNPCs"))
 	end,
 })
 
@@ -6448,7 +6516,7 @@ Command.Add({
 	Description = "Disables the FollowNPCs command",
 	Arguments = {},
 	Task = function()
-		Refresh("FollowNPCs", false)
+		Refresh("FollowNPCs", false);
 	end,
 })
 
@@ -6460,11 +6528,11 @@ Command.Add({
 		Refresh("ClickKillNPC", true);
 
 		Cleaner:Add("ClickKillNPC", Connect(Mouse.Button1Down, function()
-			local Target = Mouse.Target
-			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
-			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"))
+			local Target = (Mouse.Target);
+			local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"));
 
-			if ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
+			if (ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant))) then
 				Humanoid.Health = 0
 			end
 		end))
@@ -6488,11 +6556,11 @@ Command.Add({
 		Refresh("ClickFlingNPC", true);
 
 		Cleaner:Add("ClickFlingNPC", Connect(Mouse.Button1Down, function()
-			local Target = Mouse.Target
-			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
-			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"))
+			local Target = (Mouse.Target);
+			local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"));
 
-			if ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
+			if (ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant))) then
 				Humanoid.HipHeight = 1024
 			end
 		end))
@@ -6516,11 +6584,11 @@ Command.Add({
 		Refresh("ClickVoidNPC", true);
 
 		Cleaner:Add("ClickVoidNPC", Connect(Mouse.Button1Down, function()
-			local Target = Mouse.Target
-			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
-			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"))
+			local Target = (Mouse.Target);
+			local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"));
 
-			if ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
+			if (ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant))) then
 				Humanoid.HipHeight = -1024
 			end
 		end))
@@ -6544,11 +6612,11 @@ Command.Add({
 		Refresh("ClickBringNPC", true);
 
 		Cleaner:Add("ClickBringNPC", Connect(Mouse.Button1Down, function()
-			local Target = Mouse.Target
-			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
-			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"))
+			local Target = (Mouse.Target);
+			local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"));
 
-			if ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
+			if (ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant))) then
 				local Object = (Humanoid.RootPart or ModelDescendant:FindFirstChild("Torso"));
 				Object.CFrame = Root.CFrame
 			end
@@ -6573,11 +6641,11 @@ Command.Add({
 		Refresh("ClickFollowNPC", true);
 
 		Cleaner:Add("ClickFollowNPC", Connect(Mouse.Button1Down, function()
-			local Target = Mouse.Target
-			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
-			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"))
+			local Target = (Mouse.Target);
+			local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+			local Humanoid = (ModelDescendant and ModelDescendant:FindFirstChildOfClass("Humanoid"));
 
-			if ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
+			if (ModelDescendant and Humanoid and (not Services.Players:GetPlayerFromCharacter(ModelDescendant))) then
 				repeat Wait(0.1)
 					Humanoid:MoveTo(Root.Position);
 				until (not Get("ClickFollowNPC"))
@@ -6602,9 +6670,51 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		local N = SetNumber(Amount)
-		SetSRadius(N, N)
+		local Radius = SetNumber(Amount);
+		SetSRadius(Radius, Radius);
+		
 		return "Simulation Radius", Format("Successfully set your simulation radius to %s", Amount)
+	end,
+})
+
+Command.Add({
+	Aliases = { "freeugc", "ugc" },
+	Description = "Tries to get UGC limiteds (use the 'Flex Your UGC Limiteds' game to find games)",
+	Arguments = {
+		{ Name = "UGC ID", Type = "String" },
+	},
+	Task = function(ID)
+		local Remotes = (0);
+		local Target = ({ "RemoteEvent", "UnreliableRemoteEvent", "RemoteFunction" });
+		local Keywords = ({ "ugc", "item", "hat", "free", "claim", "complete", "grant", "reward", "receive", "purchase"  });
+
+		for _, Remote in next, game:GetDescendants() do
+			if (Discover(Target, Remote.ClassName)) then
+				for _, Keyword in next, Keywords do
+					if (string.find(Remote.Name:lower(), Keyword)) then
+						local Arguments = ({
+							tostring(ID),
+							tonumber(ID),
+							{ ID },
+						})
+
+						for _, Argument in next, Arguments do
+							task.spawn(function()
+								if (Remote:IsA("RemoteFunction")) then
+									Remote:InvokeServer(Argument);
+								else
+									Remote:FireServer(Argument);
+								end
+							end)
+						end
+
+						Remotes += 1
+					end
+				end
+			end
+		end
+
+		return "Free UGC", Format("Fired %d possible UGC remotes", Remotes);
 	end,
 })
 
@@ -6613,7 +6723,21 @@ Command.Add({
 	Description = "Pretends you own every gamepass and fires signals as if you bought them all (doesn't always work)",
 	Arguments = {},
 	Task = function()
-		local Products = Services.Market:GetDeveloperProductsAsync():GetCurrentPage()
+		local Products = Services.Market:GetDeveloperProductsAsync():GetCurrentPage();
+		local Gamepasses = (function()
+			local Result = ({});
+
+			pcall(function()
+				local Gamepasses = JSONDecode(Services.Http, game:HttpGet(Format("https://apis.roblox.com/game-passes/v1/universes/%s/game-passes?passView=Full&pageSize=100", tostring(game.GameId))));
+
+				for _, Gamepass in next, Gamepasses.gamePasses do
+					Insert(Result, Gamepass.id);
+				end
+			end)
+
+			return Result
+		end)()
+
 		local SignalsFired = 0
 
 		if Check("Hook") then
@@ -6625,10 +6749,14 @@ Command.Add({
 		for Index, Product in next, Products do
 			for Type, ID in next, Product do
 				if (Type == "ProductId") or (Type == "DeveloperProductId") then
-					Services.Market:SignalPromptProductPurchaseFinished(LocalPlayer.UserId, ID, true)
+					Services.Market:SignalPromptProductPurchaseFinished(LocalPlayer.UserId, ID, true);
 					SignalsFired += 1
 				end
 			end
+		end
+
+		for _, Gamepass in next, (Gamepasses or {}) do
+			Services.Market:SignalPromptGamePassPurchaseFinished(LocalPlayer, Gamepass, true);
 		end
 
 		return "Gamepasses fired", Format("All gamepasses have been hooked as well as fired %s purchase signals", SignalsFired), 15
@@ -6650,7 +6778,12 @@ Command.Add({
 	Description = "Allows you to climb while in air",
 	Arguments = {},
 	Task = function()
-		local oldPart = Get("ClimbPart")
+		local OldPart = Get("ClimbPart");
+		
+		if (OldPart) then
+			Destroy(OldPart);
+		end
+		
 		local Part = Create("TrussPart", {
 			Transparency = 1,
 			Size = Vector3.new(2, 10, 2),
@@ -6659,14 +6792,11 @@ Command.Add({
 			Name = GenerateGUID(Services.Http),
 		})
 
-		Add("ClimbPart", Part)
-		if oldPart then
-			Destroy(oldPart)
-		end
+		Add("ClimbPart", Part);
 
-		while Part and Wait() do
-			Part.CFrame = Root.CFrame * CFrame.new(0, 0, -1.5)
-		end
+		repeat Wait()
+			Part.CFrame = Root.CFrame * CFrame.new(0, 0, -1.5);
+		until (not Part)
 	end,
 })
 
@@ -6675,7 +6805,7 @@ Command.Add({
 	Description = "Disables the climb command",
 	Arguments = {},
 	Task = function()
-		Destroy(Get("ClimbPart"))
+		Destroy(Get("ClimbPart"));
 	end,
 })
 
@@ -6686,9 +6816,9 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		if setfpscap then
-			setfpscap(SetNumber(Amount))
-			return "FPS", Format("Set your FPS cap to %s", Amount)
+		if (setfpscap) then
+			setfpscap(SetNumber(Amount));
+			return "FPS", Format("Set your FPS cap to %s", Amount);
 		else
 			return "Unsupported Executor", "Your executor does not support this command, missing function - setfpscap()"
 		end
@@ -6700,8 +6830,8 @@ Command.Add({
 	Description = "Unlocks the FPS limit (1000)",
 	Arguments = {},
 	Task = function()
-		if setfpscap then
-			setfpscap(1000)
+		if (setfpscap) then
+			setfpscap(1000);
 			return "FPS Cap", "Unlocked to 1000"
 		else
 			return "Unsupported Executor", "Your executor does not support this command, missing function - setfpscap()"
@@ -6714,13 +6844,13 @@ Command.Add({
 	Description = "Prevents (client) scripts from kicking you",
 	Arguments = {},
 	Task = function()
-		Refresh("AntiKick", true)
-		if Check("Hook") then
-			for Index, Kick in next, { LocalPlayer.Kick, LocalPlayer.kick } do
-				local Call
-				Call = hookfunction(Kick, function(...)
-					if not Get("AntiKick") then
-						return Call(...)
+		Refresh("AntiKick", true);
+		
+		if (Check("Hook")) then
+			for Index, Kick in next, ({ LocalPlayer.Kick, LocalPlayer.kick }) do
+				local Call; Call = hookfunction(Kick, function(...)
+					if (not Get("AntiKick")) then
+						return Call(...);
 					end
 				end)
 			end
@@ -6737,7 +6867,7 @@ Command.Add({
 	Description = "Disables AntiKick",
 	Arguments = {},
 	Task = function()
-		Refresh("AntiKick", false)
+		Refresh("AntiKick", false);
 		return "Anti Kick", "Anti Kick has been disabled"
 	end,
 })
@@ -6747,16 +6877,17 @@ Command.Add({
 	Description = "Prevents you from getting teleported to other games",
 	Arguments = {},
 	Task = function()
-		Refresh("AntiTeleport", true)
-		if Check("Hook") then
-			for Index, Kick in next, { Services.Http.TeleportToPlaceInstance, TeleportToPrivateServer } do
-				local Call
-				Call = hookfunction(Kick, function(...)
-					if not Get("AntiTeleport") then
-						return Call(...)
+		Refresh("AntiTeleport", true);
+		
+		if (Check("Hook")) then
+			for Index, Kick in next, ({ Services.Http.TeleportToPlaceInstance, Services.Http.TeleportToPrivateServer }) do
+				local Call; Call = hookfunction(Kick, function(...)
+					if (not Get("AntiTeleport")) then
+						return Call(...);
 					end
 				end)
 			end
+			
 			return "Anti Teleport", "Anti Teleport has been enabled"
 		else
 			return "Unsupported Executor", "Your executor does not support hooking"
@@ -6769,7 +6900,7 @@ Command.Add({
 	Description = "Disables AntiTeleport",
 	Arguments = {},
 	Task = function()
-		Refresh("AntiTeleport", false)
+		Refresh("AntiTeleport", false);
 		return "Anti Teleport", "Anti Teleport has been disabled"
 	end,
 })
@@ -6779,25 +6910,23 @@ Command.Add({
 	Description = "Drops a tool and tracks who picks it up (for those using automatic tool grabbers)",
 	Arguments = {},
 	Task = function()
-		local Tool = Backpack:FindFirstChildOfClass("Tool")
-		local Grabber
-
+		local Tool, Grabber = Backpack:FindFirstChildOfClass("Tool"), (nil);
+		
 		Tool.Parent = Character
-		Tool.Parent = workspace
-		Wait(2)
+		Tool.Parent = workspace; Wait(2)
 
-		if Tool and Tool.Parent ~= workspace then
-			if Tool.Parent:IsA("Backpack") and Tool.Parent.Parent ~= LocalPlayer then
-				Grabber = Tool.Parent.Parent.Name
-			elseif Tool.Parent:IsA("Model") and Tool.Parent ~= LocalPlayer then
-				Grabber = Tool.Parent.Name
+		if (Tool and Tool.Parent ~= workspace) then
+			if (Tool.Parent:IsA("Backpack") and Tool.Parent.Parent ~= LocalPlayer) then
+				Grabber = (Tool.Parent.Parent.Name);
+			elseif (Tool.Parent:IsA("Model") and Tool.Parent.Name ~= LocalPlayer.Name) then
+				Grabber = (Tool.Parent.Name);
 			end
-		elseif Tool.Parent == workspace then
-			Humanoid:EquipTool(Tool)
+		elseif (Tool.Parent == workspace) then
+			Humanoid:EquipTool(Tool);
 		end
 
-		if Grabber then
-			return "Grabber", Format("Grabber found, username - %s", Grabber)
+		if (Grabber) then
+			return "Grabber", Format("Grabber found, username - %s", Grabber);
 		else
 			return "Grabber", "Could not find grabber"
 		end
@@ -6810,7 +6939,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, Tool in next, GetClasses(workspace, "Tool") do
-			Humanoid:EquipTool(Tool)
+			Humanoid:EquipTool(Tool);
 		end
 	end,
 })
@@ -6820,10 +6949,15 @@ Command.Add({
 	Description = "Automatically grabs tools",
 	Arguments = {},
 	Task = function()
-		Add("AutoGrab", true)
+		Add("AutoGrab", true);
+		
+		for Index, Tool in next, GetClasses(workspace, "Tool") do
+			Humanoid:EquipTool(Tool);
+		end
+		
 		Connect(workspace.DescendantAdded, function(Tool)
-			if Tool:IsA("Tool") and Get("AutoGrab") then
-				Humanoid:EquipTool(Tool)
+			if (Tool:IsA("Tool") and Get("AutoGrab")) then
+				Humanoid:EquipTool(Tool);
 				Tool.Parent = Backpack
 			end
 		end)
@@ -6837,7 +6971,7 @@ Command.Add({
 	Description = "Disables the AutoGrabTools command",
 	Arguments = {},
 	Task = function()
-		Add("AutoGrab", false)
+		Add("AutoGrab", false);
 		return "Auto", "Auto Grab Tools disabled"
 	end,
 })
@@ -6848,9 +6982,8 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, Tool in next, GetClasses(workspace, "Tool") do
-			Humanoid:EquipTool(Tool)
-			Wait()
-			Destroy(Tool)
+			Humanoid:EquipTool(Tool); Wait();
+			Destroy(Tool);
 		end
 	end,
 })
@@ -6860,12 +6993,17 @@ Command.Add({
 	Description = "Automatically deletes dropped tools",
 	Arguments = {},
 	Task = function()
-		Add("AutoGrabDelete", true)
+		Add("AutoGrabDelete", true);
+		
+		for Index, Tool in next, GetClasses(workspace, "Tool") do
+			Humanoid:EquipTool(Tool); Wait();
+			Destroy(Tool);
+		end
+		
 		Connect(workspace.DescendantAdded, function(Tool)
-			if Tool:IsA("Tool") and Get("AutoGrabDelete") then
-				Humanoid:EquipTool(Tool)
-				Wait()
-				Destroy(Tool)
+			if (Tool:IsA("Tool") and Get("AutoGrabDelete")) then
+				Humanoid:EquipTool(Tool); Wait();
+				Destroy(Tool);
 			end
 		end)
 
@@ -6878,7 +7016,7 @@ Command.Add({
 	Description = "Stops the AutoGrabDeleteTools command",
 	Arguments = {},
 	Task = function()
-		Add("AutoGrabDelete", false)
+		Add("AutoGrabDelete", false);
 		return "Auto", "Auto Grab Delete Tools disabled"
 	end,
 })
@@ -6888,8 +7026,9 @@ Command.Add({
 	Description = "Disables sitting",
 	Arguments = {},
 	Task = function()
-		Humanoid:SetStateEnabled("Seated", false)
-		Humanoid.Sit = true
+		Humanoid:SetStateEnabled("Seated", false);
+		Humanoid.Sit = (true);
+
 		return "Anti Sit", "Anti Sit has been enabled"
 	end,
 })
@@ -6899,8 +7038,9 @@ Command.Add({
 	Description = "Enables sitting",
 	Arguments = {},
 	Task = function()
-		Humanoid:SetStateEnabled("Seated", true)
-		Humanoid.Sit = false
+		Humanoid:SetStateEnabled("Seated", true);
+		Humanoid.Sit = (false);
+		
 		return "Anti Sit", "Anti Sit has been disabled"
 	end,
 })
@@ -6910,13 +7050,13 @@ Command.Add({
 	Description = "Sets your new spawn location",
 	Arguments = {},
 	Task = function()
-		local Old = Root.CFrame
-		Refresh("SetSpawn", true)
+		Refresh("SetSpawn", true);
+		local Old = (Root.CFrame);
 
 		Detection = (Detection and Detection:Disconnect())
 		Detection = Connect(LocalPlayer.CharacterAdded, function(NewCharacter)
-			if Get("SetSpawn") then
-				NewCharacter:WaitForChild("HumanoidRootPart").CFrame = Old
+			if (Get("SetSpawn")) then
+				NewCharacter:WaitForChild("HumanoidRootPart").CFrame = (Old);
 			end
 		end)
 
@@ -6929,9 +7069,8 @@ Command.Add({
 	Description = "Deletes the spawn location you've saved",
 	Arguments = {},
 	Task = function()
-		Refresh("SetSpawn", false)
-		Detection = (Detection and Detection:Disconnect())
-
+		Refresh("SetSpawn", false);
+		Detection = (Detection and Detection:Disconnect());
 		return "Spawn", "Spawnpoint has been deleted"
 	end,
 })
@@ -6942,12 +7081,12 @@ Command.Add({
 	Arguments = {
 		{ Name = "Script", Type = "String" },
 	},
-	Task = function(src)
+	Task = function(Source)
 		local Success, Result = pcall(function()
-			loadstring(src)()
+			loadstring(Source)();
 		end)
 
-		if Success then
+		if (Success) then
 			return "Source", "Ran source without any errors"
 		else
 			return "Error occured running script", Result
@@ -6961,12 +7100,12 @@ Command.Add({
 	Arguments = {
 		{ Name = "URL", Type = "String" },
 	},
-	Task = function(url)
+	Task = function(URL)
 		local Success, Result = pcall(function()
-			loadstring(Methods.Get(url))()
+			loadstring(Methods.Get(URL))();
 		end)
 
-		if Success then
+		if (Success) then
 			return "Source", "Ran source without any errors"
 		else
 			return "Error occured running script", Result
@@ -6981,7 +7120,7 @@ Command.Add({
 		{ Name = "Speed", Type = "Number" },
 	},
 	Task = function(Amount)
-		SetFly(true, tonumber(Amount) or 10)
+		SetFly(true, tonumber(Amount) or 10);
 		return "Fly", "Fly has been enabled"
 	end,
 })
@@ -6991,7 +7130,7 @@ Command.Add({
 	Description = "Disables the Fly command",
 	Arguments = {},
 	Task = function()
-		SetFly(false)
+		SetFly(false);
 		return "Fly", "Fly has been disabled"
 	end,
 })
@@ -7001,7 +7140,7 @@ Command.Add({
 	Description = "Shows a prompt changing your avatar to R6",
 	Arguments = {},
 	Task = function()
-		SetRig("R6")
+		SetRig("R6");
 	end,
 })
 
@@ -7010,7 +7149,7 @@ Command.Add({
 	Description = "Shows a prompt changing your avatar to R15",
 	Arguments = {},
 	Task = function()
-		SetRig("R15")
+		SetRig("R15");
 	end,
 })
 
@@ -7021,8 +7160,8 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		Humanoid.WalkSpeed = SetNumber(Amount)
-		return "Walk speed", Format("Set walkspeed to %s", Amount)
+		Humanoid.WalkSpeed = SetNumber(Amount);
+		return "Walk speed", Format("Set walkspeed to %s", Amount);
 	end,
 })
 
@@ -7033,9 +7172,10 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		Humanoid.JumpPower = SetNumber(Amount)
-		Humanoid.UseJumpPower = true
-		return "Jump Power", Format("Set jump power to %s", Amount)
+		Humanoid.JumpPower = SetNumber(Amount);
+		Humanoid.UseJumpPower = (true);
+		
+		return "Jump Power", Format("Set jump power to %s", Amount);
 	end,
 })
 
@@ -7046,8 +7186,8 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		Humanoid.HipHeight = SetNumber(Amount)
-		return "Hip Height", Format("Set hip height to %s", Amount)
+		Humanoid.HipHeight = SetNumber(Amount);
+		return "Hip Height", Format("Set hip height to %s", Amount);
 	end,
 })
 
@@ -7058,8 +7198,9 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		workspace.Gravity = SetNumber(Amount)
-		return "Gravity", Format("Set gravity to %s", Amount)
+		workspace.Gravity = SetNumber(Amount);
+		
+		return "Gravity", Format("Set gravity to %s", Amount);
 	end,
 })
 
@@ -7070,8 +7211,9 @@ Command.Add({
 		{ Name = "Time", Type = "Number" },
 	},
 	Task = function(Time)
-		Services.Lighting.ClockTime = SetNumber(Time)
-		return "Time", Format("Set time to %s", Time)
+		Services.Lighting.ClockTime = SetNumber(Time);
+		
+		return "Time", Format("Set time to %s", Time);
 	end,
 })
 
@@ -7080,7 +7222,12 @@ Command.Add({
 	Description = "Allows you to walk on air; jump to go up",
 	Arguments = {},
 	Task = function()
-		local Old = Get("AirPart")
+		local Old = Get("AirPart");
+		
+		if (Old) then
+			Destroy(Old);
+		end
+		
 		local Part = Create("Part", {
 			Transparency = 1,
 			Size = Vector3.new(7, 2, 3),
@@ -7090,15 +7237,11 @@ Command.Add({
 			Name = GenerateGUID(Services.Http),
 		})
 
-		Add("AirPart", Part)
-
-		if Old then
-			Destroy(Old)
-		end
-
-		while Part and Wait() do
-			Part.CFrame = Root.CFrame + Vector3.new(0, -4, 0)
-		end
+		Add("AirPart", Part);
+		
+		repeat Wait()
+			Part.CFrame = Root.CFrame + Vector3.new(0, -4, 0);
+		until (not Part)
 	end,
 })
 
@@ -7107,7 +7250,7 @@ Command.Add({
 	Description = "Disables the airwalk command",
 	Arguments = {},
 	Task = function()
-		Destroy(Get("AirPart"))
+		Destroy(Get("AirPart"));
 
 		return "Air Walk", "Disabled air walk"
 	end,
@@ -7118,11 +7261,12 @@ Command.Add({
 	Description = "Reveals all invisible parts in-game",
 	Arguments = {},
 	Task = function()
-		Refresh("Hidden", {})
+		Refresh("Hidden", {});
+		
 		for Index, Wall in next, GetClasses(workspace, "BasePart") do
 			if (Wall.Transparency == 1) and (Wall.Name ~= "HumanoidRootPart") then
-				Insert(Get("Hidden"), Wall)
-				Wall.Transparency = 0
+				Insert(Get("Hidden"), Wall);
+				Wall.Transparency = (0);
 			end
 		end
 
@@ -7148,18 +7292,17 @@ Command.Add({
 	Description = "Touches any SpawnLocation that changes your team",
 	Arguments = {},
 	Task = function()
-		local OldPosition = Root.CFrame
-		local FoundCheckpoints = 0
+		local OldPosition = (Root.CFrame);
+		local FoundCheckpoints = (0);
 
 		for Index, Point in next, GetClasses(workspace, "SpawnLocation") do
-			if Point.AllowTeamChangeOnTouch then
+			if (Point.AllowTeamChangeOnTouch) then
 				Root.CFrame = Point.CFrame
-				FoundCheckpoints += 1
-				Wait(0.1)
+				FoundCheckpoints += 1; Wait(0.1)
 			end
 		end
 
-		Root.CFrame = OldPosition
+		Root.CFrame = (OldPosition);
 		return "Team Change", Format("Touched %s spawn locations with TeamChange enabled", FoundCheckpoints), 10
 	end,
 })
@@ -7181,17 +7324,17 @@ Command.Add({
 	Description = "Repeatedly drops all tools in your inventory",
 	Arguments = {},
 	Task = function()
-		local OldPosition = Root.CFrame
-		Refresh("LoopDrop", true)
+		Refresh("LoopDrop", true);
+		local OldPosition = (Root.CFrame);
 
 		local Drop = function(Char)
-			if Get("LoopDrop") then
+			if (Get("LoopDrop")) then
 				repeat
-					Wait()
-				until Root
+					Wait();
+				until (Root)
+				
 				for Index = 1, 5 do
-					Root.CFrame = OldPosition
-					Wait(0.1)
+					Root.CFrame = OldPosition; Wait(0.1);
 				end
 
 				for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
@@ -7203,8 +7346,8 @@ Command.Add({
 			end
 		end
 
-		Drop(Character)
-		Connect(LocalPlayer.CharacterAdded, Drop)
+		Drop(Character);
+		Connect(LocalPlayer.CharacterAdded, Drop);
 	end,
 })
 
@@ -7213,7 +7356,7 @@ Command.Add({
 	Description = "Disables the LoopDropTools command",
 	Arguments = {},
 	Task = function()
-		Refresh("LoopDrop", false)
+		Refresh("LoopDrop", false);
 	end,
 })
 
@@ -7222,19 +7365,17 @@ Command.Add({
 	Description = "Drops all your tools in the sky, type LoadTools to get them back",
 	Arguments = {},
 	Task = function()
-		local OldPosition = Root.CFrame
-
-		Root.CFrame = CFrame.new(0, 9e9, 0)
-		Wait(1)
+		local OldPosition = (Root.CFrame);
+		Root.CFrame = CFrame.new(0, 9e9, 0); Wait(1)
+		
 		for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
-			if Tool.CanBeDropped then
+			if (Tool.CanBeDropped) then
 				Tool.Parent = Character
 				Tool.Parent = workspace
 			end
 		end
 
-		Wait(0.5)
-
+		Wait(0.5);
 		Root.CFrame = OldPosition
 	end,
 })
@@ -7245,7 +7386,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index, Tool in next, GetClasses(workspace, "Tool", true) do
-			Humanoid:EquipTool(Tool)
+			Humanoid:EquipTool(Tool);
 		end
 	end,
 })
@@ -7255,11 +7396,11 @@ Command.Add({
 	Description = "Similiar to the spin command",
 	Arguments = {},
 	Task = function()
-		if Spazz then
-			Destroy(Spazz)
+		if (Spazz) then
+			Destroy(Spazz);
 		end
 
-		Root.CFrame = Root.CFrame * CFrame.Angles(-0.3, 0, 0)
+		Root.CFrame = Root.CFrame * CFrame.Angles(-0.3, 0, 0);
 		Spazz = Create("BodyAngularVelocity", {
 			P = 200000,
 			AngularVelocity = Vector3.new(0, 15, 0),
@@ -7274,8 +7415,8 @@ Command.Add({
 	Description = "Disables the Spazz command",
 	Arguments = {},
 	Task = function()
-		if Spazz then
-			Destroy(Spazz)
+		if (Spazz) then
+			Destroy(Spazz);
 		end
 	end,
 })
@@ -7285,12 +7426,11 @@ Command.Add({
 	Description = "Locks your Mouse in the center",
 	Arguments = {},
 	Task = function()
-		Refresh("MouseLock", true)
+		Refresh("MouseLock", true);
 
-		repeat
-			Wait()
+		repeat Wait()
 			Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
-		until not Get("MouseLock")
+		until (not Get("MouseLock"))
 	end,
 })
 
@@ -7299,7 +7439,7 @@ Command.Add({
 	Description = "Makes your mouse unlocked, freely movable",
 	Arguments = {},
 	Task = function()
-		Refresh("MouseLock", false)
+		Refresh("MouseLock", false);
 		Services.Input.MouseBehavior = Enum.MouseBehavior.Default
 	end,
 })
@@ -7311,8 +7451,8 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		if Spin then
-			Destroy(Spin)
+		if (Spin) then
+			Destroy(Spin);
 		end
 
 		Spin = Create("BodyAngularVelocity", {
@@ -7328,7 +7468,7 @@ Command.Add({
 	Description = "Disables the Spin command",
 	Arguments = {},
 	Task = function()
-		Destroy(Spin)
+		Destroy(Spin);
 	end,
 })
 
@@ -7337,19 +7477,17 @@ Command.Add({
 	Description = "Allows your character to pass through walls",
 	Arguments = {},
 	Task = function()
-		Refresh("Noclip", true)
-
+		Refresh("Noclip", true);
 		API:Notify({
 			Title = "Noclip",
 			Description = "Noclip has been enabled",
 		})
 
-		repeat
-			Wait()
+		repeat Wait()
 			for Index, Part in next, GetClasses(Character, "BasePart", true) do
 				Part.CanCollide = false
 			end
-		until not Get("Noclip")
+		until (not Get("Noclip"))
 	end,
 })
 
@@ -7358,7 +7496,7 @@ Command.Add({
 	Description = "Disables the Noclip command",
 	Arguments = {},
 	Task = function()
-		Refresh("Noclip", false)
+		Refresh("Noclip", false);
 
 		for Index, Part in next, GetClasses(Character, "BasePart", true) do
 			Part.CanCollide = false
@@ -7384,10 +7522,8 @@ Command.Add({
 	Description = "Disables the freeze command",
 	Arguments = {},
 	Task = function()
-		for Index, Part in next, Character:GetChildren() do
-			if Part:IsA("BasePart") then
-				Part.Anchored = false
-			end
+		for Index, Part in next, GetClasses(Character, "BasePart", true) do
+			Part.Anchored = false
 		end
 	end,
 })
@@ -7399,20 +7535,19 @@ Command.Add({
 		{ Name = "Speed", Type = "Number" },
 	},
 	Task = function(Amount)
-		local Amount = SetNumber(Amount, 2, math.huge)
+		local Amount = SetNumber(Amount, 2, math.huge);
 
-		Add("AnimationSpeed", true)
+		Add("AnimationSpeed", true);
 		API:Notify({
 			Title = "Animation Speed",
 			Description = Format("Set animation speed to %s", Amount),
 		})
 
-		repeat
-			Wait()
+		repeat Wait()
 			for Index, Track in next, Humanoid:GetPlayingAnimationTracks() do
-				Track:AdjustSpeed(Amount)
+				Track:AdjustSpeed(Amount);
 			end
-		until not Get("AnimationSpeed")
+		until (not Get("AnimationSpeed"))
 	end,
 })
 
@@ -7423,9 +7558,10 @@ Command.Add({
 		{ Name = "Speed", Type = "Number" },
 	},
 	Task = function(Amount)
-		Refresh("AnimationSpeed", false)
+		Refresh("AnimationSpeed", false);
+		
 		for Index, Track in next, Humanoid:GetPlayingAnimationTracks() do
-			Track:AdjustSpeed(Amount)
+			Track:AdjustSpeed(Amount);
 		end
 
 		return "Animation Speed", "Set animation speed back to normal"
@@ -7468,16 +7604,15 @@ Command.Add({
 	Description = "Fires all TouchInterests",
 	Arguments = {},
 	Task = function()
-		local Fired = 0
-		if not firetouchinterest then
-			return "Missing Function",
-			"Executor does not support this command, missing function - firetouchinterest",
-			10
+		local Fired = (0);
+		
+		if (not firetouchinterest) then
+			return "Missing Function", "Executor does not support this command, missing function - firetouchinterest", 10
 		end
 
 		for Index, Target in next, GetClasses(workspace, "TouchTransmitter") do
-			firetouchinterest(Root, Target.Parent, 0)
-			firetouchinterest(Root, Target.Parent, 1)
+			firetouchinterest(Root, Target.Parent, 0);
+			firetouchinterest(Root, Target.Parent, 1);
 			Fired += 1
 		end
 
@@ -7490,17 +7625,15 @@ Command.Add({
 	Description = "Fires all ProximityPrompts",
 	Arguments = {},
 	Task = function()
-		local Fired = 0
-		if not fireproximityprompt then
-			return "Missing Function",
-			"Executor does not support this command, missing function - fireproximityprompt",
-			10
+		local Fired = (0);
+		
+		if (not fireproximityprompt) then
+			return "Missing Function", "Executor does not support this command, missing function - fireproximityprompt", 10
 		end
 
 		for Index, Target in next, GetClasses(workspace, "ProximityPrompt") do
-			fireproximityprompt(Target, 0)
-			Wait()
-			fireproximityprompt(Target, 1)
+			fireproximityprompt(Target, 0); Wait();
+			fireproximityprompt(Target, 1);
 			Fired += 1
 		end
 
@@ -7513,15 +7646,14 @@ Command.Add({
 	Description = "Fires all ClickDetectors",
 	Arguments = {},
 	Task = function()
-		local Fired = 0
-		if not fireclickdetector then
-			return "Missing Function",
-			"Executor does not support this command, missing function - fireclickdetector",
-			10
+		local Fired = (0);
+		
+		if (not fireclickdetector) then
+			return "Missing Function", "Executor does not support this command, missing function - fireclickdetector", 10
 		end
 
 		for Index, Target in next, GetClasses(workspace, "ClickDetector") do
-			fireclickdetector(Target)
+			fireclickdetector(Target);
 			Fired += 1
 		end
 
@@ -7534,15 +7666,15 @@ Command.Add({
 	Description = "Fires all Remotes",
 	Arguments = {},
 	Task = function()
-		local Fired = 0
+		local Fired = (0);
 
 		for Index, Target in next, GetClasses(game, "RemoteEvents") do
-			Target:FireServer()
+			Target:FireServer();
 			Fired += 1
 		end
 
 		for Index, Target in next, GetClasses(game, "UnreliableRemoteEvent") do
-			Target:FireServer()
+			Target:FireServer();
 			Fired += 1
 		end
 
@@ -7583,7 +7715,7 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Targets = GetPlayer(Input)
+		local Targets = GetPlayer(Input);
 		return Format("Got %s players", #Targets), Input
 	end,
 })
@@ -7596,20 +7728,20 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Input, Amount)
-		Add("Hitbox", true)
-		repeat
-			Wait()
+		Add("Hitbox", true);
+		
+		repeat Wait()
 			for Index, Target in next, GetPlayer(Input) do
-				local TRoot = GetRoot(Target)
-				local S = (Amount and SetNumber(Amount, 5)) or 10
+				local TargetRoot = GetRoot(Target);
+				local Size = ((Amount and SetNumber(Amount, 5)) or 10);
 
-				if TRoot and Target ~= LocalPlayer then
-					TRoot.Size = Vector3.new(S, S, S)
-					TRoot.Transparency = 0.8
-					TRoot.CanCollide = false
+				if (TargetRoot and Target ~= LocalPlayer) then
+					TargetRoot.Size = Vector3.new(Size, Size, Size)
+					TargetRoot.Transparency = 0.8
+					TargetRoot.CanCollide = false
 				end
 			end
-		until not Get("Hitbox")
+		until (not Get("Hitbox"))
 	end,
 })
 
@@ -7618,14 +7750,14 @@ Command.Add({
 	Description = "Disables the Hitbox command",
 	Arguments = {},
 	Task = function()
-		Refresh("Hitbox", false)
+		Refresh("Hitbox", false);
 
 		for Index, Target in next, GetPlayer("all") do
-			local TRoot = GetRoot(Target)
+			local TargetRoot = GetRoot(Target);
 
-			if TRoot then
-				TRoot.Size = Vector3.new(2, 2, 1)
-				TRoot.Transparency = 1
+			if (TargetRoot) then
+				TargetRoot.Size = Vector3.new(2, 2, 1);
+				TargetRoot.Transparency = 1
 			end
 		end
 	end,
@@ -7636,7 +7768,7 @@ Command.Add({
 	Description = "Rejoins the server",
 	Arguments = {},
 	Task = function()
-		Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+		Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
 	end,
 })
 
@@ -7645,18 +7777,15 @@ Command.Add({
 	Description = "Allows you to jump in air",
 	Arguments = {},
 	Task = function()
-		local Old = Get("InfiniteJump")
-		Old = Old and Old:Disconnect()
-		Add(
-			"InfiniteJump",
-			Connect(Services.Input.InputBegan, function(Key, FocusedTextbox)
-				if (Key.KeyCode == Enum.KeyCode.Space) and not FocusedTextbox then
-					Humanoid:ChangeState("Jumping")
-					Wait()
-					Humanoid:ChangeState("Seated")
-				end
-			end)
-		)
+		local Old = Get("InfiniteJump");
+		Old = (Old and Old:Disconnect());
+		
+		Add("InfiniteJump", Connect(Services.Input.InputBegan, function(Key, FocusedTextbox)
+			if (Key.KeyCode == Enum.KeyCode.Space) and (not FocusedTextbox) then
+				Humanoid:ChangeState("Jumping"); Wait();
+				Humanoid:ChangeState("Seated");
+			end
+		end))
 
 		return "Infinite Jump", "Enabled"
 	end,
@@ -7667,8 +7796,9 @@ Command.Add({
 	Description = "Disables the InfiniteJump command",
 	Arguments = {},
 	Task = function()
-		local Old = Get("InfiniteJump")
-		Old = Old and Old:Disconnect()
+		local Old = Get("InfiniteJump");
+		Old = (Old and Old:Disconnect());
+		
 		return "Infinite Jump", "Disabled"
 	end,
 })
@@ -7678,10 +7808,10 @@ Command.Add({
 	Description = "Freezes your character in the server, but not on your client, allowing to kill enemies without them seeing you",
 	Arguments = {},
 	Task = function()
-		local Root = GetRoot(LocalPlayer)
-		local Character = GetCharacter(LocalPlayer)
+		local Root = GetRoot(LocalPlayer);
+		local Character = GetCharacter(LocalPlayer);
 
-		if GetHumanoid(LocalPlayer).RigType == Enum.HumanoidRigType.R6 then
+		if (GetHumanoid(LocalPlayer).RigType == Enum.HumanoidRigType.R6) then
 			local Clone = Clone(Root);
 			Destroy(Root);
 			Clone.Parent = Character
@@ -7702,10 +7832,11 @@ Command.Add({
 	},
 	Task = function(ID)
 		for Index, Boombox in next, GetClasses(Backpack, "Tool", true) do
-			local Name = Lower(Boombox.Name)
+			local Name = Lower(Boombox.Name);
+			
 			if (Name == "radio" or Name == "boombox") and (Boombox:FindFirstChild("Remote")) then
 				Boombox.Parent = Character
-				Boombox.Remote:FireServer("PlaySong", ID)
+				Boombox.Remote:FireServer("PlaySong", ID);
 			end
 		end
 
@@ -7721,9 +7852,10 @@ Command.Add({
 	},
 	Task = function(Target)
 		for Index, Boombox in next, GetClasses(GetPlayer(Target)[1].Character, "Tool", true) do
-			local Name = Lower(Boombox.Name)
+			local Name = Lower(Boombox.Name);
+			
 			if (Name == "radio" or Name == "boombox") and (Boombox:FindFirstChild("Handle")) then
-				local AudioID = Boombox.Handle:FindFirstChildOfClass("Sound").SoundId
+				local AudioID = (Boombox.Handle:FindFirstChildOfClass("Sound").SoundId);
 				return "Audio Logged", AudioID, 20
 			end
 		end
@@ -7739,14 +7871,14 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		if RespectFilteringEnabled then
+		if (RespectFilteringEnabled) then
 			return "Mute", "Couldn't mute since RespectFilteringEnabled is enabled"
 		end
 
 		for Index, Target in next, GetPlayer(Input) do
-			local Character = GetCharacter(Target)
+			local Character = GetCharacter(Target);
 
-			if Character then
+			if (Character) then
 				for Index, Sound in next, GetClasses(Character, "Sound") do
 					Sound.Playing = false
 				end
@@ -7765,24 +7897,22 @@ Command.Add({
 	},
 	Task = function(Input)
 		Add("Glitch", true)
-		if RespectFilteringEnabled then
+		if (RespectFilteringEnabled) then
 			return "Glitch", "Couldn't glitch since RespectFilteringEnabled is enabled"
 		end
 
-		repeat
-			Wait()
+		repeat Wait()
 			for Index, Target in next, GetPlayer(Input) do
-				local Character = GetCharacter(Target)
+				local Character = GetCharacter(Target);
 
-				if Character then
+				if (Character) then
 					for Index, Sound in next, GetClasses(Character, "Sound") do
-						Sound.Playing = true
-						Wait(0.2)
+						Sound.Playing = true; Wait(0.2);
 						Sound.Playing = false
 					end
 				end
 			end
-		until not Get("Glitch")
+		until (not Get("Glitch"))
 	end,
 })
 
@@ -7791,7 +7921,7 @@ Command.Add({
 	Description = "Disables the glitch command",
 	Arguments = {},
 	Task = function()
-		Refresh("Glitch", false)
+		Refresh("Glitch", false);
 		return "Glitch", "Glitch has been disabled"
 	end,
 })
@@ -7804,6 +7934,7 @@ Command.Add({
 		for Index, Audio in next, GetClasses(game, "Sound") do
 			Audio.Playing = false
 		end
+		
 		return "No Audio", "Muted the game"
 	end,
 })
@@ -7816,6 +7947,7 @@ Command.Add({
 		for Index, Audio in next, GetClasses(game, "Sound") do
 			Audio.Playing = true
 		end
+		
 		return "Audio", "Unmuted the game"
 	end,
 })
@@ -7825,7 +7957,7 @@ Command.Add({
 	Description = "Checks if RespectFilteringEnabled is enabled, helpful on commands that require it like mute and glitch",
 	Arguments = {},
 	Task = function()
-		return "RFE", Format("RFE is set to %s", tostring(RespectFilteringEnabled))
+		return "RFE", Format("RFE is set to %s", tostring(RespectFilteringEnabled));
 	end,
 })
 
@@ -7837,18 +7969,17 @@ Command.Add({
 		{ Name = "Distance", Type = "Number" },
 	},
 	Task = function(Input, Distance)
-		Add("ClientBring", true)
+		Add("ClientBring", true);
 
-		repeat
-			Wait()
+		repeat Wait()
 			for Index, Target in next, GetPlayer(Input) do
-				local TRoot = GetRoot(Target)
+				local TargetRoot = GetRoot(Target);
 
-				if TRoot then
-					TRoot.CFrame = Root.CFrame * CFrame.new(0, 0, (Distance and -SetNumber(Distance or 3)))
+				if (TargetRoot) then
+					TargetRoot.CFrame = Root.CFrame * CFrame.new(0, 0, (Distance and -SetNumber(Distance or 3)));
 				end
 			end
-		until not Get("ClientBring")
+		until (not Get("ClientBring"))
 	end,
 })
 
@@ -7857,7 +7988,7 @@ Command.Add({
 	Description = "Disables the ClientBring command",
 	Arguments = {},
 	Task = function()
-		Refresh("ClientBring", false)
+		Refresh("ClientBring", false);
 	end,
 })
 
@@ -7866,8 +7997,7 @@ Command.Add({
 	Description = "Changes the Shift Lock keybinds to use the Control keys",
 	Arguments = {},
 	Task = function()
-		local Bound = LocalPlayer.PlayerScripts.PlayerModule.CameraModule.MouseLockController.BoundKeys
-		Bound.Value = "LeftControl, RightControl"
+		LocalPlayer.PlayerScripts.PlayerModule.CameraModule.MouseLockController.BoundKeys.Value = ("LeftControl, RightControl");
 		return "Control Lock", "Set the shiftlock keybind to Control"
 	end,
 })
@@ -7879,7 +8009,7 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		Root.CFrame = GetRoot(GetPlayer(Input)[1]).CFrame
+		Root.CFrame = (GetRoot(GetPlayer(Input)[1]).CFrame);
 	end,
 })
 
@@ -7892,8 +8022,8 @@ Command.Add({
 	},
 	Task = function(Input, Time)
 		local OldPosition = Root.CFrame
-		Root.CFrame = GetRoot(GetPlayer(Input)[1]).CFrame
-		Wait(SetNumber(Time))
+		
+		Root.CFrame = (GetRoot(GetPlayer(Input)[1]).CFrame); Wait(SetNumber(Time))
 		Root.CFrame = OldPosition
 	end,
 })
@@ -7906,8 +8036,8 @@ Command.Add({
 	},
 	Task = function(Input)
 		local OldPosition = Root.CFrame
-		Root.CFrame = GetRoot(GetPlayer(Input)[1]).CFrame
-		Wait(1)
+		
+		Root.CFrame = (GetRoot(GetPlayer(Input)[1]).CFrame); Wait(1)
 		Root.CFrame = OldPosition
 	end,
 })
@@ -7919,7 +8049,7 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		Humanoid.SeatPart:FindFirstAncestorOfClass("Model"):PivotTo(GetRoot(GetPlayer(Input)[1]).CFrame)
+		Humanoid.SeatPart:FindFirstAncestorOfClass("Model"):PivotTo(GetRoot(GetPlayer(Input)[1]).CFrame);
 	end,
 })
 
@@ -7930,13 +8060,13 @@ Command.Add({
 		{ Name = "Amount", Type = "Number" },
 	},
 	Task = function(Amount)
-		VehicleSpeed = (VehicleSpeed and VehicleSpeed:Disconnect())
+		VehicleSpeed = (VehicleSpeed and VehicleSpeed:Disconnect());
 		VehicleSpeed = Connect(Services.Run.Stepped, function()
-			local SeatPart = Humanoid.SeatPart
+			local SeatPart = (Humanoid.SeatPart);
 
-			if SeatPart then
-				local Speed = SetNumber(Amount) * SeatPart.Throttle
-				SeatPart:ApplyImpulse(SeatPart.CFrame.LookVector * Vector3.new(Speed, Speed, Speed))
+			if (SeatPart) then
+				local Speed = (SetNumber(Amount) * SeatPart.Throttle);
+				SeatPart:ApplyImpulse(SeatPart.CFrame.LookVector * Vector3.new(Speed, Speed, Speed));
 			end
 		end)
 	end,
@@ -7951,8 +8081,8 @@ Command.Add({
 		Refresh("VehicleNoclip", true);
 
 		repeat Wait(0.1)
-			local VehicleSeat = Humanoid.SeatPart
-			local Vehicle = VehicleSeat and VehicleSeat:FindFirstAncestorOfClass("Model");
+			local VehicleSeat = (Humanoid.SeatPart);
+			local Vehicle = (VehicleSeat and VehicleSeat:FindFirstAncestorOfClass("Model"));
 
 			for Wall, Bool in next, NoclipWalls do
 				if (Wall and Wall.Parent) then
@@ -7960,11 +8090,11 @@ Command.Add({
 				end
 			end
 
-			NoclipWalls = {}
+			NoclipWalls = ({});
 
 			if (Vehicle) then
-				local PrimaryPart = Vehicle.PrimaryPart or VehicleSeat
-				local Position = PrimaryPart.Position
+				local PrimaryPart = (Vehicle.PrimaryPart or VehicleSeat);
+				local Position = (PrimaryPart.Position);
 				local VehicleSize = Vehicle:GetExtentsSize();
 				local Parts = workspace:GetPartBoundsInBox(PrimaryPart.CFrame, Vector3.new(70, 30, 70));
 
@@ -7972,16 +8102,9 @@ Command.Add({
 					if (Part:IsA("BasePart") and Part.Anchored and Part.CanCollide) then
 						if (Part.Name ~= "Baseplate") then
 							if (not Part:IsDescendantOf(Vehicle)) and (not Part:IsDescendantOf(Character)) then
-								--if (Part.Position.Y - Position.Y) > (-(Size.Y / 2) + 0.5) then								
 								if (Part.Position.Y - (Part.Size.Y / 2)) > (Position.Y - (VehicleSize.Y / 2) - 0.75) then
 									Part.CanCollide = false
 									NoclipWalls[Part] = true
-							--[[else
-								local Highlight = Create("Highlight", {
-									Parent = Part
-								})
-								
-								game.Debris:AddItem(Highlight, 1)]]
 								end
 							end
 						end
@@ -7996,7 +8119,7 @@ Command.Add({
 			end
 		end
 
-		NoclipWalls = {}
+		NoclipWalls = ({});
 	end,
 })
 
@@ -8050,11 +8173,12 @@ Command.Add({
 			if (HumanoidConnected ~= Humanoid) or (RootConnected ~= Root) then
 				Connection:Disconnect();
 				Connection = Connect(Humanoid.StateChanged, StateConnection);
+				
 				HumanoidConnected = Humanoid
 				RootConnected = Root
 
 				if (BodyVelocity) then
-					Destroy(BodyVelocity)
+					Destroy(BodyVelocity);
 					BodyVelocity = nil
 				end
 			end
@@ -8074,9 +8198,11 @@ Command.Add({
 			if (JumpCount > 2 and Root.Velocity.Magnitude >= 10) then 
 				local Velocity = Root.CFrame.LookVector * (JumpCount * 7)
 				local Magnitude = Velocity.Magnitude
+				
 				if Magnitude < 16 then
 					Velocity *= (16 / Magnitude);
 				end
+				
 				BodyVelocity.Velocity = Velocity
 				BodyVelocity.MaxForce = Vector3.new(2500, 0, 2500);
 			else
@@ -8088,10 +8214,10 @@ Command.Add({
 		Connection:Disconnect();
 
 		if BodyVelocity then 
-			Destroy(BodyVelocity)
+			Destroy(BodyVelocity);
 		end
 
-		if Character:FindFirstChild("Animate") then
+		if (Character:FindFirstChild("Animate")) then
 			Character:FindFirstChild("Animate").Enabled = true
 		end
 	end,
@@ -8117,7 +8243,7 @@ Command.Add({
 			AnimationId = "rbxassetid://2506281703"
 		})
 
-		local SitAnimTrack = Humanoid:LoadAnimation(SitAnimation)
+		local SitAnimTrack = Humanoid:LoadAnimation(SitAnimation);
 		SitAnimTrack.Looped = true
 		SitAnimTrack.Priority = Enum.AnimationPriority.Action
 
@@ -8133,7 +8259,7 @@ Command.Add({
 			end
 		until (not Get("WalkSit"))
 
-		SitAnimTrack:Stop()
+		SitAnimTrack:Stop();
 	end,
 })
 
@@ -8151,7 +8277,7 @@ Command.Add({
 	Description = "Disables the VehicleSpeed command",
 	Arguments = {},
 	Task = function()
-		VehicleSpeed = (VehicleSpeed and VehicleSpeed:Disconnect())
+		VehicleSpeed = (VehicleSpeed and VehicleSpeed:Disconnect());
 	end,
 })
 
@@ -8168,7 +8294,7 @@ Command.Add({
 			end
 		end
 
-		Seats[math.random(1, #Seats)]:Sit(Humanoid)
+		Seats[math.random(1, #Seats)]:Sit(Humanoid);
 	end,
 })
 
@@ -8185,7 +8311,7 @@ Command.Add({
 			end
 		end
 
-		Seats[math.random(1, #Seats)]:Sit(Humanoid)
+		Seats[math.random(1, #Seats)]:Sit(Humanoid);
 	end,
 })
 
@@ -8250,7 +8376,7 @@ Command.Add({
 					Connection:Disconnect();
 				end
 
-				Create()
+				Create();
 			end
 		until (not Get("Reach"))
 
@@ -8287,7 +8413,7 @@ Command.Add({
 		{ Name = "Size", Type = "Number" },
 	},
 	Task = function(Size)
-		local Length = (SetNumber(Size) or 10)
+		local Length = (SetNumber(Size) or 10);
 		local Overlap = OverlapParams.new();
 
 		if (firetouchinterest) then
@@ -8343,14 +8469,8 @@ Command.Add({
 	},
 	Task = function(Input)
 		for Index, Admin in next, GetPlayer(Input) do
-			Command.Whitelist(Admin)
-			Chat(
-				Format(
-					'/w %s You are now whitelisted to COCOS POV ADMIn, prefix is "%s"',
-					Admin.Name,
-					Settings.ChatPrefix
-				)
-			)
+			Command.Whitelist(Admin);
+			Chat(Format('/w %s You are now whitelisted to Cmd, prefix is "%s"', Admin.Name, Settings.ChatPrefix))
 		end
 	end,
 })
@@ -8363,9 +8483,9 @@ Command.Add({
 	},
 	Task = function(Input)
 		for Index, Admin in next, GetPlayer(Input) do
-			if Admins[Admin.UserId] then
-				Command.RemoveWhitelist(Admin)
-				Chat(Format("/w %s You are no longer an admin!", Admin.Name))
+			if (Admins[Admin.UserId]) then
+				Command.RemoveWhitelist(Admin);
+				Chat(Format("/w %s You are no longer an admin!", Admin.Name));
 			end
 		end
 	end,
@@ -8378,12 +8498,11 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		Refresh("Follow", true)
+		Refresh("Follow", true);
 
-		repeat
-			Wait()
-			Humanoid:MoveTo(GetRoot(GetPlayer(Input)[1]).Position)
-		until not Get("Follow")
+		repeat Wait()
+			Humanoid:MoveTo(GetRoot(GetPlayer(Input)[1]).Position);
+		until (not Get("Follow"))
 	end,
 })
 
@@ -8392,7 +8511,7 @@ Command.Add({
 	Description = "Disables the Follow command",
 	Arguments = {},
 	Task = function()
-		Refresh("Follow", false)
+		Refresh("Follow", false);
 	end,
 })
 
@@ -8401,12 +8520,14 @@ Command.Add({
 	Description = "Click to teleport to your mouse position",
 	Arguments = {},
 	Task = function()
-		Refresh("ClickTP", true)
+		Refresh("ClickTP", true);
+		
 		Connect(Mouse.Button1Down, function()
-			if Get("ClickTP") then
-				Root.CFrame = Mouse.Hit * CFrame.new(0, 3, 0)
+			if (Get("ClickTP")) then
+				Root.CFrame = (Mouse.Hit * CFrame.new(0, 3, 0));
 			end
 		end)
+		
 		return "Click TP", "Click TP has been enabled"
 	end,
 })
@@ -8416,7 +8537,7 @@ Command.Add({
 	Description = "Disables the ClickTp command",
 	Arguments = {},
 	Task = function()
-		Refresh("ClickTP", false)
+		Refresh("ClickTP", false);
 		return "Click TP", "Click TP has been disabled"
 	end,
 })
@@ -8428,14 +8549,13 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Target = GetPlayer(Input)[1]
-		Refresh("Stare", true)
+		local Target = GetPlayer(Input)[1];
+		Refresh("Stare", true);
 
-		repeat
-			Wait()
-			local TRoot = GetRoot(Target).Position
-			Root.CFrame = CFrame.new(Root.Position, Vector3.new(TRoot.X, Root.Position.y, TRoot.Z))
-		until not Get("Stare")
+		repeat Wait()
+			local TRoot = (GetRoot(Target).Position);
+			Root.CFrame = CFrame.new(Root.Position, Vector3.new(TRoot.X, Root.Position.y, TRoot.Z));
+		until (not Get("Stare"))
 	end,
 })
 
@@ -8444,7 +8564,7 @@ Command.Add({
 	Description = "Disables the Stare command",
 	Arguments = {},
 	Task = function()
-		Refresh("Stare", false)
+		Refresh("Stare", false);
 	end,
 })
 
@@ -8454,10 +8574,10 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Humanoid.Sit = true
-		Root.CFrame = Root.CFrame * CFrame.Angles(1.5, 0, 0)
-		Wait(0.1)
+		Root.CFrame = (Root.CFrame * CFrame.Angles(1.5, 0, 0)); Wait(0.1)
+		
 		for Index, Track in next, Humanoid:GetPlayingAnimationTracks() do
-			Track:Stop()
+			Track:Stop();
 		end
 	end,
 })
@@ -8467,12 +8587,14 @@ Command.Add({
 	Description = "Automatically rejoins if you get KICKED",
 	Arguments = {},
 	Task = function()
-		Add("AutoRejoin", true)
+		Add("AutoRejoin", true);
+		
 		Connect(GetService("GuiService").ErrorMessageChanged, function()
-			if Get("AutoRejoin") then
-				Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+			if (Get("AutoRejoin")) then
+				Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId);
 			end
 		end)
+		
 		return "Auto Rejoin", "Auto Rejoin enabled"
 	end,
 })
@@ -8482,7 +8604,7 @@ Command.Add({
 	Description = "Disables the AutoRejoin command",
 	Arguments = {},
 	Task = function()
-		Add("AutoRejoin", false)
+		Add("AutoRejoin", false);
 		return "Auto Rejoin", "Auto Rejoin disabled"
 	end,
 })
@@ -8494,13 +8616,15 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Sent = 0
+		local Sent = (0);
+		
 		for Index, Target in next, GetPlayer(Input) do
-			if Target ~= LocalPlayer then
-				LocalPlayer:RequestFriendship(Target)
+			if (Target ~= LocalPlayer) then
+				LocalPlayer:RequestFriendship(Target);
 				Sent += 1
 			end
 		end
+		
 		return "Friend", Format("Sent friend request to %s player(s)", Sent)
 	end,
 })
@@ -8512,14 +8636,14 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Targets = GetPlayer(Input)
-		local Roots = {}
+		local Targets = GetPlayer(Input);
+		local Roots = ({});
 
 		for Index, Target in next, Targets do
 			Roots[#Roots + 1] = GetRoot(Target);
 		end
 
-		Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, Unpack(Roots))
+		Services.Sound:SetListener(Enum.ListenerType.ObjectPosition, Unpack(Roots));
 		return "Listen", Format("Listening to %s player(s)", #Roots)
 	end,
 })
@@ -8531,13 +8655,12 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Target = GetPlayer(Input)[1]
-		Refresh("View", true)
+		local Target = GetPlayer(Input)[1];
+		Refresh("View", true);
 
-		repeat
-			Wait()
+		repeat Wait()
 			Camera.CameraSubject = GetHumanoid(Target)
-		until not Get("View")
+		until (not Get("View"))
 	end,
 })
 
@@ -8546,7 +8669,7 @@ Command.Add({
 	Description = "Disables the view command",
 	Arguments = {},
 	Task = function()
-		Refresh("View", false)
+		Refresh("View", false);
 		Camera.CameraSubject = Humanoid
 	end,
 })
@@ -8557,7 +8680,8 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		if (not Freecam) then
-			Freecam = {}
+			Freecam = ({});
+			
 			local pi = math.pi
 			local abs = math.abs
 			local clamp = math.clamp
@@ -9023,7 +9147,7 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Target)
-		Freecam:EnableFreecam(GetRoot(GetPlayer(Target)[1]).CFrame)
+		Freecam:EnableFreecam(GetRoot(GetPlayer(Target)[1]).CFrame);
 	end,
 })
 
@@ -9043,23 +9167,23 @@ Command.Add({
 		{ Name = "Distance", Type = "Number" },
 	},
 	Task = function(Distance)
-		Refresh("Walkfling", true)
+		Refresh("Walkfling", true);
+		
 		Spawn(function()
 			local Velocity = Root.Velocity
 
-			repeat
-				Wait()
-				if
-					GetPlayer("closest")[1]:DistanceFromCharacter(Root.Position)
-					<= (Distance and SetNumber(Distance, 0, 9e9) or 10)
-				then
+			repeat Wait()
+				if (GetPlayer("closest")[1]:DistanceFromCharacter(Root.Position) <= (Distance and SetNumber(Distance, 0, 9e9) or 10)) then
 					Velocity = Root.Velocity
-					Root.Velocity = (Velocity * 10000) + Vector3.new(0, 10000, 0)
-					CWait(Services.Run.RenderStepped)
+					
+					Root.Velocity = (Velocity * 10000) + Vector3.new(0, 10000, 0);
+					CWait(Services.Run.RenderStepped);
+					
 					Root.Velocity = Velocity
 				end
-			until not Get("Walkfling")
+			until (not Get("Walkfling"))
 		end)
+		
 		return "Walk Fling", "Walk Fling has been enabled"
 	end,
 })
@@ -9069,7 +9193,7 @@ Command.Add({
 	Description = "Disables the WalkFling command",
 	Arguments = {},
 	Task = function()
-		Refresh("Walkfling", false)
+		Refresh("Walkfling", false);
 		return "Walk Fling", "Walk Fling has been disabled"
 	end,
 })
@@ -9080,8 +9204,10 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		for Index = 1, 3 do
-			Services.Players:Chat(Format("!clear"))
+			local ToChat = ({ [1] = "!clear", [2] = "abcdefghijk", [3] = "!clear" });
+			Services.Players:Chat(ToChat[Index]);
 		end
+		
 		return "Filter", "Reset"
 	end,
 })
@@ -9094,12 +9220,10 @@ Command.Add({
 		{ Name = "Second Split", Type = "String" },
 	},
 	Task = function(First, Second)
-		if First and Second then
-			Command.Parse(true, "ref")
-			Wait(0.2)
-			Chat(First)
-			Command.Parse(true, "ref")
-			Wait(0.5)
+		if (First and Second) then
+			Command.Parse(true, "ref"); Wait(0.2);
+			Chat(First);
+			Command.Parse(true, "ref"); Wait(0.5);
 			Chat(Second)
 		else
 			return "Split", "One or more arguments are missing"
@@ -9112,13 +9236,13 @@ Command.Add({
 	Description = "Flings players using tools in your inventory",
 	Arguments = {},
 	Task = function()
-		local Tools = LocalPlayer.Backpack:GetChildren()
+		local Tools = LocalPlayer.Backpack:GetChildren();
 
-		if #Tools > 0 then
-			local SelectedTool = Tools[math.random(1, #Tools)]
+		if (#Tools > 0) then
+			local SelectedTool = (Tools[math.random(1, #Tools)]);
 
+			SelectedTool.GripPos = Vector3.new(0, -10000, 0);
 			SelectedTool.Parent = Character
-			SelectedTool.GripPos = Vector3.new(0, -10000, 0)
 			SelectedTool.Handle.Massless = true
 		else
 			return "Tool Fling", "No tool found"
@@ -9135,13 +9259,13 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Targets = GetPlayer(Input)
+		local Targets = GetPlayer(Input);
 
-		if #Targets == 0 then
+		if (#Targets == 0) then
 			return "Fling", "No targets found"
 		end
 
-		local Successes = Fling(Targets)
+		local Successes = Fling(Targets);
 		return "Fling", Format("Flinged (%s/%s) player(s) - NOT ACCURATE (can be higher)", Successes or 0, #Targets)
 	end,
 })
@@ -9153,13 +9277,13 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		local Targets = GetPlayer(Input)
+		local Targets = GetPlayer(Input);
 
-		if #Targets == 0 then
+		if (#Targets == 0) then
 			return "Fling", "No targets found"
 		end
 
-		local Successes = Fling(Targets, 3, 0)
+		local Successes = Fling(Targets, 3, 0);
 		return "Fling", Format("Successfully launched (%s/%s) player(s)", Successes or 0, #Targets)
 	end,
 })
@@ -9171,10 +9295,11 @@ Command.Add({
 		{ Name = "Target", Type = "Player" },
 	},
 	Task = function(Input)
-		Refresh("Fling", true)
+		Refresh("Fling", true);
+		
 		repeat Wait();
-			Fling(GetPlayer(Input))
-		until not Get("Fling")
+			Fling(GetPlayer(Input));
+		until (not Get("Fling"))
 	end,
 })
 
@@ -9194,18 +9319,17 @@ Command.Add({
 	Task = function()
 		local Connection = Get("Clickfling")
 		Connection = (Connection and Connection:Disconnect())
-		Add(
-			"Clickfling",
-			Connect(Mouse.Button1Down, function()
-				local Target = Mouse.Target
-				local Model = Target:FindFirstAncestorOfClass("Model")
-				local isPlayer = Services.Players:GetPlayerFromCharacter(Model)
+		
+		Add("Clickfling", Connect(Mouse.Button1Down, function()
+			local Target = (Mouse.Target);
+			local Model = Target:FindFirstAncestorOfClass("Model");
+			local PlayerObject = Services.Players:GetPlayerFromCharacter(Model);
 
-				if isPlayer then
-					Fling({ isPlayer })
-				end
-			end)
-		)
+			if (PlayerObject) then
+				Fling({ PlayerObject });
+			end
+		end))
+		
 		return "Clickfling", "Enabled"
 	end,
 })
@@ -9215,26 +9339,28 @@ Command.Add({
 	Description = "Disables the ClickFling command",
 	Arguments = {},
 	Task = function()
-		local Connection = Get("Clickfling")
-		Connection = (Connection and Connection:Disconnect())
+		local Connection = Get("Clickfling");
+		Connection = (Connection and Connection:Disconnect());
+		
 		return "Clickfling", "Disabled"
 	end,
 })
 
 -- :: SETUP :: --
-if Check("File") then
-	local LoadedPlugins = 0
-	for Index, Folder in next, { "Cmd", "Cmd/Logs", "Cmd/Plugins" } do
-		if not isfolder(Folder) then
-			makefolder(Folder)
-			
+if (Check("File")) then
+	local LoadedPlugins = (0);
+	
+	for Index, Folder in next, ({ "Cmd", "Cmd/Logs", "Cmd/Plugins" }) do
+		if (not isfolder(Folder)) then
+			makefolder(Folder);
+
 			if (Folder == "Cmd") then
 				Command.Parse(true, "tutorial");
 			end
 		end
 	end
 
-	Cmd().Build = {
+	Cmd().Build = ({
 		GetCharacter = GetCharacter,
 		GetHumanoid = GetHumanoid,
 		GetRoot = GetRoot,
@@ -9249,35 +9375,33 @@ if Check("File") then
 		Notify = function(Config)
 			return API:Notify(Config)
 		end,
-	}
+	})
 
 	for Index, File in next, listfiles("Cmd/Plugins") do
 		local Success, Plugin = pcall(function()
 			LoadedPlugins += 1
-			return loadfile(File)()
+			return loadfile(File)();
 		end)
 
 		if Success then
-			do
-				for Index, PluginCommand in next, Plugin.Commands do
-					Command.Add({
-						Aliases = PluginCommand.Aliases or { "couldnt-get-aliases" },
-						Description = PluginCommand.Description or "No description",
-						Arguments = PluginCommand.Arguments or {},
-						Plugin = true,
-						Task = PluginCommand.Callback or function()
-							return "plugin command", "this plugin does not have a callback."
-						end,
-					})
-				end
-
-				API:Notify({
-					Title = Plugin.Name,
-					Description = Plugin.Description,
-					Duration = 5,
-					Type = "Info",
+			for Index, PluginCommand in next, Plugin.Commands do
+				Command.Add({
+					Aliases = (PluginCommand.Aliases or { "couldnt-get-aliases" }),
+					Description = (PluginCommand.Description or "No description"),
+					Arguments = (PluginCommand.Arguments or {}),
+					Plugin = true,
+					Task = PluginCommand.Callback or function()
+						return "plugin command", "this plugin does not have a callback."
+					end,
 				})
 			end
+
+			API:Notify({
+				Title = Plugin.Name,
+				Description = Plugin.Description,
+				Duration = 5,
+				Type = "Info",
+			})
 		else
 			API:Notify({
 				Title = File,
@@ -9291,22 +9415,18 @@ end
 
 --> Autofill & Recommendation
 for Index, Command in next, Commands do
-	Fill.Add(Command)
+	Fill.Add(Command);
 end
 
 Connect(Changed(Input, "Text"), function()
-	Fill.Search(Input.Text)
-	Fill.Recommend(Input.Text)
+	Fill.Search(Input.Text);
+	Fill.Recommend(Input.Text);
 end)
 
 Connect(Services.Input.InputBegan, function(Key)
-	if
-		Key.KeyCode == Enum.KeyCode.Tab
-		and Press.Title.Text == "Tab"
-		and Services.Input:GetFocusedTextBox() == Input
-	then
+	if (Key.KeyCode == Enum.KeyCode.Tab) and (Press.Title.Text == "Tab") and (Services.Input:GetFocusedTextBox() == Input) then
 		local Text = Recommend.Text
-		Wait()
+		Wait();
 		Input.Text = Text
 		Input.CursorPosition = #Text + 1
 	end
@@ -9316,13 +9436,12 @@ end)
 local ChatDebounce = false
 local OpenCommandBar = function()
 	local Transparency = Settings.Theme.Transparency
-	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding")
-	Wait()
+	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding");
 
-	Input:CaptureFocus()
+	Input:CaptureFocus();
 	BarShadow.Transparency = 1
 	BarInner.Transparency = 1
-	Padding.PaddingTop = UDim.new(0, -5)
+	Padding.PaddingTop = UDim.new(0, -5);
 
 	MultiSet(CommandBar, {
 		GroupTransparency = 1,
@@ -9330,26 +9449,25 @@ local OpenCommandBar = function()
 		Position = UDim2.new(0.5, 0, 0.5, -9),
 	})
 
-	Tween(BarShadow, 0.2, { Transparency = 0.2 })
-	Tween(BarInner, 0.2, { Transparency = 0.9 })
-	Tween(Padding, 0.2, { PaddingTop = UDim.new(0, 0) })
+	Tween(BarShadow, 0.2, { Transparency = 0.2 });
+	Tween(BarInner, 0.2, { Transparency = 0.9 });
+	Tween(Padding, 0.2, { PaddingTop = UDim.new(0, 0) });
 	Tween(CommandBar, 0.2, {
 		GroupTransparency = (Transparency == 0) and 0.07 or Settings.Theme.Transparency,
-	}, { EasingDirection = Enum.EasingDirection.In, EasingStyle = Enum.EasingStyle.Linear })
+	}, { EasingDirection = Enum.EasingDirection.In, EasingStyle = Enum.EasingStyle.Linear });
 end
 
 ConnectMessaged(LocalPlayer, function(Message)
-	if not ChatDebounce and Find(Message, Settings.ChatPrefix) then
+	if (not ChatDebounce and Find(Message, Settings.ChatPrefix)) then
 		ChatDebounce = true
-		Command.Parse(false, Split(Message, Settings.ChatPrefix)[2])
-		Wait()
+		Command.Parse(false, Split(Message, Settings.ChatPrefix)[2]); Wait()
 		ChatDebounce = false
 	end
 end)
 
 Connect(Mouse.KeyDown, function(Key)
-	if Lower(Key) == Lower(Settings.Prefix) then
-		OpenCommandBar()
+	if (Lower(Key) == Lower(Settings.Prefix)) then
+		OpenCommandBar();
 	end
 end)
 
@@ -9362,9 +9480,7 @@ Connect(Input.FocusLost, function()
 	Tween(Padding, 0.2, { PaddingTop = UDim.new(0, 5) });
 	Tween(CommandBar, 0.2, {
 		GroupTransparency = 1,
-	}, { EasingDirection = Enum.EasingDirection.In, EasingStyle = Enum.EasingStyle.Linear })
-
-	Wait(0.2);
+	}, { EasingDirection = Enum.EasingDirection.In, EasingStyle = Enum.EasingStyle.Linear }); Wait(0.2);
 	CommandBar.Visible = false
 end)
 
@@ -9372,23 +9488,23 @@ do
 	local Interface = Cmd().UI
 	local API = Cmd().API
 
-	if Check("File") and not isfile("Cmd/Settings.json") then
-		SaveSettings()
+	if (Check("File") and not isfile("Cmd/Settings.json")) then
+		SaveSettings();
 	end
 
-	Settings = GetSavedSettings()
+	Settings = GetSavedSettings();
 
-	for AliasName, CommandName in next, Settings.Aliases or {} do
-		local Cmd = Command.Find(Lower(CommandName))
+	for AliasName, CommandName in next, (Settings.Aliases or {}) do
+		local Cmd = Command.Find(Lower(CommandName));
 
-		if Cmd and CommandName and AliasName then
-			local Aliases = Cmd[1]
-			Aliases[#Aliases + 1] = Lower(AliasName)
+		if (Cmd and CommandName and AliasName) then
+			local Aliases = Cmd[1];
+			Aliases[#Aliases + 1] = Lower(AliasName);
 		end
 	end
 
-	if Settings.Toggles.Developer then
-		if Interface then
+	if (Settings.Toggles.Developer) then
+		if (Interface) then
 			Interface.Parent = nil
 		end
 
@@ -9404,7 +9520,7 @@ do
 			end
 		end)
 	else
-		if Interface and API then
+		if (Interface and API) then
 			UI.Parent = nil
 			API:Notify({
 				Title = "Already loaded",
@@ -9417,32 +9533,28 @@ do
 		end
 	end
 
-	SetTheme()
+	SetTheme();
 end
 
 Spawn(function()
 	-- making opening button work
-	Animate.Drag(Button, true)
-	Connect(Button.MouseButton1Click, OpenCommandBar)
+	Animate.Drag(Button, true);
+	Connect(Button.MouseButton1Click, OpenCommandBar);
 
 	if (Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
 		Button.Visible = Settings.Toggles.CommandBarOpenButtonShown
 	end
 
 	-- loading internal ui
-	if Settings.Toggles.InternalUI then
-		loadstring(GetModule("internal-ui.lua"))()
+	if (Settings.Toggles.InternalUI) then
+		loadstring(GetModule("internal-ui.lua"))();
 	end
 
 	-- remove other admin prompts
-	if Settings.Toggles.RemoveCommandBars then
+	if (Settings.Toggles.RemoveCommandBars) then
+		local Targets = ({ "KCoreUI", "HDAdminGuis", "Essentials Client", "Cmdr" });
 		local ClearCommandBar = function(UI)
-			if
-				UI.Name == "KCoreUI"
-				or UI.Name == "HDAdminGuis"
-				or UI.Name == "Essentials Client"
-				or UI.Name == "Cmdr"
-			then
+			if (Discover(Targets, UI.Name)) then
 				Destroy(UI);
 			end
 		end
@@ -9458,8 +9570,9 @@ Spawn(function()
 
 	-- staff notifier
 	Connect(Services.Players.PlayerAdded, function(Player)
-		local StaffMember, Role = IsStaff(Player)
-		if StaffMember and Settings.Toggles.StaffNotifier then
+		local StaffMember, Role = IsStaff(Player);
+		
+		if (StaffMember and Settings.Toggles.StaffNotifier) then
 			API:Notify({
 				Title = "Staff Member has joined",
 				Description = Format("Name: %s (@%s)\nRole: <b>%s</b>", Player.DisplayName, Player.Name, Role),
@@ -9469,12 +9582,12 @@ Spawn(function()
 		end
 	end)
 
-	local Staff = {}
-	local ToSearch = Services.Players:GetPlayers()
-	local Searched = 0
+	local Staff = ({});
+	local ToSearch = Services.Players:GetPlayers();
+	local Searched = (0);
 
 	for Index, Player in next, ToSearch do
-		Spawn(function() -- since getroleingroup is slow we adding a spawn to make it faster
+		Spawn(function()
 			if (Player ~= LocalPlayer and IsStaff(Player) and UI.Parent and Settings.Toggles.StaffNotifier) then
 				Insert(Staff, Player.Name)
 			end
@@ -9484,17 +9597,13 @@ Spawn(function()
 	end
 
 	repeat
-		Wait()
+		Wait();
 	until (Searched == #ToSearch)
 
 	if (#Staff > 0) then
 		API:Notify({
 			Title = "Staff Detected!",
-			Description = Format(
-				"We have found <b>%s</b> staff member(s) in your game! (%s)",
-				tostring(#Staff),
-				Concat(Staff, " , ")
-			),
+			Description = Format("We have found <b>%s</b> staff member(s) in your game! (%s)", tostring(#Staff), Concat(Staff, " , ")),
 			Duration = 20,
 			Type = "Warn",
 		})
@@ -9511,36 +9620,27 @@ Cmd().UI = UI
 Cmd().API = API
 
 Spawn(function()
-	if not Character then
+	if (not Character) then
 		repeat
-			Wait()
-		until Character and Humanoid
+			Wait();
+		until (Character and Humanoid)
 	end
 
-	local OldHealth = (Humanoid and Humanoid.Health)
+	local OldHealth = (Humanoid and Humanoid.Health);
 
-	Feature:ConnectEvent("PlayerRemoved")
-	Feature:ConnectEvent("AutoExecute")
-	Feature:ConnectEvent("Chatted", LocalPlayer.Chatted)
-	Feature:ConnectEvent("CharacterAdded", LocalPlayer.CharacterAdded)
-	Feature:ConnectEvent("Died", nil, true)
+	Feature:ConnectEvent("PlayerRemoved");
+	Feature:ConnectEvent("AutoExecute");
+	Feature:ConnectEvent("Chatted", LocalPlayer.Chatted);
+	Feature:ConnectEvent("CharacterAdded", LocalPlayer.CharacterAdded);
+	Feature:ConnectEvent("Died", nil, true);
 	Feature:ConnectEvent("Damaged", nil, true, function(Humanoid)
 		if (not OldHealth) or (Humanoid.Health <= OldHealth) then
 			return true
 		end
 
-		OldHealth = Humanoid.Health
+		OldHealth = (Humanoid.Health);
 	end)
 end)
-
-do
-	Cmd()._Cmd = {
-		SetTheme = function(NewTheme)
-			Settings.Theme = NewTheme
-			SetTheme();
-		end
-	}
-end
 
 API:Notify({
 	Title = "Welcome (NEW UPDATE)",
@@ -9550,13 +9650,13 @@ API:Notify({
 		Settings.Version,
 		Settings.Prefix,
 		Settings.ChatPrefix,
-		"discord.gg/JSkvFkC9Eq"
+		"discord.gg/pBDqEj4BSP"
 	),
 	Duration = 15,
 	Type = "Info",
 })
 
-if Methods.Check() then
+if (Methods.Check()) then
 	API:Notify({
 		Title = "Possible game vulnerability found!",
 		Description = "This game has a possible vulnerability where you can delete Instances, run the command <b>;vuln</b> and test if it works!",
@@ -9572,7 +9672,7 @@ if Methods.Check() then
 			local Tab = Library.Tabs["Vulnerability"]
 
 			if Tab then
-				Tab.Open()
+				Tab.Open();
 			else
 				local Window = Library:CreateWindow({
 					Title = "Vulnerability",
