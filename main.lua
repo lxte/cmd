@@ -426,6 +426,22 @@ local Chat = function(Message)
 	Services.Chat.TextChannels.RBXGeneral:SendAsync(Message);
 end
 
+local IsCorrectInput = function(Input: InputObject, Target: Enum.KeyCode | Enum.UserInputType)
+	if (Input and Target) then
+		local Name = Target.Name
+		local KeyCode = Input.KeyCode.Name
+		local InputType = Input.UserInputType.Name
+
+		if (KeyCode == Name) or (InputType == Name) then
+			return true
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
+
 local Foreach = function(Table, Func, Loop)
 	for Index, Value in next, Table do
 		pcall(function()
@@ -688,13 +704,13 @@ local PlayerArguments = {
 
 	["others"] = function()
 		local Targets = ({});
-		
+
 		Foreach(Services.Players:GetPlayers(), function(Index, Player)
 			if (Player ~= LocalPlayer) then
 				Insert(Targets, Player);
 			end
 		end)
-		
+
 		return Targets
 	end,
 
@@ -704,7 +720,7 @@ local PlayerArguments = {
 
 	["random"] = function()
 		local Amount = Services.Players:GetPlayers();
-		
+
 		return ({ Amount[math.random(1, #Amount)] })
 	end,
 
@@ -722,125 +738,125 @@ local PlayerArguments = {
 
 	["seated"] = function()
 		local Targets = ({});
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			local PlayerHumanoid = GetHumanoid(Player);
-			
+
 			if (PlayerHumanoid and PlayerHumanoid.Sit) then
 				Insert(Targets, Player);
 			end
 		end
-		
+
 		return Targets
 	end,
 
 	["stood"] = function()
 		local Targets = ({});
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			local PlayerHumanoid = GetHumanoid(Player);
-			
+
 			if (PlayerHumanoid and not PlayerHumanoid.Sit) then
 				Insert(Targets, Player);
 			end
 		end
-		
+
 		return Targets
 	end,
 
 	["closest"] = function()
 		local Targets = ({});
 		local ClosestDistance, ClosestPlayer = (9e9), (nil);
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			local Distance = Player:DistanceFromCharacter(Root.Position);
-			
+
 			if (Player ~= LocalPlayer) and (Distance < ClosestDistance) then
 				ClosestDistance = Distance
 				ClosestPlayer = Player
 			end
 		end
-		
+
 		return ({ ClosestPlayer })
 	end,
 
 	["farthest"] = function()
 		local Targets = ({});
 		local FurthestDistance, FurthestPlayer = (0), (nil);
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			local Distance = Player:DistanceFromCharacter(Root.Position);
-			
+
 			if (Player ~= LocalPlayer) and (Distance > FurthestDistance) then
 				FurthestDistance = Distance
 				FurthestPlayer = Player
 			end
 		end
-		
+
 		return ({ FurthestPlayer })
 	end,
 
 	["enemies"] = function()
 		local Targets = ({});
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			if (Player.Team ~= LocalPlayer.Team) then
 				Insert(Targets, Player);
 			end
 		end
-		
+
 		return Targets
 	end,
 
 	["dead"] = function()
 		local Targets = ({});
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			local PlayerHumanoid = GetHumanoid(Player);
-			
+
 			if (PlayerHumanoid and PlayerHumanoid.Health == 0) then
 				Insert(Targets, Player);
 			end
 		end
-		
+
 		return Targets
 	end,
 
 	["alive"] = function()
 		local Targets = ({});
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			local PlayerHumanoid = GetHumanoid(Player);
-			
+
 			if (PlayerHumanoid and PlayerHumanoid.Health > 0) then
 				Insert(Targets, Player);
 			end
 		end
-		
+
 		return Targets
 	end,
 
 	["friends"] = function()
 		local Targets = ({});
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			if (Player:IsFriendsWith(LocalPlayer.UserId)) and (LocalPlayer ~= Player) then
 				Insert(Targets, Player);
 			end
 		end
-		
+
 		return Targets
 	end,
 
 	["nonfriends"] = function()
 		local Targets = ({})
-		
+
 		for Index, Player in next, GetClasses(Services.Players, "Player") do
 			if (not Player:IsFriendsWith(LocalPlayer.UserId)) and (LocalPlayer ~= Player) then
 				Insert(Targets, Player)
 			end
 		end
-		
+
 		return Targets
 	end,
 }
@@ -853,17 +869,17 @@ local GetPlayer = function(Target)
 		return PlayerType();
 	else
 		local Specific = ({});
-		
+
 		Foreach(Services.Players:GetPlayers(), function(Index, Player)
 			local Name, Display = Lower(Player.Name), Lower(Player.DisplayName);
-			
+
 			if (Sub(Name, 1, #Target) == Target) then
 				Insert(Specific, Player);
 			elseif (Sub(Display, 1, #Target) == Target) then
 				Insert(Specific, Player);
 			end
 		end)
-		
+
 		return Specific
 	end
 end
@@ -888,7 +904,7 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 
 		repeat Wait()
 			Velocity = Root.Velocity
-			
+
 			Root.Velocity = Velocity * 10000 + Vector3.new(0, 10000, 0);
 			CWait(Services.Run.RenderStepped);
 			Root.Velocity = Velocity
@@ -960,7 +976,7 @@ Spawn(function()
 
 	local BodyVelocity, BodyGyro = Create("BodyVelocity", {
 		MaxForce = Vector3.new(1, 1, 1) * 10 ^ 6,
-		P = 10 ^ 4,
+		P = 10 ^ 6,
 	}), Create("BodyGyro", {
 		P = 10 ^ 6,
 		MaxTorque = Vector3.new(1, 1, 1) * 10 ^ 6,
@@ -1393,15 +1409,15 @@ function Library:CreateWindow(Config: {
 
 	Library.Tabs[Config.Title].Open();
 	Animate.Drag(Window);
-	
+
 	local SetShadow = function(Bool)
 		Spawn(function()
 			Shadow.Visible = true
-			
+
 			Tween(Shadow, 0.5, {
 				BackgroundTransparency = (Bool and 0.7 or 1)
 			}); Wait(0.5)
-			
+
 			Shadow.Visible = Bool
 		end)
 	end
@@ -1499,13 +1515,13 @@ function Library:CreateWindow(Config: {
 
 		Animations:Component(Button);
 		Component:Set(Button, Config.Title, Config.Description);
-		
+
 		MultiSet(Tab, { Parent = Tabs, Name = Config.Title });
 		MultiSet(Button, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
 		})
-		
+
 		Connect(Button.MouseButton1Click, function()
 			Animations:SetTab(Config.Title);
 		end)
@@ -1516,6 +1532,7 @@ function Library:CreateWindow(Config: {
 		Description: string, 
 		Options: {}, 
 		Tab: Instance, 
+		Default: string?,
 		Callback: any 
 	})
 		local Dropdown = Clone(Components.Dropdown);
@@ -1529,7 +1546,7 @@ function Library:CreateWindow(Config: {
 			Tween(Background, 0.25, { BackgroundTransparency = 0.6 });
 			Animate.Open(Example, 0);
 			Example.Parent = Window
-			
+
 			for Index, Button in next, Buttons:GetChildren() do
 				if (Button:IsA("TextButton")) then
 					Animations:Component(Button, true);
@@ -1573,6 +1590,10 @@ function Library:CreateWindow(Config: {
 
 		Component:Set(Dropdown, Config.Title, Config.Description);
 		Animations:Component(Dropdown);
+		
+		if (Config.Default) then
+			Text.Text = Config.Default
+		end
 
 		MultiSet(Dropdown, {
 			Name = Config.Title,
@@ -1615,7 +1636,7 @@ function Library:CreateWindow(Config: {
 
 		Component:Set(MultiActions, Config.Title, Config.Description);
 		Holder.UIListLayout.FillDirection = (Enum.FillDirection[Config.Direction or "Vertical"]);
-		
+
 		MultiSet(MultiActions, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
@@ -1623,11 +1644,11 @@ function Library:CreateWindow(Config: {
 
 		for _, Action in next, Config.Actions do
 			local Button = Holder.ActionTemplate:Clone();
-			
+
 			Button.Parent = Holder
 			Button.Visible = true
 			Button.Title.Text = Action
-			
+
 			Animations:Component(Button);
 			Connect(Button.MouseButton1Click, function()
 				Config.Callback(Action, MultiActions)
@@ -1635,8 +1656,7 @@ function Library:CreateWindow(Config: {
 		end
 	end
 
-	function Component:AddInput(
-		Config: { 
+	function Component:AddInput(Config: { 
 			Title: string, 
 			Description: string, 
 			Tab: string, 
@@ -1684,7 +1704,7 @@ function Library:CreateWindow(Config: {
 		Tab: string 
 	})
 		local Paragraph = Clone(Components.Paragraph);
-		
+
 		Component:Set(Paragraph, Config.Title, Config.Description);
 		MultiSet(Paragraph, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
@@ -1730,14 +1750,22 @@ function Library:CreateWindow(Config: {
 			local Detect, Finished
 
 			MultiSet(Bind, { Text = "press key" });
-			Detect = Connect(Services.Input.InputBegan, function(Key, Focused)
-				local InputType = (Key.UserInputType);
+			Detect = Connect(Services.Input.InputBegan, function(Input, Processed)
+				if (Finished or Processed) then 
+					return 
+				end; Finished = true
 
-				if (not Finished and not Focused) then
-					Finished = true
-					Config.Callback(Key);
-					SetKey(InputType, Key.KeyCode);
+				local InputType = Input.UserInputType
+
+				if (InputType == Enum.UserInputType.Keyboard) then
+					Config.Callback(Input.KeyCode);
+					SetKey(Enum.UserInputType.Keyboard, Input.KeyCode);
+				elseif (Discover(Mouse, InputType)) then
+					Config.Callback(InputType);
+					SetKey(InputType);
 				end
+
+				Detect:Disconnect();
 			end)
 		end)
 
@@ -1831,14 +1859,14 @@ function Library:CreateWindow(Config: {
 		Handle(ValueSlider, function(MousePosition)
 			local RelX = math.clamp((MousePosition.X - ValueSlider.AbsolutePosition.X) / ValueSlider.AbsoluteSize.X, 0, 1);
 			Brightness = RelX
-			
+
 			UpdateColor();
 		end)
 
 		Connect(HexInput.FocusLost, function(EnterPressed)
 			if (EnterPressed) then
 				local Hex = HexInput.Text:gsub("#", "");
-				
+
 				if (#Hex == 6) then
 					local R = tonumber(Hex:sub(1, 2), 16);
 					local G = tonumber(Hex:sub(3, 4), 16);
@@ -1847,7 +1875,7 @@ function Library:CreateWindow(Config: {
 					if (R and G and B) then
 						local H, S, V = Color3.fromRGB(R, G, B):ToHSV();
 						Hue, Saturation, Brightness = H, S, V
-						
+
 						UpdateColor();
 					end
 				end
@@ -1867,7 +1895,7 @@ function Library:CreateWindow(Config: {
 
 					local H, S, V = Color3.fromRGB(R, G, B):ToHSV();
 					Hue, Saturation, Brightness = H, S, V
-					
+
 					UpdateColor();
 				end
 			end)
@@ -1903,7 +1931,7 @@ function Library:CreateWindow(Config: {
 		Current.BackgroundColor3 = (Config.Default or Color3.fromRGB(255, 255, 255));
 		Component:Set(ColorPicker, Config.Title, Config.Description);
 		Animations:Component(ColorPicker);		
-		
+
 		MultiSet(ColorPicker, {
 			Parent = Tabs[Config.Tab].ScrollingFrame,
 			Visible = true,
@@ -2042,7 +2070,7 @@ function Library:CreateWindow(Config: {
 
 	Animations:Component(Topbar.Back, true);
 	Animations:Component(Topbar.Search, true);
-	
+
 	for Index, Button in next, Actions:GetChildren() do
 		local Type = Button.Name
 
@@ -2075,7 +2103,7 @@ function Library:CreateWindow(Config: {
 	end
 
 	Animations:SetTab("Home");
-	
+
 	Connect(Topbar.Back.MouseButton1Click, function()
 		if (Topbar.Back.ImageLabel.Image == "rbxassetid://97330543812984") then
 			Animate.Close(Window); Wait(0.25)
@@ -2125,7 +2153,12 @@ function Library:CreateWindow(Config: {
 	return Component
 end
 
-function API:Notify(Config: { Title: string, Description: string, Duration: number, Type: string })
+function API:Notify(Config: { 
+	Title: string, 
+	Description: string, 
+	Duration: number, 
+	Type: string 
+})
 	Spawn(function()
 		local Info = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out);
 		local SetShadow = function(Box, Boolean)
@@ -2156,7 +2189,7 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 			Box.Frame.Title.Notify.ImageColor3 = Information.color
 			Box.Frame.Title.Notify.Image = Information.icon
 			Notification.Parent = UI.Frame
-			
+
 			Animate.Set(Box, Config.Title, Config.Description)
 			MultiSet(Box, {
 				AutomaticSize = None,
@@ -2170,13 +2203,13 @@ function API:Notify(Config: { Title: string, Description: string, Duration: numb
 
 			-- very sorry for the ugly code
 			local Open, Close = function()
-					SetShadow(Box, true);
-					Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 70) }); Wait(0.1)
-					Services.Tween:Create(Box, Info, {
-						Size = UDim2.fromOffset(229, 70),
-						GroupTransparency = Settings.Theme.Transparency,
-					}):Play(); Wait(0.3)
-					Box.AutomaticSize = Enum.AutomaticSize.Y
+				SetShadow(Box, true);
+				Tween(Notification, 0.4, { Size = UDim2.fromOffset(199, 70) }); Wait(0.1)
+				Services.Tween:Create(Box, Info, {
+					Size = UDim2.fromOffset(229, 70),
+					GroupTransparency = Settings.Theme.Transparency,
+				}):Play(); Wait(0.3)
+				Box.AutomaticSize = Enum.AutomaticSize.Y
 			end, function()
 				if (not Closed) then
 					Closed = true
@@ -2725,7 +2758,7 @@ Command.Run = function(IgnoreNotifications, Name, Callbacks)
 
 			xpcall(function()
 				local Title, Description, Duration, Type = Callback(Unpack(Callbacks));
-				
+
 				if (Title and Description and not IgnoreNotifications) then
 					API:Notify({
 						Title = Title,
@@ -2765,7 +2798,7 @@ end
 
 Command.Whitelist = function(Player)
 	Admins[Player.UserId] = true
-	
+
 	ConnectMessaged(Player, function(Message)
 		if (Find(Message, Settings.ChatPrefix)) then
 			Command.Parse(false, Split(Message, Settings.ChatPrefix)[2]);
@@ -2850,7 +2883,7 @@ Fill.Recommend = function(Input)
 
 	if #Split(Input, " ") > 1 and UI.Parent then
 		local Command = Command.Find(Lowered);
-		
+
 		if (Command) then
 			local Arguments = Command[3];
 			local New = Split(Input, " ");
@@ -2864,7 +2897,7 @@ Fill.Recommend = function(Input)
 					for Index, Plr in next, Services.Players:GetPlayers() do
 						if (Find(Sub(Lower(Plr.DisplayName), 1, #Player), Lower(Player))) then
 							local Name = Format(" %s", GSub(Lower(Plr.DisplayName), Lower(Player), Player));
-							
+
 							Recommend.Text = Sub(Input, 1, #Input - #Player - 1) .. Name
 							Found = true
 							PlayerFound = true
@@ -2876,7 +2909,7 @@ Fill.Recommend = function(Input)
 						for Index, Plr in next, Services.Players:GetPlayers() do
 							if (Find(Sub(Lower(Plr.Name), 1, #Player), Lower(Player))) then
 								local Name = Format(" %s", GSub(Lower(Plr.Name), Lower(Player), Player));
-								
+
 								Recommend.Text = Sub(Input, 1, #Input - #Player - 1) .. Name
 								Found = true
 								PlayerFound = true
@@ -2905,7 +2938,7 @@ Fill.Recommend = function(Input)
 						for Index, Arg in next, GetPlayerArguments do
 							if Find(Sub(Arg, 1, #Player), Lower(Player)) then
 								local Name = Format(" %s", GSub(Lower(Arg), Lower(Player), Player));
-								
+
 								Recommend.Text = Sub(Input, 1, #Input - #Player - 1) .. Name
 								Found = true
 								PlayerFound = true
@@ -3015,7 +3048,7 @@ Fill.Search = function(Input)
 			[3] = { Size = UDim2.new(1, -4, 0, 183) },
 			[4] = { Size = UDim2.new(1, -4, 0, 240) },
 		}); local Size = (Sizes[Amount] or Sizes[4]);
-		
+
 		Tween(Autofill, 0.25, { Size = Size.Size });
 		Tween(CommandBar, 0.25, { Position = Size.Position });
 	end)
@@ -3087,7 +3120,7 @@ function Feature:ConnectEvent(Event, Connection, UseHumanoid, Check)
 		end)
 	elseif (UseHumanoid and typeof(Event) == "string") then
 		local CCharacter
-		
+
 		local CDetect = function(CHumanoid)
 			if (Event == "Damaged") then
 				Connect(Changed(CHumanoid, "Health"), function()
@@ -3120,7 +3153,7 @@ end
 
 local SetRig = function(Type)
 	local Avatar = GetService("AvatarEditorService");
-	
+
 	Avatar:PromptSaveAvatar(Humanoid.HumanoidDescription, Enum.HumanoidRigType[Type]); CWait(Avatar.PromptSaveAvatarCompleted);
 	Command.Parse(true, "respawn");
 end
@@ -3528,7 +3561,7 @@ Command.Add({
 				local Key, Begin, End = Keybind.Key, Keybind.Begin, Keybind.End
 
 				Window:AddButton({
-					Title = GSub(tostring(Key.KeyCode), "Enum.KeyCode.", Blank),
+					Title = GSub(tostring(Key), "Enum.KeyCode.", Blank),
 					Description = "Click this to remove the Keybind",
 					Tab = "Keybinds",
 					Callback = function(Button)
@@ -3547,7 +3580,7 @@ Command.Add({
 				Callback = function()
 					local Key, Begin, End = Keybind.Key, Keybind.Begin, Keybind.End
 
-					if not Keybinds[Key] and Begin and End and Key then
+					if (not Keybinds[Key]) and (Begin and End and Key) then
 						Keybinds[Keybind.Key] = { Begin = Begin, End = End, Key = Key, Active = false }
 						CreateKeybind(Keybinds[Keybind.Key])
 
@@ -3570,7 +3603,7 @@ Command.Add({
 
 			Window:AddKeybind({
 				Title = "Keybind Keybind",
-				Description = "The keybind for the Keybind",
+				Description = "The keybind to fire the bind",
 				Tab = "Keybinds",
 				Default = Keybind.Key,
 				Callback = function(Key)
@@ -3598,18 +3631,18 @@ Command.Add({
 
 			Window:AddSection({ Title = "Keybinds", Tab = "Keybinds" })
 
-			Connect(Services.Input.InputBegan, function(Key, InputFocused)
-				if (InputFocused) then
+			Connect(Services.Input.InputBegan, function(Key, Focused)
+				if (Focused) then
 					return
 				end
 
-				local Keybind = Keybinds[Key]
+				local Keybind = (Keybinds[Key.KeyCode] or Keybinds[Key.UserInputType]);
 
-				if Keybind then
-					if Keybind.Active then
-						Command.Parse(true, Keybinds[Key].End)
+				if (Keybind) then
+					if (Keybind.Active) then
+						Command.Parse(true, Keybind.End);
 					else
-						Command.Parse(true, Keybinds[Key].Begin)
+						Command.Parse(true, Keybind.Begin);
 					end
 
 					Keybind.Active = not Keybind.Active
@@ -3825,7 +3858,14 @@ local ESPSettings = {
 	Enabled = false,
 	Boxes = true,
 	Text = true,
-
+	Tracers = false,
+	ShowHealth = false,
+	ShowDistance = false,
+	ShowDisplay = false,
+	ShowNames = true,
+	TracerTransparency = 1,
+	TracerThickness = 1,
+	
 	TextSize = 18,
 	BoxThickness = 1,
 	IgnoreTeammates = false,
@@ -3877,6 +3917,15 @@ Command.Add({
 			})
 
 			Window:AddToggle({
+				Title = "Tracers Enabled",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Toggle)
+					ESPSettings.Tracers = Toggle
+				end,
+			})
+			
+			Window:AddToggle({
 				Title = "Text Enabled",
 				Tab = "Home",
 				Default = true,
@@ -3885,6 +3934,42 @@ Command.Add({
 				end,
 			})
 
+			Window:AddToggle({
+				Title = "Show Names",
+				Tab = "Home",
+				Default = true,
+				Callback = function(Toggle)
+					ESPSettings.ShowNames = Toggle
+				end,
+			})
+			
+			Window:AddToggle({
+				Title = "Display Name Shown",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Toggle)
+					ESPSettings.ShowDisplay = Toggle
+				end,
+			})
+
+			Window:AddToggle({
+				Title = "Health Shown",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Toggle)
+					ESPSettings.ShowHealth = Toggle
+				end,
+			})
+			
+			Window:AddToggle({
+				Title = "Distance Shown",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Toggle)
+					ESPSettings.ShowDistance = Toggle
+				end,
+			})
+			
 			Window:AddSection({ Title = "Customize", Tab = "Home" })
 
 			Window:AddSlider({
@@ -3894,6 +3979,28 @@ Command.Add({
 				Default = ESPSettings.BoxThickness,
 				Callback = function(Amount)
 					ESPSettings.BoxThickness = Amount
+				end,
+			})
+			
+			Window:AddSlider({
+				Title = "Tracer Transparency",
+				Tab = "Home",
+				MaxValue = 1,
+				AllowDecimals = true,
+				Default = ESPSettings.TracerTransparency,
+				Callback = function(Amount)
+					ESPSettings.TracerTransparency = Amount
+				end,
+			})
+			
+			Window:AddSlider({
+				Title = "Tracer Thickness",
+				Tab = "Home",
+				MaxValue = 5,
+				AllowDecimals = true,
+				Default = ESPSettings.TracerThickness,
+				Callback = function(Amount)
+					ESPSettings.TracerThickness = Amount
 				end,
 			})
 
@@ -3908,12 +4015,13 @@ Command.Add({
 			})
 
 			local Add = function(Player)
-				local Bottom = Drawing.new("Line")
-				local Top = Drawing.new("Line")
-				local Right = Drawing.new("Line")
-				local Left = Drawing.new("Line")
-				local Name = Drawing.new("Text")
-
+				local Bottom = Drawing.new("Line");
+				local Top = Drawing.new("Line");
+				local Right = Drawing.new("Line");
+				local Left = Drawing.new("Line");
+				local Name = Drawing.new("Text");
+				local Tracer = Drawing.new("Line");
+				
 				local SetVisible = function(Boolean)
 					for Index, DrawingLine in next, { Bottom, Top, Right, Left } do
 						if ESPSettings.Enabled and ESPSettings.Boxes then
@@ -3928,24 +4036,34 @@ Command.Add({
 					else
 						Name.Visible = false
 					end
+					
+					if ESPSettings.Enabled and ESPSettings.Tracers then
+						Tracer.Visible = Boolean
+					else
+						Tracer.Visible = false
+					end
 				end
 
 				local UpdatePosition = function()
-					local Root = (Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"))
-
+					local TargetRoot = (Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"));
+				
 					if
-						Root
+						TargetRoot
 						and not (ESPSettings.IgnoreTeammates and Player.Team == LocalPlayer.Team)
 						and ESPSettings.Enabled
 					then
-						local Root = Player.Character.HumanoidRootPart
-						local _, Visible = Camera:WorldToViewportPoint(Root.Position)
-						local Coordinate = Root.CFrame
+						local Humanoid = Player.Character:FindFirstChildOfClass("Humanoid");
+						local _, Visible = Camera:WorldToViewportPoint(TargetRoot.Position)
+						local Coordinate = TargetRoot.CFrame
 						local TeamColor = Player.TeamColor.Color
-
-						for Index, DrawingLine in next, { Bottom, Top, Right, Left } do
+						local CurrentText = Player.Name
+						
+						for Index, DrawingLine in next, { Bottom, Top, Right, Left, Tracer } do
 							DrawingLine.Color = TeamColor
-							DrawingLine.Thickness = ESPSettings.BoxThickness
+							
+							if (DrawingLine ~= Tracer) then
+								DrawingLine.Thickness = ESPSettings.BoxThickness
+							end
 						end
 
 						Name.Color = TeamColor
@@ -3953,10 +4071,10 @@ Command.Add({
 						Name.Center = true
 						Name.Outline = true
 						Name.OutlineColor = Color3.new(0, 0, 0)
-						Name.Text = Player.Name
+						Name.Center = true
 
-						if Visible then
-							local Size = Vector3.new(2, 3, 0)
+						if (Visible) then
+							local Size = Vector3.new(2, 3, 0);
 							local BL =
 								Camera:WorldToViewportPoint((Coordinate * CFrame.new(-Size.X, -Size.Y, 0)).Position)
 							local BR =
@@ -3979,35 +4097,78 @@ Command.Add({
 							Left.To = Vector2.new(BL.X, BL.Y)
 
 							Name.Position = Vector2.new((TL.X + TR.X) / 2, TL.Y - 20)
+							
+							if (ESPSettings.Tracers) then
+								Tracer.To = Vector2.new((BL.X + BR.X) / 2, BL.Y);
+								Tracer.Thickness = ESPSettings.TracerThickness
+								Tracer.Transparency = ESPSettings.TracerTransparency
+							end
+							
+							if (ESPSettings.ShowDisplay and Player.Name ~= Player.DisplayName) then
+								CurrentText = Format("%s (@%s)", Player.DisplayName, CurrentText);
+							end
 
-							SetVisible(true)
+							if (not ESPSettings.ShowNames) then
+								CurrentText = ("");
+							end
+
+							if (ESPSettings.ShowNames and (ESPSettings.ShowHealth or ESPSettings.ShowDistance)) then
+								CurrentText ..= ("\n");
+							end
+
+							if (ESPSettings.ShowHealth) then
+								CurrentText ..= Format("[%s%%]", math.floor(Humanoid.Health));
+							end
+
+							if ESPSettings.ShowDistance then
+								local Seperator = ((ESPSettings.ShowHealth and " | ") or "");
+								CurrentText ..= Seperator .. Format("[%s studs]", math.floor((TargetRoot.Position - Root.Position).Magnitude));
+							end
+
+							Name.Text = CurrentText
+							
+							SetVisible(true);
 						else
-							SetVisible(false)
+							SetVisible(false);
 						end
 					else
-						SetVisible(false)
+						SetVisible(false);
 					end
 				end
 
-				Connect(Services.Run.RenderStepped, UpdatePosition)
+				Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y);
+				local Connection = Connect(Services.Run.RenderStepped, UpdatePosition);
+				
+				Connect(Changed(Player, "Parent"), function()
+					if (Player.Parent == nil) then
+						Connection:Disconnect();
+						
+						for _, Object in next, ({ Bottom, Top, Right, Left, Name, Tracer }) do
+							Object:Remove();
+						end
+					end
+				end)
 			end
 
-			Connect(Services.Players.PlayerAdded, Add)
+			Connect(Services.Players.PlayerAdded, Add);
 			for Index, Player in next, Services.Players:GetPlayers() do
-				if Player ~= LocalPlayer then
-					Add(Player)
+				if (Player ~= LocalPlayer) then
+					task.spawn(Add, Player);
 				end
 			end
 		end
 	end,
 })
 
-local AimbotSettings = {
+local AimbotSettings = ({
 	Enabled = false,
 	Triggerbot = false,
 	Part = "Head",
 	Method = "Camera",
 	RandomPart = false,
+	Toggled = false,
+	DotLockTarget = nil,
+	Wallbang = false,
 
 	AliveCheck = true,
 	TeamCheck = false,
@@ -4021,22 +4182,18 @@ local AimbotSettings = {
 	AutoPrediction = false,
 	Target = nil,
 
-	FOV = {
+	FOV = ({
 		Radius = 100,
-	},
-}
+	}),
+})
 
 AimbotSettings.BehindWall = function(TargetCharacter)
 	local VisibleWalls = {}
-	local Walls = Camera.GetPartsObscuringTarget(
-		Camera,
-		{ Character.Head.Position, TargetCharacter.Head.Position },
-		{ Character, TargetCharacter }
-	)
+	local Walls = Camera.GetPartsObscuringTarget(Camera, { Character.Head.Position, TargetCharacter.Head.Position }, { Character, TargetCharacter })
 
 	for _, Wall in next, Walls do
 		if Wall and Wall.IsA(Wall, "BasePart") and Wall.Transparency < 1 then
-			Insert(VisibleWalls, Wall)
+			Insert(VisibleWalls, Wall);
 		end
 	end
 
@@ -4055,11 +4212,11 @@ AimbotSettings.Closest = function()
 			return
 		end
 
-		local Humanoid = Character and Character.FindFirstChild(Character, "Humanoid")
-		local TargetPart = Character and Character.FindFirstChild(Character, AimbotSettings.Part)
+		local Humanoid = Character and Character.FindFirstChild(Character, "Humanoid");
+		local TargetPart = Character and Character.FindFirstChild(Character, AimbotSettings.Part);
 
-		if Humanoid and TargetPart then
-			local Coordinates, Visible = Camera.WorldToViewportPoint(Camera, TargetPart.Position)
+		if (Humanoid and TargetPart) then
+			local Coordinates, Visible = Camera.WorldToViewportPoint(Camera, TargetPart.Position);
 
 			if
 				not (AimbotSettings.WallCheck and AimbotSettings.BehindWall(Character))
@@ -4069,24 +4226,28 @@ AimbotSettings.Closest = function()
 			then
 				local Distance = (Vector2.new(MouseX, MouseY) - Vector2.new(Coordinates.X, Coordinates.Y)).Magnitude
 
-				if Distance < Fov_Size and Distance < ClosestDistance then
+				if (Distance < Fov_Size) and (Distance < ClosestDistance) then
 					ClosestDistance = Distance
 					ClosestPlayerPart = TargetPart
 				end
 			end
 		end
 	end
-
-	for _, Player in next, Services.Players.GetPlayers(Services.Players) do
-		if Player ~= LocalPlayer and not (AimbotSettings.TeamCheck and Player.Team == LocalPlayer.Team) then
-			GetRange(Player and Player.Character)
+	
+	if (AimbotSettings.Toggled and AimbotSettings.Method == "DotLock" and AimbotSettings.DotLockTarget) then
+		return AimbotSettings.DotLockTarget
+	else
+		for _, Player in next, Services.Players.GetPlayers(Services.Players) do
+			if (Player ~= LocalPlayer) and not (AimbotSettings.TeamCheck and Player.Team == LocalPlayer.Team) then
+				GetRange(Player and Player.Character);
+			end
 		end
-	end
 
-	if AimbotSettings.IncludeNpcs then
-		for Index, Model in next, GetClasses(workspace, "Model") do
-			if Model:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Model) then
-				GetRange(Model);
+		if (AimbotSettings.IncludeNpcs) then
+			for Index, Model in next, GetClasses(workspace, "Model") do
+				if (Model:FindFirstChildOfClass("Humanoid") and not Services.Players:GetPlayerFromCharacter(Model)) then
+					GetRange(Model);
+				end
 			end
 		end
 	end
@@ -4096,7 +4257,7 @@ end
 
 AimbotSettings.GetAutoPrediction = function()
 	local DataPing = Services.Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
-	local Prediction = math.clamp(DataPing / 1000, 0, 1) * 1.285
+	local Prediction = math.clamp(DataPing / 1000, 0, 1) * 1.325
 
 	return Prediction
 end
@@ -4123,7 +4284,7 @@ Command.Add({
 		local Tab = Library.Tabs.Aimbot
 
 		if Tab then
-			Tab.Open()
+			Tab.Open();
 		else
 			local EnableAimbot
 			local Window = Library:CreateWindow({
@@ -4146,21 +4307,24 @@ Command.Add({
 					["First Person"] = "Camera",
 					["Third Person"] = "Third",
 					["Silent Aim"] = "Silent",
+					["Dot Lock"] = "DotLock"
 				},
+				Default = "First Person",
 				Callback = function(Method)
 					AimbotSettings.Method = Method
 
-					if Method == "Silent" then
-						EnableAimbot()
-						if Check("Hook") then
+					if (Method == "Silent" or Method == "DotLock") then
+						EnableAimbot();
+						
+						if (Check("Hook")) then
 							API:Notify({
-								Title = "Silent Aim",
+								Title = Method,
 								Description = "Enabled",
 								Type = "Success",
 							})
 						else
 							API:Notify({
-								Title = "Silent Aim",
+								Title = Method,
 								Description = "Executor does not support it.",
 								Type = "Error",
 							})
@@ -4184,6 +4348,15 @@ Command.Add({
 				Default = false,
 				Callback = function(Boolean)
 					AimbotSettings.Triggerbot = Boolean
+				end,
+			})
+			
+			Window:AddToggle({
+				Title = "Wallbang Enabled",
+				Tab = "Home",
+				Default = false,
+				Callback = function(Boolean)
+					AimbotSettings.Wallbang = Boolean
 				end,
 			})
 
@@ -4265,140 +4438,236 @@ Command.Add({
 					["Head"] = "Head",
 					["Random"] = "Random",
 				},
+				Default = "Head",
 				Callback = function(Part)
 					AimbotSettings.Part = Part
 					AimbotSettings.RandomPart = (Part == "Random")
 				end,
 			})
 
+			local AimingCoordinate
+			local ClosestRoot
+			local PredictedPosition
+			local ScreenPosition, OnScreen
+			
 			Spawn(function()
+				local Circle
+				local Visualizer
+				
+				if (Drawing and Drawing.new) then
+					Circle = Drawing.new("Circle");
+					Visualizer = Drawing.new("Circle");
+					
+					Visualizer.Visible = false
+					Visualizer.Thickness = 2
+					Visualizer.NumSides = 32
+					Visualizer.Radius = 5
+					Visualizer.Color = Color3.fromRGB(255, 0, 0)
+					Visualizer.Transparency = 1
+					Visualizer.Filled = true
+				end
+
 				Connect(Services.Run.RenderStepped, function()
-					if AimbotSettings.RandomPart then
-						local Available = { "Head", "HumanoidRootPart" }
-						AimbotSettings.Part = Available[math.random(1, #Available)]
+					if (AimbotSettings.RandomPart) then
+						local Available = ({ "Head", "HumanoidRootPart" });
+						AimbotSettings.Part = Available[math.random(1, #Available)];
+					end
+					
+					if (Drawing and Drawing.new) then
+						if (AimingCoordinate and AimbotSettings.Enabled) then
+							local Position = ((typeof(AimingCoordinate) == "CFrame" and AimingCoordinate.Position) or AimingCoordinate);
+							local ScreenPos, OnScreen = Camera:WorldToViewportPoint(Position);
+
+							if (OnScreen) then
+								Visualizer.Position = Vector2.new(ScreenPos.X, ScreenPos.Y);
+								Visualizer.Visible = true
+							else
+								Visualizer.Visible = false
+							end
+						else
+							Visualizer.Visible = false
+						end
+						
+						if (AimbotSettings.Enabled) then
+							local MouseLocation = (Services.Input:GetMouseLocation());
+
+							Circle.Radius = AimbotSettings.FOV.Radius
+							Circle.Position = Vector2.new(MouseLocation.X, MouseLocation.Y)
+							Circle.Visible = true
+						else
+							Circle.Visible = false
+						end
+
+						if (AimbotSettings.Method == "DotLock" and AimbotSettings.Toggled) or (AimbotSettings.Method == "Silent") then
+							ClosestRoot = AimbotSettings.Closest();
+
+							if (ClosestRoot) then
+								PredictedPosition = ClosestRoot.Position + AimbotSettings.GetPrediction(ClosestRoot);
+								ScreenPosition, OnScreen = Camera:WorldToViewportPoint(PredictedPosition);
+							end
+						elseif (AimbotSettings.Method == "DotLock" and not AimbotSettings.Toggled) then
+							ClosestRoot = nil
+						end
 					end
 
-					if AimbotSettings.Triggerbot then
+					if (AimbotSettings.Triggerbot) then
 						local Target = (function()
 							local Target = Mouse.Target
-							local Character = Target and Target:FindFirstAncestorOfClass("Model")
-							local Player = Character and Services.Players:GetPlayerFromCharacter(Character)
+							local Character = Target and Target:FindFirstAncestorOfClass("Model");
+							local Player = Character and Services.Players:GetPlayerFromCharacter(Character);
 
 							if Player and Player ~= LocalPlayer then
 								return Player
 							end
 						end)()
 
-						if Target and not (AimbotSettings.TeamCheck and Target.Team == LocalPlayer.Team) then
-							mouse1click()
+						if (Target) and not (AimbotSettings.TeamCheck and Target.Team == LocalPlayer.Team) then
+							mouse1click();
 						end
 					end
 				end)
 
 				Connect(Services.Input.InputBegan, function(Key, Processed)
-					if Key == AimbotSettings.Key and AimbotSettings.Enabled and not Processed then
-						local TargetPart = AimbotSettings.Closest()
+					if IsCorrectInput(Key, AimbotSettings.Key) and (AimbotSettings.Enabled) and (not Processed) then
 						local Method = AimbotSettings.Method
+						
+						if (Method ~= "DotLock") then
+							local TargetPart = AimbotSettings.Closest();
+							
+							if (TargetPart) then
+								AimbotSettings.Held = true
 
-						if TargetPart then
-							AimbotSettings.Held = true
+								repeat Wait()
+									if (Method == "Camera" or Method == "Third") and TargetPart then
+										local LookAt = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart)
 
-							repeat
-								Wait()
-								if (Method == "Camera" or Method == "Third") and TargetPart then
-									local LookAt = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart)
+										if (TargetPart.Position.Y > -100) then
+											Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, LookAt.Position)
+										end
 
-									if TargetPart.Position.Y > -100 then
-										Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, LookAt.Position)
+										if (Method == "Third") then
+											Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
+										end
 									end
-
-									if Method == "Third" then
-										Services.Input.MouseBehavior = Enum.MouseBehavior.LockCenter
+								until (not AimbotSettings.Held or not TargetPart)
+							end
+						else
+							AimbotSettings.Toggled = (not AimbotSettings.Toggled);
+							
+							if (AimbotSettings.Toggled) then
+								local TargetPart = AimbotSettings.Closest();
+								
+								repeat Wait()
+									AimbotSettings.DotLockTarget = TargetPart
+									
+									if (TargetPart) then
+										AimingCoordinate = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart);
 									end
-								end
-							until (not AimbotSettings.Held or not TargetPart)
+								until (not AimbotSettings.Toggled or not TargetPart or not AimbotSettings.DotLockTarget or AimbotSettings.Method ~= "DotLock")
+								
+								AimingCoordinate = nil
+								AimbotSettings.DotLockTarget = nil
+							else
+								AimingCoordinate = nil
+								AimbotSettings.DotLockTarget = nil
+							end
 						end
 					end
 				end)
 
 				Connect(Services.Input.InputEnded, function(Key, Processed)
-					if Key == AimbotSettings.Key and AimbotSettings.Enabled and not Processed then
+					if IsCorrectInput(Key, AimbotSettings.Key) and (AimbotSettings.Enabled) and (not Processed) then
 						AimbotSettings.Held = false
 					end
 				end)
-
-				Spawn(function()
-					local Circle
-					if Drawing and Drawing.new then
-						Circle = Drawing.new("Circle")
-
-						repeat
-							Wait()
-							local MouseLocation = (Services.Input:GetMouseLocation())
-							if AimbotSettings.Enabled then
-								Circle.Radius = AimbotSettings.FOV.Radius
-								Circle.Position = Vector2.new(MouseLocation.X, MouseLocation.Y)
-								Circle.Visible = true
-							else
-								Circle.Visible = false
-							end
-
-						until (not Circle)
-					end
-				end)
-
+				
 				local Enabled = false
 				EnableAimbot = function()
-					if not Enabled and Check("Hook") then
+					if (not Enabled and Check("Hook")) then
 						Enabled = true
 
 						local OldNamecall
-						OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-							local Method = getnamecallmethod()
+						OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+							local Method = getnamecallmethod();
 
 							if
 								not checkcaller()
 								and string.find(string.lower(Method), "ray")
 								and AimbotSettings.Enabled
-								and AimbotSettings.Method == "Silent"
+								and (AimbotSettings.Method == "Silent" or AimbotSettings.Method == "DotLock")
 							then
 								if
 									Method == "FindPartOnRay"
 									or Method == "FindPartOnRayWithIgnoreList"
 									or Method == "FindPartOnRayWithWhitelist"
-								then
-									local ClosestRoot = AimbotSettings.Closest()
-
-									if ClosestRoot then
+								then									
+									if (ClosestRoot) then
 										local Args = { ... }
 										local Origin = Args[1].Origin
 										local Direction = Args[1].Direction
 
-										if Direction.Magnitude > 50 then
-											Args[1] = Ray.new(Origin, (ClosestRoot.Position - Origin).Unit * 500)
+										if (Direction.Magnitude > 50) then
+											Args[1] = Ray.new(Origin, (PredictedPosition - Origin).Unit * 500)
 										end
 
+										if (AimbotSettings.Wallbang) then
+											return ClosestRoot, ClosestRoot.Position, Vector3.new(0, 1, 0), ClosestRoot.Material
+										end
+										
 										return OldNamecall(self, table.unpack(Args))
 									end
 								elseif Method == "Raycast" then
-									local ClosestRoot = AimbotSettings.Closest()
-
-									if ClosestRoot then
+									if (ClosestRoot) then
 										local Args = { ... }
 										local Origin = Args[1]
 										local Direction = Args[2]
 
-										if Direction.Magnitude > 50 then
-											Args[2] = (ClosestRoot.Position - Origin).Unit * 500
+										if (Direction.Magnitude > 50) then
+											Args[2] = (PredictedPosition - Origin).Unit * 500
 										end
 
+										if (AimbotSettings.Wallbang) then
+											return ({
+												Instance = ClosestRoot,
+												Position = ClosestRoot.Position,
+												Normal   = Vector3.new(0, 1, 0),
+												Material = ClosestRoot.Material
+											})
+										end
+										
 										return OldNamecall(self, table.unpack(Args))
 									end
 								end
 							end
 
 							return OldNamecall(self, ...)
-						end)
+						end))
+						
+						local OldIndex
+						OldIndex = hookmetamethod(game, "__index", newcclosure(function(self, Index)
+							if 
+								self == Mouse
+								and not checkcaller()
+								and rawget(AimbotSettings, "Enabled")
+								and (rawget(AimbotSettings, "Method") == "Silent" or rawget(AimbotSettings, "Method") == "DotLock")
+							then
+								if (ClosestRoot) then
+									if (Index == "Target" or Index == "target") then
+										return ClosestRoot
+									elseif (Index == "X" or Index == "x") then 
+										return ScreenPosition.X
+									elseif (Index == "Y" or Index == "y") then 
+										return ScreenPosition.Y
+									elseif (Index == "Hit" or Index == "hit") then
+										return CFrame.new(PredictedPosition)
+									elseif (Index == "UnitRay") then
+										return Ray.new(Camera.CFrame.Position, (PredictedPosition - Camera.CFrame.Position).Unit);
+									end
+								end
+							end
+
+							return OldIndex(self, Index)
+						end))
 					end
 				end
 			end)
@@ -4447,7 +4716,7 @@ Command.Add({
 
 				repeat Wait()
 					local Decode = JSONDecode(Services.Http, Servers);
-					
+
 					for Index, Server in next, Decode.data do
 						if (typeof(Server) == "table") and (not PlayerCount or Server.playing == PlayerCount) then
 							Found = true
@@ -4541,11 +4810,11 @@ Command.Add({
 				Tab = "Home",
 				Callback = function()
 					LayoutOrder = 100000
-					
+
 					for _, Message in next, Messages do
 						Destroy(Message);
 					end
-					
+
 					Messages = nil
 				end,
 			})
@@ -4631,7 +4900,7 @@ Command.Add({
 				end
 
 				Info = tostring(Info)
-				
+
 				if (Info == "") then
 					Info = ("empty (no information)");
 				end
@@ -4840,7 +5109,7 @@ Command.Add({
 		else
 			local HighlightName = GenerateGUID(Services.Http);
 			local Highlights = ({});
-			
+
 			local SetParent = false
 			local Name = nil
 			local Class = nil
@@ -5452,11 +5721,11 @@ Command.Add({
 		end
 
 		local Amount = (tonumber(RepeatAmount) or 1);
-		
+
 		for Index = 1, Amount do
 			Command.Run(true, Name, Arguments or {}); Wait(Delay or 0);
 		end
-		
+
 		return Name, Format("Repeated %s times", Amount);
 	end,
 })
@@ -5587,7 +5856,7 @@ Command.Add({
 							Coordinate = Humanoid.RootPart.CFrame
 						end
 					end); CWait(LocalPlayer.CharacterAdded);
-					
+
 					local Root = LocalPlayer.Character:WaitForChild("HumanoidRootPart");
 					Root.CFrame = (Coordinate or Root.CFrame)
 				end
@@ -5785,7 +6054,7 @@ Command.Add({
 		end
 
 		Connect(workspace.DescendantAdded, SetInstance);
-		
+
 		for Index, Instance in next, (workspace:GetDescendants()) do
 			SetInstance(Instance);
 		end
@@ -5839,7 +6108,7 @@ Command.Add({
 	},
 	Task = function(Input)
 		local Sword
-		
+
 		for Index, Target in next, GetPlayer(Input) do
 			if (Target ~= LocalPlayer) then
 				local TargetCharacter = GetCharacter(Target);
@@ -5857,7 +6126,7 @@ Command.Add({
 					repeat Wait()
 						Sword.Parent = Character
 						Sword:Activate();
-						
+
 						if (firetouchinterest) then
 							firetouchinterest(TRoot, Sword.Handle, 0); Wait();
 							firetouchinterest(TRoot, Sword.Handle, 1);
@@ -5996,11 +6265,11 @@ Command.Add({
 	Task = function()
 		local OriginalPlayer = Services.Lighting:FindFirstChild(LocalPlayer.Name);
 		Character.Archivable = true
-		
+
 		if (not OriginalPlayer) then
 			local Clone = Clone(Character);
 			local Animate = (Clone.Animate);
-			
+
 			for Index, BodyPart in next, GetClasses(Clone, "BasePart", true) do
 				BodyPart.Transparency = (0.7);
 			end
@@ -6028,7 +6297,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local OriginalPlayer = Services.Lighting:FindFirstChild(LocalPlayer.Name);
-		
+
 		if (OriginalPlayer) then
 			local Invisible = LocalPlayer.Character
 			local Parent = Invisible.Parent
@@ -6087,7 +6356,7 @@ Command.Add({
 	},
 	Task = function(Message, Cooldown)
 		Add("Spam", true);
-		
+
 		repeat Wait(SetNumber(Cooldown) or 0.3)
 			Chat(Message);
 		until (not Get("Spam"))
@@ -6110,7 +6379,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("Sync", true);
-		
+
 		if (RespectFilteringEnabled) then
 			return "Sync", "Couldn't sync since RFE is turned on"
 		else
@@ -6141,7 +6410,7 @@ Command.Add({
 		for Index, BodyPart in next, GetClasses(Character, "BasePart", true) do
 			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(100, 0.5, 0.5);
 		end
-		
+
 		return "Buff", "Buff has been enabled"
 	end,
 })
@@ -6154,7 +6423,7 @@ Command.Add({
 		for Index, BodyPart in next, GetClasses(Character, "BasePart", true) do
 			BodyPart.CustomPhysicalProperties = PhysicalProperties.new(1, 0.5, 0.5);
 		end
-		
+
 		return "Buff", "Buff has been disabled"
 	end,
 })
@@ -6168,7 +6437,7 @@ Command.Add({
 	Task = function(Amount)
 		local BodyForces = ({});		
 		local Gravity = SetNumber(Amount);
-		
+
 		local Set = function(Part)
 			local Model = Part:FindFirstAncestorOfClass("Model");
 			local Character = Model and Services.Players:GetPlayerFromCharacter(Model);
@@ -6215,7 +6484,7 @@ Command.Add({
 	Description = "UI for viewing fired remotes",
 	Arguments = {},
 	Task = function(Amount)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpySource.lua"))();
+		loadstring(game:HttpGet("https://github.com/notpoiu/cobalt/releases/latest/download/Cobalt.luau"))();
 	end,
 })
 
@@ -6233,7 +6502,7 @@ Command.Add({
 		for Index, Part in next, GetClasses(workspace, "BasePart") do
 			local Model = Part:FindFirstAncestorOfClass("Model");
 			local PlayerObject = (Model and Services.Players:GetPlayerFromCharacter(Model));
-			
+
 			if (not Part.Anchored) and (not PlayerObject) then
 				Bring(Part, Target);
 			end
@@ -6264,7 +6533,7 @@ Command.Add({
 		for Index, Part in next, GetClasses(workspace, "BasePart") do
 			Attach(Part);
 		end
-		
+
 		return "Part Attach", "Attached to every part in game"
 	end,
 })
@@ -6275,7 +6544,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("ControlNPC", true);
-		
+
 		Cleaner:Add("ControlNPC", Connect(Mouse.Button1Down, function()
 			local Target = Mouse.Target
 			local ModelDescendant = Target:FindFirstAncestorOfClass("Model")
@@ -6285,7 +6554,7 @@ Command.Add({
 				local RootPart = (ModelDescendant:FindFirstChild("HumanoidRootPart") or ModelDescendant:FindFirstChild("Torso"));
 
 				Attach(RootPart);
-				
+
 				repeat Wait()
 					for Index, BodyPart in next, GetClasses(ModelDescendant, "BasePart") do
 						BodyPart.CanCollide = false
@@ -6314,7 +6583,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("Blackhole", true);
-		
+
 		local Blackhole = Create("Part", {
 			Parent = workspace,
 			Transparency = 0.5,
@@ -6328,7 +6597,7 @@ Command.Add({
 				Bring(Part, Blackhole);
 			end
 		until (not Get("Blackhole"))
-		
+
 		Destroy(Blackhole);
 	end,
 })
@@ -6352,7 +6621,7 @@ Command.Add({
 				Destroy(Attachment);
 			end
 		end
-		
+
 		return "Part Attach", "Unattached every part"
 	end,
 })
@@ -6409,7 +6678,7 @@ Command.Add({
 			Add("Stand", false);
 			Command.Parse(true, "unairwalk");
 			Camera.CameraSubject = GetHumanoid(LocalPlayer);
-			
+
 			break
 		end
 	end,
@@ -6431,12 +6700,12 @@ Command.Add({
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
 			local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
-			
+
 			if (Humanoid) then
 				Humanoid.Health = 0
 			end
 		end
-		
+
 		return "NPC", "Killed all NPCs"
 	end,
 })
@@ -6448,12 +6717,12 @@ Command.Add({
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
 			local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
-			
+
 			if (Humanoid) then
 				Humanoid.HipHeight = 1024
 			end
 		end
-		
+
 		return "NPC", "Flinged all NPCs"
 	end,
 })
@@ -6465,12 +6734,12 @@ Command.Add({
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
 			local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
-			
+
 			if (Humanoid) then
 				Humanoid.HipHeight = -1024
 			end
 		end
-		
+
 		return "NPC", "Voided all NPCs"
 	end,
 })
@@ -6482,12 +6751,12 @@ Command.Add({
 	Task = function()
 		for Index, NPC in next, GetPlayer("NPC") do
 			local RootPart = (NPC:FindFirstChild("HumanoidRootPart") or NPC:FindFirstChild("Torso"));
-			
+
 			if (RootPart) then
 				RootPart.CFrame = Root.CFrame
 			end
 		end
-		
+
 		return "NPC", "Brought all NPCs"
 	end,
 })
@@ -6502,7 +6771,7 @@ Command.Add({
 		repeat Wait(0.1)
 			for Index, NPC in next, GetPlayer("NPC") do
 				local Humanoid = NPC:FindFirstChildOfClass("Humanoid");
-				
+
 				if (Humanoid) then
 					Humanoid:MoveTo(Root.Position);
 				end
@@ -6672,7 +6941,7 @@ Command.Add({
 	Task = function(Amount)
 		local Radius = SetNumber(Amount);
 		SetSRadius(Radius, Radius);
-		
+
 		return "Simulation Radius", Format("Successfully set your simulation radius to %s", Amount)
 	end,
 })
@@ -6779,11 +7048,11 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local OldPart = Get("ClimbPart");
-		
+
 		if (OldPart) then
 			Destroy(OldPart);
 		end
-		
+
 		local Part = Create("TrussPart", {
 			Transparency = 1,
 			Size = Vector3.new(2, 10, 2),
@@ -6845,7 +7114,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("AntiKick", true);
-		
+
 		if (Check("Hook")) then
 			for Index, Kick in next, ({ LocalPlayer.Kick, LocalPlayer.kick }) do
 				local Call; Call = hookfunction(Kick, function(...)
@@ -6878,7 +7147,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("AntiTeleport", true);
-		
+
 		if (Check("Hook")) then
 			for Index, Kick in next, ({ Services.Http.TeleportToPlaceInstance, Services.Http.TeleportToPrivateServer }) do
 				local Call; Call = hookfunction(Kick, function(...)
@@ -6887,7 +7156,7 @@ Command.Add({
 					end
 				end)
 			end
-			
+
 			return "Anti Teleport", "Anti Teleport has been enabled"
 		else
 			return "Unsupported Executor", "Your executor does not support hooking"
@@ -6911,7 +7180,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Tool, Grabber = Backpack:FindFirstChildOfClass("Tool"), (nil);
-		
+
 		Tool.Parent = Character
 		Tool.Parent = workspace; Wait(2)
 
@@ -6950,11 +7219,11 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Add("AutoGrab", true);
-		
+
 		for Index, Tool in next, GetClasses(workspace, "Tool") do
 			Humanoid:EquipTool(Tool);
 		end
-		
+
 		Connect(workspace.DescendantAdded, function(Tool)
 			if (Tool:IsA("Tool") and Get("AutoGrab")) then
 				Humanoid:EquipTool(Tool);
@@ -6994,12 +7263,12 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Add("AutoGrabDelete", true);
-		
+
 		for Index, Tool in next, GetClasses(workspace, "Tool") do
 			Humanoid:EquipTool(Tool); Wait();
 			Destroy(Tool);
 		end
-		
+
 		Connect(workspace.DescendantAdded, function(Tool)
 			if (Tool:IsA("Tool") and Get("AutoGrabDelete")) then
 				Humanoid:EquipTool(Tool); Wait();
@@ -7040,7 +7309,7 @@ Command.Add({
 	Task = function()
 		Humanoid:SetStateEnabled("Seated", true);
 		Humanoid.Sit = (false);
-		
+
 		return "Anti Sit", "Anti Sit has been disabled"
 	end,
 })
@@ -7174,7 +7443,7 @@ Command.Add({
 	Task = function(Amount)
 		Humanoid.JumpPower = SetNumber(Amount);
 		Humanoid.UseJumpPower = (true);
-		
+
 		return "Jump Power", Format("Set jump power to %s", Amount);
 	end,
 })
@@ -7199,7 +7468,7 @@ Command.Add({
 	},
 	Task = function(Amount)
 		workspace.Gravity = SetNumber(Amount);
-		
+
 		return "Gravity", Format("Set gravity to %s", Amount);
 	end,
 })
@@ -7212,7 +7481,7 @@ Command.Add({
 	},
 	Task = function(Time)
 		Services.Lighting.ClockTime = SetNumber(Time);
-		
+
 		return "Time", Format("Set time to %s", Time);
 	end,
 })
@@ -7223,11 +7492,11 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Old = Get("AirPart");
-		
+
 		if (Old) then
 			Destroy(Old);
 		end
-		
+
 		local Part = Create("Part", {
 			Transparency = 1,
 			Size = Vector3.new(7, 2, 3),
@@ -7238,7 +7507,7 @@ Command.Add({
 		})
 
 		Add("AirPart", Part);
-		
+
 		repeat Wait()
 			Part.CFrame = Root.CFrame + Vector3.new(0, -4, 0);
 		until (not Part)
@@ -7262,7 +7531,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("Hidden", {});
-		
+
 		for Index, Wall in next, GetClasses(workspace, "BasePart") do
 			if (Wall.Transparency == 1) and (Wall.Name ~= "HumanoidRootPart") then
 				Insert(Get("Hidden"), Wall);
@@ -7332,7 +7601,7 @@ Command.Add({
 				repeat
 					Wait();
 				until (Root)
-				
+
 				for Index = 1, 5 do
 					Root.CFrame = OldPosition; Wait(0.1);
 				end
@@ -7367,7 +7636,7 @@ Command.Add({
 	Task = function()
 		local OldPosition = (Root.CFrame);
 		Root.CFrame = CFrame.new(0, 9e9, 0); Wait(1)
-		
+
 		for Index, Tool in next, GetClasses(Backpack, "Tool", true) do
 			if (Tool.CanBeDropped) then
 				Tool.Parent = Character
@@ -7559,7 +7828,7 @@ Command.Add({
 	},
 	Task = function(Amount)
 		Refresh("AnimationSpeed", false);
-		
+
 		for Index, Track in next, Humanoid:GetPlayingAnimationTracks() do
 			Track:AdjustSpeed(Amount);
 		end
@@ -7605,7 +7874,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Fired = (0);
-		
+
 		if (not firetouchinterest) then
 			return "Missing Function", "Executor does not support this command, missing function - firetouchinterest", 10
 		end
@@ -7626,7 +7895,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Fired = (0);
-		
+
 		if (not fireproximityprompt) then
 			return "Missing Function", "Executor does not support this command, missing function - fireproximityprompt", 10
 		end
@@ -7647,7 +7916,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Fired = (0);
-		
+
 		if (not fireclickdetector) then
 			return "Missing Function", "Executor does not support this command, missing function - fireclickdetector", 10
 		end
@@ -7729,7 +7998,7 @@ Command.Add({
 	},
 	Task = function(Input, Amount)
 		Add("Hitbox", true);
-		
+
 		repeat Wait()
 			for Index, Target in next, GetPlayer(Input) do
 				local TargetRoot = GetRoot(Target);
@@ -7779,7 +8048,7 @@ Command.Add({
 	Task = function()
 		local Old = Get("InfiniteJump");
 		Old = (Old and Old:Disconnect());
-		
+
 		Add("InfiniteJump", Connect(Services.Input.InputBegan, function(Key, FocusedTextbox)
 			if (Key.KeyCode == Enum.KeyCode.Space) and (not FocusedTextbox) then
 				Humanoid:ChangeState("Jumping"); Wait();
@@ -7798,7 +8067,7 @@ Command.Add({
 	Task = function()
 		local Old = Get("InfiniteJump");
 		Old = (Old and Old:Disconnect());
-		
+
 		return "Infinite Jump", "Disabled"
 	end,
 })
@@ -7833,7 +8102,7 @@ Command.Add({
 	Task = function(ID)
 		for Index, Boombox in next, GetClasses(Backpack, "Tool", true) do
 			local Name = Lower(Boombox.Name);
-			
+
 			if (Name == "radio" or Name == "boombox") and (Boombox:FindFirstChild("Remote")) then
 				Boombox.Parent = Character
 				Boombox.Remote:FireServer("PlaySong", ID);
@@ -7853,7 +8122,7 @@ Command.Add({
 	Task = function(Target)
 		for Index, Boombox in next, GetClasses(GetPlayer(Target)[1].Character, "Tool", true) do
 			local Name = Lower(Boombox.Name);
-			
+
 			if (Name == "radio" or Name == "boombox") and (Boombox:FindFirstChild("Handle")) then
 				local AudioID = (Boombox.Handle:FindFirstChildOfClass("Sound").SoundId);
 				return "Audio Logged", AudioID, 20
@@ -7934,7 +8203,7 @@ Command.Add({
 		for Index, Audio in next, GetClasses(game, "Sound") do
 			Audio.Playing = false
 		end
-		
+
 		return "No Audio", "Muted the game"
 	end,
 })
@@ -7947,7 +8216,7 @@ Command.Add({
 		for Index, Audio in next, GetClasses(game, "Sound") do
 			Audio.Playing = true
 		end
-		
+
 		return "Audio", "Unmuted the game"
 	end,
 })
@@ -8022,7 +8291,7 @@ Command.Add({
 	},
 	Task = function(Input, Time)
 		local OldPosition = Root.CFrame
-		
+
 		Root.CFrame = (GetRoot(GetPlayer(Input)[1]).CFrame); Wait(SetNumber(Time))
 		Root.CFrame = OldPosition
 	end,
@@ -8036,7 +8305,7 @@ Command.Add({
 	},
 	Task = function(Input)
 		local OldPosition = Root.CFrame
-		
+
 		Root.CFrame = (GetRoot(GetPlayer(Input)[1]).CFrame); Wait(1)
 		Root.CFrame = OldPosition
 	end,
@@ -8173,7 +8442,7 @@ Command.Add({
 			if (HumanoidConnected ~= Humanoid) or (RootConnected ~= Root) then
 				Connection:Disconnect();
 				Connection = Connect(Humanoid.StateChanged, StateConnection);
-				
+
 				HumanoidConnected = Humanoid
 				RootConnected = Root
 
@@ -8198,11 +8467,11 @@ Command.Add({
 			if (JumpCount > 2 and Root.Velocity.Magnitude >= 10) then 
 				local Velocity = Root.CFrame.LookVector * (JumpCount * 7)
 				local Magnitude = Velocity.Magnitude
-				
+
 				if Magnitude < 16 then
 					Velocity *= (16 / Magnitude);
 				end
-				
+
 				BodyVelocity.Velocity = Velocity
 				BodyVelocity.MaxForce = Vector3.new(2500, 0, 2500);
 			else
@@ -8521,13 +8790,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("ClickTP", true);
-		
+
 		Connect(Mouse.Button1Down, function()
 			if (Get("ClickTP")) then
 				Root.CFrame = (Mouse.Hit * CFrame.new(0, 3, 0));
 			end
 		end)
-		
+
 		return "Click TP", "Click TP has been enabled"
 	end,
 })
@@ -8575,7 +8844,7 @@ Command.Add({
 	Task = function()
 		Humanoid.Sit = true
 		Root.CFrame = (Root.CFrame * CFrame.Angles(1.5, 0, 0)); Wait(0.1)
-		
+
 		for Index, Track in next, Humanoid:GetPlayingAnimationTracks() do
 			Track:Stop();
 		end
@@ -8588,13 +8857,13 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Add("AutoRejoin", true);
-		
+
 		Connect(GetService("GuiService").ErrorMessageChanged, function()
 			if (Get("AutoRejoin")) then
 				Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId);
 			end
 		end)
-		
+
 		return "Auto Rejoin", "Auto Rejoin enabled"
 	end,
 })
@@ -8617,14 +8886,14 @@ Command.Add({
 	},
 	Task = function(Input)
 		local Sent = (0);
-		
+
 		for Index, Target in next, GetPlayer(Input) do
 			if (Target ~= LocalPlayer) then
 				LocalPlayer:RequestFriendship(Target);
 				Sent += 1
 			end
 		end
-		
+
 		return "Friend", Format("Sent friend request to %s player(s)", Sent)
 	end,
 })
@@ -8681,7 +8950,7 @@ Command.Add({
 	Task = function()
 		if (not Freecam) then
 			Freecam = ({});
-			
+
 			local pi = math.pi
 			local abs = math.abs
 			local clamp = math.clamp
@@ -9168,22 +9437,22 @@ Command.Add({
 	},
 	Task = function(Distance)
 		Refresh("Walkfling", true);
-		
+
 		Spawn(function()
 			local Velocity = Root.Velocity
 
 			repeat Wait()
 				if (GetPlayer("closest")[1]:DistanceFromCharacter(Root.Position) <= (Distance and SetNumber(Distance, 0, 9e9) or 10)) then
 					Velocity = Root.Velocity
-					
+
 					Root.Velocity = (Velocity * 10000) + Vector3.new(0, 10000, 0);
 					CWait(Services.Run.RenderStepped);
-					
+
 					Root.Velocity = Velocity
 				end
 			until (not Get("Walkfling"))
 		end)
-		
+
 		return "Walk Fling", "Walk Fling has been enabled"
 	end,
 })
@@ -9207,7 +9476,7 @@ Command.Add({
 			local ToChat = ({ [1] = "!clear", [2] = "abcdefghijk", [3] = "!clear" });
 			Services.Players:Chat(ToChat[Index]);
 		end
-		
+
 		return "Filter", "Reset"
 	end,
 })
@@ -9296,7 +9565,7 @@ Command.Add({
 	},
 	Task = function(Input)
 		Refresh("Fling", true);
-		
+
 		repeat Wait();
 			Fling(GetPlayer(Input));
 		until (not Get("Fling"))
@@ -9319,7 +9588,7 @@ Command.Add({
 	Task = function()
 		local Connection = Get("Clickfling")
 		Connection = (Connection and Connection:Disconnect())
-		
+
 		Add("Clickfling", Connect(Mouse.Button1Down, function()
 			local Target = (Mouse.Target);
 			local Model = Target:FindFirstAncestorOfClass("Model");
@@ -9329,7 +9598,7 @@ Command.Add({
 				Fling({ PlayerObject });
 			end
 		end))
-		
+
 		return "Clickfling", "Enabled"
 	end,
 })
@@ -9341,7 +9610,7 @@ Command.Add({
 	Task = function()
 		local Connection = Get("Clickfling");
 		Connection = (Connection and Connection:Disconnect());
-		
+
 		return "Clickfling", "Disabled"
 	end,
 })
@@ -9349,7 +9618,7 @@ Command.Add({
 -- :: SETUP :: --
 if (Check("File")) then
 	local LoadedPlugins = (0);
-	
+
 	for Index, Folder in next, ({ "Cmd", "Cmd/Logs", "Cmd/Plugins" }) do
 		if (not isfolder(Folder)) then
 			makefolder(Folder);
@@ -9438,6 +9707,8 @@ local OpenCommandBar = function()
 	local Transparency = Settings.Theme.Transparency
 	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding");
 
+	Wait();
+	
 	Input:CaptureFocus();
 	BarShadow.Transparency = 1
 	BarInner.Transparency = 1
@@ -9571,7 +9842,7 @@ Spawn(function()
 	-- staff notifier
 	Connect(Services.Players.PlayerAdded, function(Player)
 		local StaffMember, Role = IsStaff(Player);
-		
+
 		if (StaffMember and Settings.Toggles.StaffNotifier) then
 			API:Notify({
 				Title = "Staff Member has joined",
