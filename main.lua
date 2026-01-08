@@ -894,7 +894,7 @@ local GetTableLength = function(Table)
 	return Length
 end
 
-local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
+local Fling = function(Targets: { Player }, YAxis: number, Angle: number, Time: number)
 	local Flinged = 0
 	local Flinging = true
 	local OldPosition = Root.CFrame
@@ -921,12 +921,16 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 
 		if (_Humanoid and _Root) then
 			repeat Wait()
+				local Success, Result = pcall(function()
+					sethiddenproperty(Root, "PhysicsRepRootPart", _Root);
+				end)
+
 				local Magnitude = _Root.Velocity.Magnitude
 				local Direction = (_Humanoid and _Humanoid.MoveDirection) or Vector3.zero
 				local Seat = (_Humanoid and _Humanoid.SeatPart);
 				local PredictionOffset
 
-				if (Magnitude < 5) then
+				if (Magnitude < 5 or Success) then
 					PredictionOffset = Vector3.new(0, YAxis or math.random(-0.5, 0.4), 0);
 				else
 					PredictionOffset = Direction * (Magnitude / Random.new():NextNumber(0.7, 8)) - Vector3.new(0, YAxis or math.random(-1, 1), 0);
@@ -946,7 +950,7 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 				Humanoid.Sit = false
 				Camera.CameraSubject = _Humanoid
 				Root.CFrame = PredictedCFrame * CFrame.Angles(Angle or math.random(0, 360), 0, 0)
-			until (tick() - Start >= 2) or (_Root.Velocity.Magnitude > 200) or (not Root) or (not Root.Parent) or (not _Root) or (not _Root.Parent)
+			until (tick() - Start >= (Time or 2)) or (_Root.Velocity.Magnitude > 200) or (not Root) or (not Root.Parent) or (not _Root) or (not _Root.Parent)
 
 			if (not _Root or not _Root.Parent) or (_Root.Velocity.Magnitude > 200) then
 				Flinged += 1
@@ -958,7 +962,127 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number)
 	Root.CFrame = OldPosition
 	Camera.CameraSubject = Humanoid
 
+	pcall(function()
+		sethiddenproperty(Root, "PhysicsRepRootPart", nil);
+	end)
+
 	return Flinged
+end
+
+
+local HatFling = function(Targets: { Player }, Configuration: {})
+	local Configuration = (Configuration or {});
+	local Old = workspace.Gravity
+	local OldCoordinate = Root.CFrame
+	
+	local Hats = (function()
+		local Return = ({});
+
+		for _, Accessory in next, GetClasses(Character, "Accessory", true) do
+			if (Accessory:FindFirstChild("Handle")) then
+				sethiddenproperty(Accessory, "BackendAccoutrementState", 3);
+				Insert(Return, Accessory);
+			end
+		end
+
+		return Return
+	end)()
+	
+	if (#Targets == 0) then
+		return
+	end
+	
+	task.spawn(function()
+		local Pos = CFrame.new(Root.CFrame.X, -500, Root.CFrame.Y);
+		local Animation = Humanoid.Animator:LoadAnimation(Create("Animation", {
+			AnimationId = ({
+				[Enum.HumanoidRigType.R6] = "rbxassetid://180436148",
+				[Enum.HumanoidRigType.R15] = "rbxassetid://507767968",
+			})[Humanoid.RigType]
+		}))
+		
+		workspace.Gravity = 0
+		workspace.FallenPartsDestroyHeight = 0/0
+		
+		Animation.Priority = (Enum.AnimationPriority.Action);
+		Animation.TimePosition = (0.1);
+		Animation:Play();
+		Animation:AdjustWeight(5);
+		
+		for _ = 1, 60 do
+			Root.CFrame = Pos
+			Wait();
+		end
+	end)
+
+	task.delay(0.2, function()
+		Humanoid.Health = 0
+	end)
+
+	local Start = tick();
+	local Respawned = false
+	
+	LocalPlayer.CharacterAdded:Once(function()
+		Respawned = true
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = OldCoordinate
+	end)
+	
+	local Offsets = ({});
+	
+	if (Configuration.GiveHatsMode) then
+		for _, Accessory in next, Hats do
+			local Handle = Accessory:FindFirstChild("Handle");
+
+			if (Handle) then
+				local Offset = Root.CFrame:ToObjectSpace(Handle.CFrame);
+				Offsets[Accessory] = Offset
+			end
+		end
+	end
+	
+	repeat Wait()
+		for _, Target in next, Targets do
+			local _Root = GetRoot(Target);
+			local _Humanoid = GetHumanoid(Target);
+			local _Start = tick();
+			
+			if (Respawned) then
+				break
+			end
+			
+			if (not Configuration.FlingDisabled) and (_Humanoid and _Humanoid.Sit) then
+				continue
+			end
+			
+			Camera.CameraSubject = _Root
+			
+			repeat Wait();
+				for _, Hat in next, Hats do
+					local Handle = Hat:FindFirstChild("Handle");
+
+					if (Handle and _Root and (Configuration.GiveHatsMode or Handle.CanCollide)) then
+						sethiddenproperty(Handle, "PhysicsRepRootPart", _Root);
+						
+						if (not Configuration.FlingDisabled) then
+							Handle.Velocity = Vector3.new(1, 1, 1) * 9e9
+							Handle.RotVelocity = Vector3.new(1, 1, 1) * 9e9
+						else
+							Handle.Velocity = Vector3.new(0, 30, 0)
+						end
+						
+						if (Configuration.GiveHatsMode) then
+							Handle.CFrame = (_Root.CFrame * Offsets[Hat]);
+						else
+							Handle.CFrame = _Root.CFrame
+						end
+					end
+				end
+			until (tick() - _Start >= 0.2) or (Respawned)
+		end
+	until (Respawned)
+	
+	Camera.CameraSubject = Humanoid
+	workspace.Gravity = Old
 end
 
 local SetFly
@@ -1313,7 +1437,7 @@ end
 
 function Library:CreateWindow(Config: { 
 	Title: string 
-})
+	})
 	local Window = Clone(Tab);
 	local Animations = ({});
 	local Component = ({ Self = Window });
@@ -1509,7 +1633,7 @@ function Library:CreateWindow(Config: {
 		Title: string, 
 		Description: string, 
 		Tab: string 
-	})
+		})
 		local Button = Clone(Components.Section);
 		local Tab = Clone(Components.SectionExample);
 
@@ -1534,7 +1658,7 @@ function Library:CreateWindow(Config: {
 		Tab: Instance, 
 		Default: string?,
 		Callback: any 
-	})
+		})
 		local Dropdown = Clone(Components.Dropdown);
 		local Background = Window.Background
 		local Text = Dropdown.Holder.Main.Title
@@ -1590,7 +1714,7 @@ function Library:CreateWindow(Config: {
 
 		Component:Set(Dropdown, Config.Title, Config.Description);
 		Animations:Component(Dropdown);
-		
+
 		if (Config.Default) then
 			Text.Text = Config.Default
 		end
@@ -1607,7 +1731,7 @@ function Library:CreateWindow(Config: {
 		Description: string, 
 		Tab: string, 
 		Callback: any 
-	})
+		})
 		local Button = Clone(Components.Button);
 
 		Component:Set(Button, Config.Title, Config.Description);
@@ -1630,7 +1754,7 @@ function Library:CreateWindow(Config: {
 		Direction: string, 
 		Callback: (string, TextButton) -> (), 
 		Actions: { string } 
-	})
+		})
 		local MultiActions = Clone(Components.MultiActions);
 		local Holder = (MultiActions.Holder);
 
@@ -1657,12 +1781,12 @@ function Library:CreateWindow(Config: {
 	end
 
 	function Component:AddInput(Config: { 
-			Title: string, 
-			Description: string, 
-			Tab: string, 
-			Default: string, 
-			Callback: any 
-	})
+		Title: string, 
+		Description: string, 
+		Tab: string, 
+		Default: string, 
+		Callback: any 
+		})
 		local Button = Clone(Components.Input);
 		local Box = (Button.Main.TextBox);
 
@@ -1688,7 +1812,7 @@ function Library:CreateWindow(Config: {
 	function Component:AddSection(Config: { 
 		Title: string, 
 		Tab: string 
-	})
+		})
 		local Section = Clone(Components.TabSection);
 
 		Section.Title.Text = (Config.Title);
@@ -1702,7 +1826,7 @@ function Library:CreateWindow(Config: {
 		Title: string, 
 		Description: string, 
 		Tab: string 
-	})
+		})
 		local Paragraph = Clone(Components.Paragraph);
 
 		Component:Set(Paragraph, Config.Title, Config.Description);
@@ -1720,7 +1844,7 @@ function Library:CreateWindow(Config: {
 		Tab: string, 
 		Callback: any, 
 		Default: Enum.KeyCode 
-	})
+		})
 		local Dropdown = Clone(Components.Keybind);
 		local Bind = (Dropdown.Holder.Main.Title);
 
@@ -1924,7 +2048,7 @@ function Library:CreateWindow(Config: {
 		Tab: string, 
 		Default: Color3, 
 		Callback: (Color3) -> () 
-	})
+		})
 		local ColorPicker = Clone(Components.ColorPicker);
 		local Current = ColorPicker.CurrentColor
 
@@ -1953,7 +2077,7 @@ function Library:CreateWindow(Config: {
 		Tab: string,
 		Default: boolean,
 		Callback: any 
-	})
+		})
 		local Toggle = Clone(Components.Toggle);
 
 		local On = Toggle.Value
@@ -1998,7 +2122,7 @@ function Library:CreateWindow(Config: {
 		AllowDecimals: boolean,
 		DecimalAmount: number,
 		Callback: any,
-	})
+		})
 		local Slider = Clone(Components.Slider);
 
 		local Main = Slider.Slider
@@ -2158,7 +2282,7 @@ function API:Notify(Config: {
 	Description: string, 
 	Duration: number, 
 	Type: string 
-})
+	})
 	Spawn(function()
 		local Info = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out);
 		local SetShadow = function(Box, Boolean)
@@ -3865,7 +3989,7 @@ local ESPSettings = {
 	ShowNames = true,
 	TracerTransparency = 1,
 	TracerThickness = 1,
-	
+
 	TextSize = 18,
 	BoxThickness = 1,
 	IgnoreTeammates = false,
@@ -3924,7 +4048,7 @@ Command.Add({
 					ESPSettings.Tracers = Toggle
 				end,
 			})
-			
+
 			Window:AddToggle({
 				Title = "Text Enabled",
 				Tab = "Home",
@@ -3942,7 +4066,7 @@ Command.Add({
 					ESPSettings.ShowNames = Toggle
 				end,
 			})
-			
+
 			Window:AddToggle({
 				Title = "Display Name Shown",
 				Tab = "Home",
@@ -3960,7 +4084,7 @@ Command.Add({
 					ESPSettings.ShowHealth = Toggle
 				end,
 			})
-			
+
 			Window:AddToggle({
 				Title = "Distance Shown",
 				Tab = "Home",
@@ -3969,7 +4093,7 @@ Command.Add({
 					ESPSettings.ShowDistance = Toggle
 				end,
 			})
-			
+
 			Window:AddSection({ Title = "Customize", Tab = "Home" })
 
 			Window:AddSlider({
@@ -3981,7 +4105,7 @@ Command.Add({
 					ESPSettings.BoxThickness = Amount
 				end,
 			})
-			
+
 			Window:AddSlider({
 				Title = "Tracer Transparency",
 				Tab = "Home",
@@ -3992,7 +4116,7 @@ Command.Add({
 					ESPSettings.TracerTransparency = Amount
 				end,
 			})
-			
+
 			Window:AddSlider({
 				Title = "Tracer Thickness",
 				Tab = "Home",
@@ -4021,7 +4145,7 @@ Command.Add({
 				local Left = Drawing.new("Line");
 				local Name = Drawing.new("Text");
 				local Tracer = Drawing.new("Line");
-				
+
 				local SetVisible = function(Boolean)
 					for Index, DrawingLine in next, { Bottom, Top, Right, Left } do
 						if ESPSettings.Enabled and ESPSettings.Boxes then
@@ -4036,7 +4160,7 @@ Command.Add({
 					else
 						Name.Visible = false
 					end
-					
+
 					if ESPSettings.Enabled and ESPSettings.Tracers then
 						Tracer.Visible = Boolean
 					else
@@ -4046,7 +4170,7 @@ Command.Add({
 
 				local UpdatePosition = function()
 					local TargetRoot = (Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"));
-				
+
 					if
 						TargetRoot
 						and not (ESPSettings.IgnoreTeammates and Player.Team == LocalPlayer.Team)
@@ -4057,10 +4181,10 @@ Command.Add({
 						local Coordinate = TargetRoot.CFrame
 						local TeamColor = Player.TeamColor.Color
 						local CurrentText = Player.Name
-						
+
 						for Index, DrawingLine in next, { Bottom, Top, Right, Left, Tracer } do
 							DrawingLine.Color = TeamColor
-							
+
 							if (DrawingLine ~= Tracer) then
 								DrawingLine.Thickness = ESPSettings.BoxThickness
 							end
@@ -4097,13 +4221,13 @@ Command.Add({
 							Left.To = Vector2.new(BL.X, BL.Y)
 
 							Name.Position = Vector2.new((TL.X + TR.X) / 2, TL.Y - 20)
-							
+
 							if (ESPSettings.Tracers) then
 								Tracer.To = Vector2.new((BL.X + BR.X) / 2, BL.Y);
 								Tracer.Thickness = ESPSettings.TracerThickness
 								Tracer.Transparency = ESPSettings.TracerTransparency
 							end
-							
+
 							if (ESPSettings.ShowDisplay and Player.Name ~= Player.DisplayName) then
 								CurrentText = Format("%s (@%s)", Player.DisplayName, CurrentText);
 							end
@@ -4126,7 +4250,7 @@ Command.Add({
 							end
 
 							Name.Text = CurrentText
-							
+
 							SetVisible(true);
 						else
 							SetVisible(false);
@@ -4138,11 +4262,11 @@ Command.Add({
 
 				Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y);
 				local Connection = Connect(Services.Run.RenderStepped, UpdatePosition);
-				
+
 				Connect(Changed(Player, "Parent"), function()
 					if (Player.Parent == nil) then
 						Connection:Disconnect();
-						
+
 						for _, Object in next, ({ Bottom, Top, Right, Left, Name, Tracer }) do
 							Object:Remove();
 						end
@@ -4233,7 +4357,7 @@ AimbotSettings.Closest = function()
 			end
 		end
 	end
-	
+
 	if (AimbotSettings.Toggled and AimbotSettings.Method == "DotLock" and AimbotSettings.DotLockTarget) then
 		return AimbotSettings.DotLockTarget
 	else
@@ -4315,7 +4439,7 @@ Command.Add({
 
 					if (Method == "Silent" or Method == "DotLock") then
 						EnableAimbot();
-						
+
 						if (Check("Hook")) then
 							API:Notify({
 								Title = Method,
@@ -4350,7 +4474,7 @@ Command.Add({
 					AimbotSettings.Triggerbot = Boolean
 				end,
 			})
-			
+
 			Window:AddToggle({
 				Title = "Wallbang Enabled",
 				Tab = "Home",
@@ -4449,15 +4573,15 @@ Command.Add({
 			local ClosestRoot
 			local PredictedPosition
 			local ScreenPosition, OnScreen
-			
+
 			Spawn(function()
 				local Circle
 				local Visualizer
-				
+
 				if (Drawing and Drawing.new) then
 					Circle = Drawing.new("Circle");
 					Visualizer = Drawing.new("Circle");
-					
+
 					Visualizer.Visible = false
 					Visualizer.Thickness = 2
 					Visualizer.NumSides = 32
@@ -4472,7 +4596,7 @@ Command.Add({
 						local Available = ({ "Head", "HumanoidRootPart" });
 						AimbotSettings.Part = Available[math.random(1, #Available)];
 					end
-					
+
 					if (Drawing and Drawing.new) then
 						if (AimingCoordinate and AimbotSettings.Enabled) then
 							local Position = ((typeof(AimingCoordinate) == "CFrame" and AimingCoordinate.Position) or AimingCoordinate);
@@ -4487,7 +4611,7 @@ Command.Add({
 						else
 							Visualizer.Visible = false
 						end
-						
+
 						if (AimbotSettings.Enabled) then
 							local MouseLocation = (Services.Input:GetMouseLocation());
 
@@ -4530,10 +4654,10 @@ Command.Add({
 				Connect(Services.Input.InputBegan, function(Key, Processed)
 					if IsCorrectInput(Key, AimbotSettings.Key) and (AimbotSettings.Enabled) and (not Processed) then
 						local Method = AimbotSettings.Method
-						
+
 						if (Method ~= "DotLock") then
 							local TargetPart = AimbotSettings.Closest();
-							
+
 							if (TargetPart) then
 								AimbotSettings.Held = true
 
@@ -4553,18 +4677,18 @@ Command.Add({
 							end
 						else
 							AimbotSettings.Toggled = (not AimbotSettings.Toggled);
-							
+
 							if (AimbotSettings.Toggled) then
 								local TargetPart = AimbotSettings.Closest();
-								
+
 								repeat Wait()
 									AimbotSettings.DotLockTarget = TargetPart
-									
+
 									if (TargetPart) then
 										AimingCoordinate = TargetPart.CFrame + AimbotSettings.GetPrediction(TargetPart);
 									end
 								until (not AimbotSettings.Toggled or not TargetPart or not AimbotSettings.DotLockTarget or AimbotSettings.Method ~= "DotLock")
-								
+
 								AimingCoordinate = nil
 								AimbotSettings.DotLockTarget = nil
 							else
@@ -4580,7 +4704,7 @@ Command.Add({
 						AimbotSettings.Held = false
 					end
 				end)
-				
+
 				local Enabled = false
 				EnableAimbot = function()
 					if (not Enabled and Check("Hook")) then
@@ -4613,7 +4737,7 @@ Command.Add({
 										if (AimbotSettings.Wallbang) then
 											return ClosestRoot, ClosestRoot.Position, Vector3.new(0, 1, 0), ClosestRoot.Material
 										end
-										
+
 										return OldNamecall(self, table.unpack(Args))
 									end
 								elseif Method == "Raycast" then
@@ -4634,7 +4758,7 @@ Command.Add({
 												Material = ClosestRoot.Material
 											})
 										end
-										
+
 										return OldNamecall(self, table.unpack(Args))
 									end
 								end
@@ -4642,7 +4766,7 @@ Command.Add({
 
 							return OldNamecall(self, ...)
 						end))
-						
+
 						local OldIndex
 						OldIndex = hookmetamethod(game, "__index", newcclosure(function(self, Index)
 							if 
@@ -5462,14 +5586,14 @@ Command.Add({
 					})
 
 					local Character = Player.Character or Player.CharacterAdded:Wait();
-					local Root = Character:WaitForChild("HumanoidRootPart", 5)
+
 					local Init = function(BasePart)
 						for Property, Default in next, Properties do
-							BasePart[Property] = Default
-
 							Cleaner:Add("AntiFling", Connect(Changed(BasePart, Property), function()
 								BasePart[Property] = Default
 							end))
+							
+							BasePart[Property] = Default
 						end
 					end
 
@@ -5888,7 +6012,7 @@ Command.Add({
 		Refresh("FastCarts", true);
 
 		if (not fireclickdetector) then
-			return "Fast Carts", "Unsupported Executor", "Your executor does not support this command, missing function - fireclickdetector()"
+			return "Unsupported Executor", "Your executor does not support this command, missing function - fireclickdetector()"
 		end
 
 		local Slow = function(Cart)
@@ -5933,7 +6057,7 @@ Command.Add({
 		Refresh("SlowCarts", true);
 
 		if (not fireclickdetector) then
-			return "Slow Carts", "Unsupported Executor", "Your executor does not support this command, missing function - fireclickdetector()"
+			return "Unsupported Executor", "Your executor does not support this command, missing function - fireclickdetector()"
 		end
 
 		local Slow = function(Cart)
@@ -9472,8 +9596,9 @@ Command.Add({
 	Description = "Resets the chat filter if Roblox keeps tagging your messages",
 	Arguments = {},
 	Task = function()
+		local ToChat = ({ [1] = "!clear", [2] = "abcdefghijk", [3] = "!clear" });
+
 		for Index = 1, 3 do
-			local ToChat = ({ [1] = "!clear", [2] = "abcdefghijk", [3] = "!clear" });
 			Services.Players:Chat(ToChat[Index]);
 		end
 
@@ -9540,6 +9665,99 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "fling2" },
+	Description = "Flings with a lesser cooldown",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)
+		local Targets = GetPlayer(Input);
+
+		if (#Targets == 0) then
+			return "Fling", "No targets found"
+		end
+
+		local Successes = Fling(Targets, nil, nil, 0.4);
+		return "Fling", "Flinged selected players"
+	end,
+})
+
+Command.Add({
+	Aliases = { "hatfling", "hf" },
+	Description = "Flings your targets using hats",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)
+		if (not sethiddenproperty) then
+			return "Unsupported Executor", "Your executor does not support this command, missing function - sethiddenproperty()"
+		end
+
+		local Targets = GetPlayer(Input);
+
+		if (#Targets == 0) then
+			return "Hat Fling", "No targets found"
+		end
+				
+		HatFling(Targets);
+		
+		return "Hat Fling", "Flinged all targets"
+	end,
+})
+
+-- i remember seeing this on v3rm (the old one) so shoutout to whoever released this i got the idea from u
+Command.Add({
+	Aliases = { "toolball", "tball" },
+	Description = "Makes your tools have ball collisions (recommended to have a ton of tools for this)",
+	Arguments = {},
+	Task = function()
+		Humanoid:UnequipTools();
+		
+		local Tools = (function()
+			local Return = ({});
+			
+			for _, Tool in next, GetClasses(Backpack, "Tool", true) do
+				Humanoid:EquipTool(Tool);
+				Insert(Return, Tool);
+			end
+			
+			return Return
+		end)()
+		
+		Humanoid:UnequipTools();
+
+		for _, Tool in next, Tools do
+			local Handle = Tool:FindFirstChild("Handle");
+			
+			if (Handle) then
+				Tool.Parent = Character
+				Tool.Parent = Backpack
+				Tool.Parent = Humanoid
+				Tool.Parent = Character
+
+				local Ball = Create("Part", {
+					Size = Vector3.new(3, 3, 3),
+					CFrame = Root.CFrame * CFrame.new(0, 100, 0),
+					Shape = Enum.PartType.Ball,
+					Transparency = 0.8,
+					Parent = workspace,
+				})
+				
+				Connect(Tool.Destroying, function()
+					Destroy(Ball);
+				end)
+				
+				Spawn(function()
+					repeat Wait()
+						Handle.CFrame = Ball.CFrame
+					until (not Ball) or (not Tool)
+				end)
+			end
+		end
+	end,
+})
+
+Command.Add({
 	Aliases = { "launch" },
 	Description = "Launches your target to the sky (basically fling but it makes them go up)",
 	Arguments = {
@@ -9554,6 +9772,70 @@ Command.Add({
 
 		local Successes = Fling(Targets, 3, 0);
 		return "Fling", Format("Successfully launched (%s/%s) player(s)", Successes or 0, #Targets)
+	end,
+})
+
+Command.Add({
+	Aliases = { "loophatfling", "lhf" },
+	Description = "Repeatedly flings your target using your hats",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)		
+		Spawn(function()
+			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+			Wait(Services.Players.RespawnTime + 0.1);
+			replicatesignal(LocalPlayer.Kill);
+			HatFling(GetPlayer(Input));
+		end)
+		
+		return "Loop Hat Fling", Format("Please wait %d seconds", Services.Players.RespawnTime)
+	end,
+})
+
+Command.Add({
+	Aliases = { "unloophatfling", "unlhf" },
+	Description = "Disables the LoopHatFling command",
+	Arguments = {},
+	Task = function()
+		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+	end,
+})
+
+Command.Add({
+	Aliases = { "givehats", "ghats" },
+	Description = "Gives your hats to someone",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)		
+		Spawn(function()
+			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+			Wait(Services.Players.RespawnTime + 0.1);
+			replicatesignal(LocalPlayer.Kill);
+			
+			local Target = GetPlayer(Input)[1]
+			
+			if (Target) then
+				HatFling({ Target }, {
+					FlingDisabled = true,
+					GiveHatsMode = true,
+				});
+			end
+		end)
+
+		return "Give Hats", Format("Please wait %d seconds", Services.Players.RespawnTime)
+	end,
+})
+
+Command.Add({
+	Aliases = { "ungivehats", "takehats", "unghats", "thats" },
+	Description = "Disables the GiveHats command",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)		
+		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
 	end,
 })
 
@@ -9577,7 +9859,31 @@ Command.Add({
 	Description = "Disables the LoopFling command",
 	Arguments = {},
 	Task = function()
-		Add("Fling", false)
+		Add("Fling", false);
+	end,
+})
+
+Command.Add({
+	Aliases = { "loopfling2", "lf2" },
+	Description = "Repeatedly flings your target (2nd method)",
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Input)
+		Refresh("Fling2", true);
+
+		repeat Wait();
+			Fling(GetPlayer(Input), nil, nil, 0.2);
+		until (not Get("Fling2"))
+	end,
+})
+
+Command.Add({
+	Aliases = { "unloopfling2", "unlf2" },
+	Description = "Disables the LoopFling2 command",
+	Arguments = {},
+	Task = function()
+		Add("Fling2", false);
 	end,
 })
 
@@ -9708,7 +10014,7 @@ local OpenCommandBar = function()
 	local Padding = CommandBar.Parent:FindFirstChildOfClass("UIPadding");
 
 	Wait();
-	
+
 	Input:CaptureFocus();
 	BarShadow.Transparency = 1
 	BarInner.Transparency = 1
