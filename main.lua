@@ -27,8 +27,7 @@ local Settings = ({
 	ChatPrefix = ("!"),
 	Seperator = (","),
 	Version = ("1.2"),
-
-	CustomUI = (Cmd().CustomUI or "rbxassetid://129646501448633"),
+	CustomUI = (Cmd().CustomUI or "rbxassetid://127095266446147"),
 
 	Aliases = ({}),
 	Waypoints = ({}),
@@ -80,6 +79,9 @@ local Settings = ({
 		UnsureVulnDetector = false,
 		IgnoreVulnerabilityScans = false,
 	}),
+	
+	Configs = ({}),
+	UIScale = 1,
 })
 
 local Connect = (game.Loaded.Connect);
@@ -493,7 +495,7 @@ local SetSRadius = function(Radius, MaxRadius)
 	end
 
 	if (not MaxRadius) then
-		MaxRadius = 9e9
+		MaxRadius = math.huge
 	end
 
 	OldSRadius = Connect(Services.Run.Heartbeat, function()
@@ -514,9 +516,9 @@ local SetSRadius = function(Radius, MaxRadius)
 	end)
 end
 
-local AttachName = GenerateGUID(Services.Http);
-local Attach = function(Part, Target)
-	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
+local Attached = ({});
+local Attach = function(Part, Target, BringMode, NPCMode)
+	if (Part and Part:IsA("BasePart") and not Part.Anchored) then	
 		local ModelDescendant = Part:FindFirstAncestorOfClass("Model");
 
 		if (ModelDescendant) then
@@ -526,31 +528,30 @@ local Attach = function(Part, Target)
 		end
 
 		for _, Object in next, Part:GetChildren() do
-			local Blacklisted = ({ "Attachment", "AlignPosition", "AlignOrientation", "Attachment", "BodyPosition", "BodyGyro", "BodyThrust", "BodyForce", "BodyAngularVelocity", "BodyVelocity", "RocketPropulsion" });
+			local Blacklisted = ({ "Attachment", "AlignPosition", "AlignOrientation", "BodyPosition", "BodyGyro", "BodyThrust", "BodyForce", "BodyAngularVelocity", "BodyVelocity", "RocketPropulsion" });
 
-			if Discover(Blacklisted, Object.ClassName) then
+			if (Discover(Blacklisted, Object.ClassName)) then
 				Object:Destroy();
 			end
 		end
+		
+		local Attachment = Instance.new("Attachment");
+		local Position = Instance.new("AlignPosition");
+		local Orientation = Instance.new("AlignOrientation");
+		local Attachment2 = Instance.new("Attachment");
+		local Torque = Instance.new("Torque");
+		local OldCollide = Part.CanCollide
 
-		SetSRadius(9e9, 9e9)
-		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0)
+		SetSRadius(math.huge, math.huge);
+		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0);
 		Part.CanCollide = false
-		Part.Massless = true
-		Part.Velocity = Vector3.zero
-
-		local Attachment = Instance.new("Attachment")
-		local Position = Instance.new("AlignPosition")
-		local Orientation = Instance.new("AlignOrientation")
-		local Attachment2 = Instance.new("Attachment")
-
-		Attachment.Name = AttachName
-		Position.Name = AttachName
-		Orientation.Name = AttachName
-		Attachment2.Name = AttachName
-
+		
 		Attachment.Parent = Part
-		Attachment2.Parent = (Target or Root)
+		Attachment2.Parent = (Target or Root);
+		
+		Torque.Parent = Part
+		Torque.Torque = Vector3.new(9e9, 9e9, 9e9);
+		Torque.Attachment0 = Attachment
 
 		Position.Parent = Part
 		Position.Attachment0 = Attachment
@@ -558,8 +559,6 @@ local Attach = function(Part, Target)
 		Position.Responsiveness = 200
 		Position.MaxForce = math.huge
 		Position.MaxVelocity = math.huge
-		Position.ReactionForceEnabled = false
-		Position.ApplyAtCenterOfMass = true 
 
 		Orientation.Parent = Part
 		Orientation.Attachment0 = Attachment
@@ -567,72 +566,35 @@ local Attach = function(Part, Target)
 		Orientation.Responsiveness = 200
 		Orientation.MaxTorque = math.huge
 		Orientation.MaxAngularVelocity = math.huge
-		Orientation.ReactionTorqueEnabled = false
-		Orientation.PrimaryAxisOnly = false
 
-		Part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		Part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-
-		return Attachment, Position, Orientation, Attachment2
+		for _, Object in next, ({ Attachment, Position, Torque, Attachment2, Orientation }) do
+			Insert(Attached, Object);
+		end
+		
+		Connect(Changed(Attachment2, "Parent"), function()
+			Part.CanCollide = OldCollide
+		end)
+		
+		if (BringMode) then
+			Delay(1, function()
+				Destroy(Orientation);
+				Destroy(Position);
+				Destroy(Torque);
+				Destroy(Attachment);
+				Destroy(Attachment2);
+			end)
+		end
 	end
 end
 
-local Bring = function(Part, Target)
-	if (Part and Part:IsA("BasePart") and not Part.Anchored) then
-		local ModelDescendant = Part:FindFirstAncestorOfClass("Model");
-		local OldCollide = (Part.CanCollide);
-
-		if (ModelDescendant) then
-			if (Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
-				return
-			end
-		end
-
-		for _, Object in next, Part:GetChildren() do
-			local Blacklisted = ({ "Attachment", "AlignPosition", "AlignOrientation", "Attachment", "BodyPosition", "BodyGyro", "BodyThrust", "BodyForce", "BodyAngularVelocity", "BodyVelocity", "RocketPropulsion" });
-
-			if (Discover(Blacklisted, Object.ClassName)) then
-				Object:Destroy();
-			end
-		end
-
-		SetSRadius(9e9, 9e9);
-		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0);
-		Part.CanCollide = false
-		Part.Massless = true
-		Part.Velocity = Vector3.zero
-
-		local Attachment = Instance.new("Attachment");
-		local Position = Instance.new("AlignPosition");
-		local Torque = Instance.new("Torque");
-		local Attachment2 = Instance.new("Attachment");
-
-		Attachment.Parent = Part
-		Position.Parent = Part
-		Torque.Parent = Part
-		Attachment2.Parent = (Target or Root)
-
-		Position.Responsiveness = 200
-		Position.MaxForce = 9e9
-		Position.MaxVelocity = 9e9
-		Torque.Torque = Vector3.new(9e9, 9e9, 9e9)
-
-		Position.Attachment0 = Attachment
-		Position.Attachment1 = Attachment2
-		Position.Attachment1 = Attachment2
-		Position.Attachment0 = Attachment
-
-		Part.AssemblyLinearVelocity = Vector3.new(0, 0, 0);
-		Part.AssemblyAngularVelocity = Vector3.new(0, 0, 0);
-
-		Delay(1, function()
+local RemoveAttachments = function()
+	for _, Attachment in next, Attached do
+		if (Attachment) then
 			Destroy(Attachment);
-			Destroy(Position);
-			Destroy(Torque);
-			Destroy(Attachment2);
-			Part.CanCollide = OldCollide
-		end)
+		end
 	end
+
+	Attached = ({});
 end
 
 local IsStaff = function(Player)
@@ -969,12 +931,14 @@ local Fling = function(Targets: { Player }, YAxis: number, Angle: number, Time: 
 	return Flinged
 end
 
-
 local HatFling = function(Targets: { Player }, Configuration: {})
 	local Configuration = (Configuration or {});
 	local Old = workspace.Gravity
 	local OldCoordinate = Root.CFrame
-	
+	local Offsets = ({});
+	local Start = tick();
+	local Respawned = false
+
 	local Hats = (function()
 		local Return = ({});
 
@@ -987,48 +951,47 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 
 		return Return
 	end)()
-	
-	if (#Targets == 0) then
+
+	if (#Targets == 0) and (not Configuration.Click) then
 		return
 	end
-	
+
 	task.spawn(function()
-		local Pos = CFrame.new(Root.CFrame.X, -500, Root.CFrame.Y);
+		local Pos = CFrame.new(Root.CFrame.X, -500, Root.CFrame.Z);
 		local Animation = Humanoid.Animator:LoadAnimation(Create("Animation", {
 			AnimationId = ({
 				[Enum.HumanoidRigType.R6] = "rbxassetid://180436148",
 				[Enum.HumanoidRigType.R15] = "rbxassetid://507767968",
 			})[Humanoid.RigType]
 		}))
-		
+
 		workspace.Gravity = 0
 		workspace.FallenPartsDestroyHeight = 0/0
-		
+
 		Animation.Priority = (Enum.AnimationPriority.Action);
 		Animation.TimePosition = (0.1);
 		Animation:Play();
 		Animation:AdjustWeight(5);
-		
-		for _ = 1, 60 do
+
+		for _ = 1, 50 do
 			Root.CFrame = Pos
 			Wait();
 		end
 	end)
 
 	task.delay(0.2, function()
+		if (Configuration.PermDeath) then
+			replicatesignal(LocalPlayer.Kill);
+		end
+		
 		Humanoid.Health = 0
 	end)
 
-	local Start = tick();
-	local Respawned = false
-	
 	LocalPlayer.CharacterAdded:Once(function()
 		Respawned = true
 		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = OldCoordinate
 	end)
-	
-	local Offsets = ({});
-	
+
 	if (Configuration.GiveHatsMode) then
 		for _, Accessory in next, Hats do
 			local Handle = Accessory:FindFirstChild("Handle");
@@ -1038,49 +1001,103 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 				Offsets[Accessory] = Offset
 			end
 		end
+		
+		Wait(0.2);
 	end
-	
-	repeat Wait()
-		for _, Target in next, Targets do
-			local _Root = GetRoot(Target);
-			local _Humanoid = GetHumanoid(Target);
-			local _Start = tick();
-			
-			if (Respawned) then
-				break
+
+	local Tries = 0
+	local Fling = function(NewTargets)
+		repeat Wait()
+			if (Configuration.MaximumTries) then
+				Tries += 1
+
+				if (Tries == Configuration.MaximumTries) then
+					break
+				end
 			end
-			
-			if (not Configuration.FlingDisabled) and (_Humanoid and _Humanoid.Sit) then
-				continue
+
+			for _, Target in next, (NewTargets or Targets) do				
+				local _Root = GetRoot(Target);
+				local _Humanoid = GetHumanoid(Target);
+				local _Start = tick();
+
+				if (Respawned) then
+					break
+				end
+
+				if (not Configuration.FlingDisabled) and (_Humanoid and _Humanoid.Sit) then
+					continue
+				end
+
+				Camera.CameraSubject = _Root
+
+				repeat Wait()
+					for _, Hat in next, Hats do
+						local Handle = Hat:FindFirstChild("Handle");
+						
+						if (Handle and _Root and (Configuration.GiveHatsMode or Handle.CanCollide)) then
+							sethiddenproperty(Handle, "PhysicsRepRootPart", _Root);
+
+							if (Configuration.GiveHatsMode) then
+								Handle.CFrame = (_Root.CFrame * Offsets[Hat]);
+							else
+								Handle.CFrame = _Root.CFrame
+							end
+
+							if (not Configuration.FlingDisabled) then
+								Handle.Velocity = Vector3.new(1, 1, 1) * 9e9
+								Handle.RotVelocity = Vector3.new(1, 1, 1) * 9e9
+							else
+								Handle.AssemblyLinearVelocity = Vector3.new(0, Random.new():NextNumber(50, 100), 0);
+								Handle.AssemblyAngularVelocity = Vector3.zero
+							end
+						end
+					end
+				until (tick() - _Start >= (Configuration.GiveHatsMode and 100000 or 0.2)) or (Respawned)
 			end
-			
-			Camera.CameraSubject = _Root
-			
-			repeat Wait();
+		until (Respawned)
+	end
+		
+	if (Configuration.Click) then
+		local Running = true
+		local Thread = nil
+		
+		task.spawn(function()
+			repeat Wait()
+				if (not Running) then
+					return
+				end
+
 				for _, Hat in next, Hats do
 					local Handle = Hat:FindFirstChild("Handle");
 
-					if (Handle and _Root and (Configuration.GiveHatsMode or Handle.CanCollide)) then
-						sethiddenproperty(Handle, "PhysicsRepRootPart", _Root);
-						
-						if (not Configuration.FlingDisabled) then
-							Handle.Velocity = Vector3.new(1, 1, 1) * 9e9
-							Handle.RotVelocity = Vector3.new(1, 1, 1) * 9e9
-						else
-							Handle.Velocity = Vector3.new(0, 30, 0)
-						end
-						
-						if (Configuration.GiveHatsMode) then
-							Handle.CFrame = (_Root.CFrame * Offsets[Hat]);
-						else
-							Handle.CFrame = _Root.CFrame
-						end
+					if (Handle and (Configuration.GiveHatsMode or Handle.CanCollide)) then
+						sethiddenproperty(Handle, "PhysicsRepRootPart", Root);
+						Handle.CFrame = CFrame.new(OldCoordinate.X, 0, OldCoordinate.Z);
+						Handle.Velocity = Vector3.new(1, 1, 1) * 9e9
+						Handle.RotVelocity = Vector3.new(1, 1, 1) * 9e9
 					end
 				end
-			until (tick() - _Start >= 0.2) or (Respawned)
-		end
-	until (Respawned)
-	
+			until (Respawned)
+		end)
+		
+		return {
+			Click = function(User)
+				if (Thread) then
+					task.cancel(Thread);
+				end
+				
+				Running = false
+				Thread = task.spawn(function()
+					Fling({ User });
+					Running = true
+				end)
+			end,
+		}
+	else
+		Fling();
+	end
+
 	Camera.CameraSubject = Humanoid
 	workspace.Gravity = Old
 end
@@ -1230,7 +1247,6 @@ end)
 Tab.Visible = false
 CommandBar.Actions.Description.Text = Format("Version %s", Settings.Version);
 CommandBar.Visible = false
-CommandBar.GroupTransparency = 1
 
 -- :: LIBRARY[UI] :: --
 local API = ({});
@@ -1456,7 +1472,6 @@ function Library:CreateWindow(Config: {
 
 	local Maximized = false
 	local Minimized = false
-
 	local Minimum, Maximum = Vector2.new(204, 220), Vector2.new(9e9, 9e9);
 
 	local List = ({
@@ -1527,7 +1542,7 @@ function Library:CreateWindow(Config: {
 
 	Library.Tabs[Config.Title] = ({
 		Open = function()
-			Animate.Open(Window, Settings.Theme.Transparency, UDim2.fromOffset(345, 418), false, true);
+			Animate.Open(Window, Settings.Theme.Transparency, UDim2.fromOffset(300, 418), false, true);
 		end,
 	})
 
@@ -1537,12 +1552,14 @@ function Library:CreateWindow(Config: {
 	local SetShadow = function(Bool)
 		Spawn(function()
 			Shadow.Visible = true
-
-			Tween(Shadow, 0.5, {
-				BackgroundTransparency = (Bool and 0.7 or 1)
-			}); Wait(0.5)
-
+			Shadow.Interactable = true
+			
+			Tween(Shadow, 0.25, {
+				BackgroundTransparency = (Bool and 0.7 or 1);
+			}); Wait(0.25)
+			
 			Shadow.Visible = Bool
+			Shadow.Interactable = Bool
 		end)
 	end
 
@@ -1660,31 +1677,33 @@ function Library:CreateWindow(Config: {
 		Callback: any 
 		})
 		local Dropdown = Clone(Components.Dropdown);
-		local Background = Window.Background
 		local Text = Dropdown.Holder.Main.Title
 
 		Connect(Dropdown.MouseButton1Click, function()
 			local Example = Clone(Features.DropdownExample);
-			local Buttons = Example.Actions
 
-			Tween(Background, 0.25, { BackgroundTransparency = 0.6 });
 			Animate.Open(Example, 0);
 			Example.Parent = Window
+			SetShadow(true);
+			
+			for Index, Button in next, Example.Actions:GetChildren() do
+				local Type = Button.Name
 
-			for Index, Button in next, Buttons:GetChildren() do
-				if (Button:IsA("TextButton")) then
+				if (Button:IsA("GuiButton")) then
 					Animations:Component(Button, true);
 
 					Connect(Button.MouseButton1Click, function()
-						Tween(Background, 0.25, { BackgroundTransparency = 1 });
-						Animate.Close(Example);
-
-						Wait(0.25);
-						Destroy(Example);
+						if (Type == "Close") then
+							Animate.Close(Example);
+							SetShadow(false);
+							
+							Wait(0.25);
+							Destroy(Example);
+						end
 					end)
 				end
 			end
-
+			
 			for Index, Option in next, Config.Options do
 				local Button = Clone(Features.DropdownButtonExample);
 
@@ -1703,9 +1722,9 @@ function Library:CreateWindow(Config: {
 						end
 					end
 
-					Tween(Background, 0.25, { BackgroundTransparency = 1 });
 					Animate.Close(Example);
-
+					SetShadow(false);
+					
 					Wait(0.25);
 					Destroy(Example);
 				end)
@@ -2121,6 +2140,7 @@ function Library:CreateWindow(Config: {
 		Default: number,
 		AllowDecimals: boolean,
 		DecimalAmount: number,
+		RunWhenHeldStopped: boolean,
 		Callback: any,
 		})
 		local Slider = Clone(Components.Slider);
@@ -2146,7 +2166,7 @@ function Library:CreateWindow(Config: {
 			return Number
 		end
 
-		local Update = function(Number)
+		local Update = function(Number, Text)
 			local Scale = ((Mouse.X - Slide.AbsolutePosition.X) / Slide.AbsoluteSize.X);
 			Scale = math.clamp(Scale, 0, 1);
 
@@ -2158,7 +2178,9 @@ function Library:CreateWindow(Config: {
 			Fill.Size = UDim2.fromScale((Number and Number / Config.MaxValue) or Scale, 1);
 			Amount.Text = (Value);
 
-			Config.Callback(Value);
+			if (Text or not Config.RunWhenHeldStopped) then
+				Config.Callback(Value);
+			end
 		end
 
 		local Activate = function()
@@ -2175,13 +2197,17 @@ function Library:CreateWindow(Config: {
 		Component:Set(Slider, Config.Title, Config.Description);
 
 		Connect(Amount.FocusLost, function()
-			Update(tonumber(Amount.Text) or 0);
+			Update(tonumber(Amount.Text) or 0, true);
 		end)
 
 		Connect(Fire.MouseButton1Down, Activate)
 		Connect(Services.Input.InputEnded, function(Input)
 			if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
 				Active = false
+
+				if (Config.RunWhenHeldStopped) then
+					Config.Callback(Value);
+				end
 			end
 		end)
 
@@ -2209,9 +2235,9 @@ function Library:CreateWindow(Config: {
 					Minimized = (not Minimized)
 
 					if (Minimized) then
-						Tween(Window, 0.25, { Size = UDim2.fromOffset(345, 60) });
+						Tween(Window, 0.25, { Size = UDim2.fromOffset(300, 60) });
 					else
-						Tween(Window, 0.25, { Size = UDim2.fromOffset(345, 394) });
+						Tween(Window, 0.25, { Size = UDim2.fromOffset(300, 394) });
 					end
 				elseif (Type == "Maximize") then
 					Maximized = (not Maximized)
@@ -2219,7 +2245,7 @@ function Library:CreateWindow(Config: {
 					if (Maximized) then
 						Tween(Window, 0.15, { Size = UDim2.fromScale(1, 1), Position = UDim2.fromScale(0.5, 0.5) });
 					else
-						Tween(Window, 0.15, { Size = UDim2.fromOffset(345, 394), Position = UDim2.fromScale(0.5, 0.5) });
+						Tween(Window, 0.15, { Size = UDim2.fromOffset(300, 394), Position = UDim2.fromScale(0.5, 0.5) });
 					end
 				end
 			end)
@@ -2727,7 +2753,16 @@ local DefaultThemes = {
 	},
 }
 
-local ThemeButtons = {}
+local ThemeButtons = ({});
+
+local UpdateUIScale = function()
+	local Scale = SetNumber(Settings.UIScale, 0.2, 2);
+
+	for _, UIScale in next, GetClasses(UI, "UIScale") do
+		UIScale.Scale = Scale
+	end
+end
+
 local SetTheme = function(Table)
 	Settings.Theme = Table or Settings.Theme
 	CommandBar.BackgroundColor3 = Settings.Theme.Primary
@@ -3237,8 +3272,8 @@ function Feature:ConnectEvent(Event, Connection, UseHumanoid, Check)
 	if (Event == "AutoExecute") then
 		RunEvent(Event);
 	elseif (Event == "PlayerRemoved") then
-		Connect(Services.Players.PlayerRemoving, function(Plr)
-			if (Plr == LocalPlayer) then
+		Connect(Services.Players.PlayerRemoving, function(User)
+			if (User == LocalPlayer) then
 				RunEvent("PlayerRemoved");
 			end
 		end)
@@ -3290,7 +3325,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs.Settings
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local Keybinds = {}
@@ -3630,6 +3665,21 @@ Command.Add({
 				Callback = function(Amount)
 					Settings.Theme.Transparency = Amount
 					SetTheme()
+				end,
+			})
+
+			Window:AddSlider({
+				Title = "UI Scale",
+				Tab = "Theme",
+				MaxValue = 2,
+				Default = Settings.UIScale,
+				AllowDecimals = true,
+				DecimalAmount = 2,
+				RunWhenHeldStopped = true,
+				Callback = function(Amount)
+					Wait(0.1); Settings.UIScale = Amount
+					UpdateUIScale();
+					SaveSettings();
 				end,
 			})
 
@@ -4002,19 +4052,25 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs["Esp"]
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local Window = Library:CreateWindow({
 				Title = "Esp",
 			})
+			
+			if (Settings.Configs.ESP) then
+				for Option, Value in next, Settings.Configs.ESP do
+					ESPSettings[Option] = Value
+				end
+			end
 
 			Window:AddSection({ Title = "Main", Tab = "Home" })
 
 			Window:AddToggle({
 				Title = "Enabled",
 				Tab = "Home",
-				Default = false,
+				Default = ESPSettings.Enabled,
 				Callback = function(Toggle)
 					ESPSettings.Enabled = Toggle
 				end,
@@ -4023,7 +4079,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Hide Teammates",
 				Tab = "Home",
-				Default = false,
+				Default = ESPSettings.IgnoreTeammates,
 				Callback = function(Toggle)
 					ESPSettings.IgnoreTeammates = Toggle
 				end,
@@ -4034,7 +4090,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Boxes Enabled",
 				Tab = "Home",
-				Default = true,
+				Default = ESPSettings.Boxes,
 				Callback = function(Toggle)
 					ESPSettings.Boxes = Toggle
 				end,
@@ -4043,7 +4099,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Tracers Enabled",
 				Tab = "Home",
-				Default = false,
+				Default = ESPSettings.Tracers,
 				Callback = function(Toggle)
 					ESPSettings.Tracers = Toggle
 				end,
@@ -4052,7 +4108,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Text Enabled",
 				Tab = "Home",
-				Default = true,
+				Default = ESPSettings.Text,
 				Callback = function(Toggle)
 					ESPSettings.Text = Toggle
 				end,
@@ -4061,7 +4117,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Show Names",
 				Tab = "Home",
-				Default = true,
+				Default = ESPSettings.ShowNames,
 				Callback = function(Toggle)
 					ESPSettings.ShowNames = Toggle
 				end,
@@ -4070,7 +4126,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Display Name Shown",
 				Tab = "Home",
-				Default = false,
+				Default = ESPSettings.ShowDisplay,
 				Callback = function(Toggle)
 					ESPSettings.ShowDisplay = Toggle
 				end,
@@ -4079,7 +4135,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Health Shown",
 				Tab = "Home",
-				Default = false,
+				Default = ESPSettings.ShowHealth,
 				Callback = function(Toggle)
 					ESPSettings.ShowHealth = Toggle
 				end,
@@ -4088,7 +4144,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Distance Shown",
 				Tab = "Home",
-				Default = false,
+				Default = ESPSettings.ShowDistance,
 				Callback = function(Toggle)
 					ESPSettings.ShowDistance = Toggle
 				end,
@@ -4138,6 +4194,35 @@ Command.Add({
 				end,
 			})
 
+			Window:AddSection({ Title = "Config", Tab = "Home" })
+
+			Window:AddButton({
+				Title = "Save Config",
+				Description = "Whenever you run the ESP command, you will set the current settings as the default",
+				Tab = "Home",
+				Callback = function(Boolean)
+					Settings.Configs.ESP = (function()
+						local Return = ({});
+
+						for Config, Value in next, ESPSettings do
+							if (typeof(Value) ~= "function") then
+								Return[Config] = Value
+							end
+						end
+
+						return Return
+					end)()
+
+					SaveSettings();
+
+					API:Notify({
+						Title = "ESP Config",
+						Description = "Default config has been saved!",
+						Type = "Success",
+					})
+				end,
+			})
+			
 			local Add = function(Player)
 				local Bottom = Drawing.new("Line");
 				local Top = Drawing.new("Line");
@@ -4169,6 +4254,10 @@ Command.Add({
 				end
 
 				local UpdatePosition = function()
+					if (not UI.Parent) then
+						return SetVisible(false);
+					end
+					
 					local TargetRoot = (Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"));
 
 					if
@@ -4181,7 +4270,8 @@ Command.Add({
 						local Coordinate = TargetRoot.CFrame
 						local TeamColor = Player.TeamColor.Color
 						local CurrentText = Player.Name
-
+						local ShowDistance = ESPSettings.ShowDistance
+						
 						for Index, DrawingLine in next, { Bottom, Top, Right, Left, Tracer } do
 							DrawingLine.Color = TeamColor
 
@@ -4221,7 +4311,11 @@ Command.Add({
 							Left.To = Vector2.new(BL.X, BL.Y)
 
 							Name.Position = Vector2.new((TL.X + TR.X) / 2, TL.Y - 20)
-
+							
+							if (not Root or not TargetRoot) then
+								ShowDistance = false
+							end
+							
 							if (ESPSettings.Tracers) then
 								Tracer.To = Vector2.new((BL.X + BR.X) / 2, BL.Y);
 								Tracer.Thickness = ESPSettings.TracerThickness
@@ -4236,7 +4330,7 @@ Command.Add({
 								CurrentText = ("");
 							end
 
-							if (ESPSettings.ShowNames and (ESPSettings.ShowHealth or ESPSettings.ShowDistance)) then
+							if (ESPSettings.ShowNames and (ESPSettings.ShowHealth or ShowDistance)) then
 								CurrentText ..= ("\n");
 							end
 
@@ -4244,7 +4338,7 @@ Command.Add({
 								CurrentText ..= Format("[%s%%]", math.floor(Humanoid.Health));
 							end
 
-							if ESPSettings.ShowDistance then
+							if (ShowDistance) then
 								local Seperator = ((ESPSettings.ShowHealth and " | ") or "");
 								CurrentText ..= Seperator .. Format("[%s studs]", math.floor((TargetRoot.Position - Root.Position).Magnitude));
 							end
@@ -4381,8 +4475,7 @@ end
 
 AimbotSettings.GetAutoPrediction = function()
 	local DataPing = Services.Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
-	local Prediction = math.clamp(DataPing / 1000, 0, 1) * 1.325
-
+	local Prediction = math.clamp(DataPing / 1000, 0, 1) * 1.335
 	return Prediction
 end
 
@@ -4401,24 +4494,32 @@ AimbotSettings.GetPrediction = function(Part)
 end
 
 Command.Add({
-	Aliases = { "aimbot" },
+	Aliases = { "aimbot", "ab" },
 	Description = "Aimbot features built into Cmd",
 	Arguments = {},
 	Task = function()
 		local Tab = Library.Tabs.Aimbot
 
-		if Tab then
+		if (Tab) then
 			Tab.Open();
 		else
 			local EnableAimbot
 			local Window = Library:CreateWindow({
 				Title = "Aimbot",
 			})
-
+			
+			if (Settings.Configs.Aimbot) then
+				for Option, Value in next, Settings.Configs.Aimbot do
+					if (Option ~= "Key") then
+						AimbotSettings[Option] = Value
+					end
+				end
+			end
+			
 			Window:AddToggle({
 				Title = "Enabled",
 				Tab = "Home",
-				Default = false,
+				Default = AimbotSettings.Enabled,
 				Callback = function(Boolean)
 					AimbotSettings.Enabled = Boolean
 				end,
@@ -4433,7 +4534,7 @@ Command.Add({
 					["Silent Aim"] = "Silent",
 					["Dot Lock"] = "DotLock"
 				},
-				Default = "First Person",
+				Default = AimbotSettings.Method,
 				Callback = function(Method)
 					AimbotSettings.Method = Method
 
@@ -4469,7 +4570,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Trigger Bot Enabled",
 				Tab = "Home",
-				Default = false,
+				Default = AimbotSettings.Triggerbot,
 				Callback = function(Boolean)
 					AimbotSettings.Triggerbot = Boolean
 				end,
@@ -4478,7 +4579,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Wallbang Enabled",
 				Tab = "Home",
-				Default = false,
+				Default = AimbotSettings.Wallbang,
 				Callback = function(Boolean)
 					AimbotSettings.Wallbang = Boolean
 				end,
@@ -4489,7 +4590,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Alive Check",
 				Tab = "Home",
-				Default = true,
+				Default = AimbotSettings.AliveCheck,
 				Callback = function(Boolean)
 					AimbotSettings.AliveCheck = Boolean
 				end,
@@ -4498,7 +4599,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Team Check",
 				Tab = "Home",
-				Default = false,
+				Default = AimbotSettings.TeamCheck,
 				Callback = function(Boolean)
 					AimbotSettings.TeamCheck = Boolean
 				end,
@@ -4507,7 +4608,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "NPCs Allowed",
 				Tab = "Home",
-				Default = false,
+				Default = AimbotSettings.IncludeNpcs,
 				Callback = function(Boolean)
 					AimbotSettings.IncludeNpcs = Boolean
 				end,
@@ -4516,7 +4617,7 @@ Command.Add({
 			Window:AddToggle({
 				Title = "Wall Check",
 				Tab = "Home",
-				Default = false,
+				Default = AimbotSettings.WallCheck,
 				Callback = function(Boolean)
 					AimbotSettings.WallCheck = Boolean
 				end,
@@ -4528,6 +4629,7 @@ Command.Add({
 				Title = "Auto Prediction",
 				Description = "Will ignore your set prediction",
 				Tab = "Home",
+				Default = AimbotSettings.AutoPrediction,
 				Callback = function(Boolean)
 					AimbotSettings.AutoPrediction = Boolean
 				end,
@@ -4562,10 +4664,39 @@ Command.Add({
 					["Head"] = "Head",
 					["Random"] = "Random",
 				},
-				Default = "Head",
+				Default = (AimbotSettings.RandomPart and "Random") or AimbotSettings.Part,
 				Callback = function(Part)
 					AimbotSettings.Part = Part
 					AimbotSettings.RandomPart = (Part == "Random")
+				end,
+			})
+
+			Window:AddSection({ Title = "Config", Tab = "Home" })
+			
+			Window:AddButton({
+				Title = "Save Config",
+				Description = "Whenever you run the Aimbot command, you will set the current settings as the default",
+				Tab = "Home",
+				Callback = function(Boolean)
+					Settings.Configs.Aimbot = (function()
+						local Return = ({});
+						
+						for Config, Value in next, AimbotSettings do
+							if (typeof(Value) ~= "function") then
+								Return[Config] = Value
+							end
+						end
+						
+						return Return
+					end)()
+					
+					SaveSettings();
+					
+					API:Notify({
+						Title = "Aimbot Config",
+						Description = "Default config has been saved!",
+						Type = "Success",
+					})
 				end,
 			})
 
@@ -4591,12 +4722,7 @@ Command.Add({
 					Visualizer.Filled = true
 				end
 
-				Connect(Services.Run.RenderStepped, function()
-					if (AimbotSettings.RandomPart) then
-						local Available = ({ "Head", "HumanoidRootPart" });
-						AimbotSettings.Part = Available[math.random(1, #Available)];
-					end
-
+				local Render; Render = Connect(Services.Run.RenderStepped, function()					
 					if (Drawing and Drawing.new) then
 						if (AimingCoordinate and AimbotSettings.Enabled) then
 							local Position = ((typeof(AimingCoordinate) == "CFrame" and AimingCoordinate.Position) or AimingCoordinate);
@@ -4633,14 +4759,25 @@ Command.Add({
 							ClosestRoot = nil
 						end
 					end
-
+					
+					if (not UI.Parent) then
+						Circle.Visible = false
+						Visualizer.Visible = false
+						return Render:Disconnect();
+					end
+					
+					if (AimbotSettings.RandomPart) then
+						local Available = ({ "Head", "HumanoidRootPart" });
+						AimbotSettings.Part = Available[math.random(1, #Available)];
+					end
+					
 					if (AimbotSettings.Triggerbot) then
 						local Target = (function()
 							local Target = Mouse.Target
 							local Character = Target and Target:FindFirstAncestorOfClass("Model");
 							local Player = Character and Services.Players:GetPlayerFromCharacter(Character);
 
-							if Player and Player ~= LocalPlayer then
+							if (Player and Player ~= LocalPlayer) then
 								return Player
 							end
 						end)()
@@ -4794,6 +4931,10 @@ Command.Add({
 						end))
 					end
 				end
+				
+				if (AimbotSettings.Method == "DotLock" or AimbotSettings.Method == "Silent") then
+					EnableAimbot();
+				end
 			end)
 		end
 	end,
@@ -4825,7 +4966,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs["Servers"]
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local PlayerCount = nil
@@ -4918,7 +5059,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs["Chat Logs"]
 
-		if Tab then
+		if (Tab) then
 			Tab.Open();
 		else
 			local LayoutOrder = 100000
@@ -4975,7 +5116,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs.Game
 
-		if Tab then
+		if (Tab) then
 			Tab.Open();
 		else
 			local Window = Library:CreateWindow({
@@ -5075,7 +5216,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs.Chat
 
-		if Tab then
+		if (Tab) then
 			Tab.Open();
 		else
 			local Username, Message = "Builderman", "Hello!"
@@ -5119,7 +5260,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs["Tutorial"]
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local Window = Library:CreateWindow({
@@ -5141,7 +5282,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs["Commands"]
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local Window = Library:CreateWindow({
@@ -5181,16 +5322,19 @@ Command.Add({
 
 		local Tab = Library.Tabs["Http"]
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local Window = Library:CreateWindow({
 				Title = "Http",
 			})
-
-			local LogFunction = function(Func, Name)
-				local Old = Func
-				Old = hookfunction(Func, function(self, Url, ...)
+			
+			local LogFunction = function(Original, Name)
+				if (not Original or typeof(Original) ~= "function") then
+					return
+				end
+				
+				local Old; Old = hookfunction(Original, function(self, Url, ...)					
 					if (Name and Url) then
 						Window:AddButton({
 							Title = Name,
@@ -5211,10 +5355,10 @@ Command.Add({
 			end
 
 			LogFunction(game.HttpGet, "HttpGet Request");
-			LogFunction(game.HttpPost, "HttpPost Request");
-			LogFunction(request, "Request");
 			LogFunction(Services.Http.PostAsync, "HttpService Post");
 			LogFunction(Services.Http.GetAsync, "HttpService Get");
+			LogFunction(request, "Request");
+			LogFunction(game.HttpPost, "HttpPost Request");
 
 			return "Http Spy", "Enabled"
 		end
@@ -5228,7 +5372,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs.Highlight
 
-		if Tab then
+		if (Tab) then
 			Tab.Open();
 		else
 			local HighlightName = GenerateGUID(Services.Http);
@@ -5337,7 +5481,7 @@ Command.Add({
 	Task = function()
 		local Tab = Library.Tabs.Scriptblox
 
-		if Tab then
+		if (Tab) then
 			Tab.Open()
 		else
 			local Window = Library:CreateWindow({
@@ -5592,7 +5736,7 @@ Command.Add({
 							Cleaner:Add("AntiFling", Connect(Changed(BasePart, Property), function()
 								BasePart[Property] = Default
 							end))
-							
+
 							BasePart[Property] = Default
 						end
 					end
@@ -6618,7 +6762,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		local Target = Create("Part", {
-			CFrame = CFrame.new(0, workspace.FallenPartsDestroyHeight + 10, 0),
+			CFrame = CFrame.new(0, workspace.FallenPartsDestroyHeight + 2, 0),
 			Anchored = true,
 			CanCollide = false,
 		})
@@ -6628,7 +6772,7 @@ Command.Add({
 			local PlayerObject = (Model and Services.Players:GetPlayerFromCharacter(Model));
 
 			if (not Part.Anchored) and (not PlayerObject) then
-				Bring(Part, Target);
+				Attach(Part, Target, true);
 			end
 		end
 
@@ -6650,12 +6794,17 @@ Command.Add({
 })
 
 Command.Add({
-	Aliases = { "attachparts", "aparts" },
+	Aliases = { "attachparts", "aparts", "attach" },
 	Description = "Attaches all unanchored parts to you",
-	Arguments = {},
-	Task = function()
+	Arguments = {
+		{ Name = "Target", Type = "Player" },
+	},
+	Task = function(Player)
+		local Players = GetPlayer(Player or "me");
+		local Target = (Players[1] or LocalPlayer);
+
 		for Index, Part in next, GetClasses(workspace, "BasePart") do
-			Attach(Part);
+			Attach(Part, GetRoot(Target));
 		end
 
 		return "Part Attach", "Attached to every part in game"
@@ -6677,7 +6826,7 @@ Command.Add({
 			if (ModelDescendant and HasHumanoid) and (not Services.Players:GetPlayerFromCharacter(ModelDescendant)) then
 				local RootPart = (ModelDescendant:FindFirstChild("HumanoidRootPart") or ModelDescendant:FindFirstChild("Torso"));
 
-				Attach(RootPart);
+				Attach(RootPart, nil, false, true);
 
 				repeat Wait()
 					for Index, BodyPart in next, GetClasses(ModelDescendant, "BasePart") do
@@ -6716,13 +6865,16 @@ Command.Add({
 			Anchored = true,
 		})
 
-		repeat Wait(1)
-			for Index, Part in next, GetClasses(workspace, "BasePart") do
-				Bring(Part, Blackhole);
-			end
-		until (not Get("Blackhole"))
+		for Index, Part in next, GetClasses(workspace, "BasePart") do
+			Attach(Part, Blackhole);
+		end
 
-		Destroy(Blackhole);
+		Cleaner:Add("Blackhole", Blackhole);
+		Cleaner:Add("Blackhole", Connect(workspace.DescendantAdded, function(Part)
+			if (Part:IsA("BasePart")) then
+				Attach(Part, Blackhole);
+			end
+		end))
 	end,
 })
 
@@ -6732,6 +6884,7 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("Blackhole", false);
+		RemoveAttachments();
 	end,
 })
 
@@ -6740,12 +6893,7 @@ Command.Add({
 	Description = "Detaches all previously attached parts",
 	Arguments = {},
 	Task = function()
-		for Index, Attachment in next, workspace:GetDescendants() do
-			if (Attachment.Name == AttachName) then
-				Destroy(Attachment);
-			end
-		end
-
+		RemoveAttachments();
 		return "Part Attach", "Unattached every part"
 	end,
 })
@@ -6762,7 +6910,7 @@ Command.Add({
 
 		for _, Part in next, GetClasses(workspace, "BasePart") do
 			if (not Part.Anchored) then
-				Bring(Part, GetRoot(Target));
+				Attach(Part, GetRoot(Target), true);
 			end
 		end
 
@@ -6802,7 +6950,6 @@ Command.Add({
 			Add("Stand", false);
 			Command.Parse(true, "unairwalk");
 			Camera.CameraSubject = GetHumanoid(LocalPlayer);
-
 			break
 		end
 	end,
@@ -8166,6 +8313,23 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "rejoinrespawn", "rjre" },
+	Description = "Rejoins the server and teleports you back to where you were standing",
+	Arguments = {},
+	Task = function()
+		if (not queueonteleport) then
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
+			return "Rejoin Respawn", "Doing regular rejoin because your executor doesn't support queueonteleport"
+		end
+		
+		queueonteleport(`local Player = game.Players.LocalPlayer; local Character = Player.Character or Player.CharacterAdded:Wait(); Character:WaitForChild("HumanoidRootPart", 10).CFrame = CFrame.new({ tostring(Root.CFrame) })`);
+		Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
+		
+		return "Rejoining", "Please wait"
+	end,
+})
+
+Command.Add({
 	Aliases = { "infinitejump", "infjump" },
 	Description = "Allows you to jump in air",
 	Arguments = {},
@@ -8193,27 +8357,6 @@ Command.Add({
 		Old = (Old and Old:Disconnect());
 
 		return "Infinite Jump", "Disabled"
-	end,
-})
-
-Command.Add({
-	Aliases = { "serverfreeze", "freezewalk" },
-	Description = "Freezes your character in the server, but not on your client, allowing to kill enemies without them seeing you",
-	Arguments = {},
-	Task = function()
-		local Root = GetRoot(LocalPlayer);
-		local Character = GetCharacter(LocalPlayer);
-
-		if (GetHumanoid(LocalPlayer).RigType == Enum.HumanoidRigType.R6) then
-			local Clone = Clone(Root);
-			Destroy(Root);
-			Clone.Parent = Character
-		else
-			Character.LowerTorso.Anchored = true
-			Destroy(Character.LowerTorso.Root);
-		end
-
-		return "Freeze Walk", "Enabled"
 	end,
 })
 
@@ -9698,9 +9841,9 @@ Command.Add({
 		if (#Targets == 0) then
 			return "Hat Fling", "No targets found"
 		end
-				
+
 		HatFling(Targets);
-		
+
 		return "Hat Fling", "Flinged all targets"
 	end,
 })
@@ -9712,23 +9855,23 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Humanoid:UnequipTools();
-		
+
 		local Tools = (function()
 			local Return = ({});
-			
+
 			for _, Tool in next, GetClasses(Backpack, "Tool", true) do
 				Humanoid:EquipTool(Tool);
 				Insert(Return, Tool);
 			end
-			
+
 			return Return
 		end)()
-		
+
 		Humanoid:UnequipTools();
 
-		for _, Tool in next, Tools do
+		for Index, Tool in next, Tools do
 			local Handle = Tool:FindFirstChild("Handle");
-			
+
 			if (Handle) then
 				Tool.Parent = Character
 				Tool.Parent = Backpack
@@ -9737,22 +9880,111 @@ Command.Add({
 
 				local Ball = Create("Part", {
 					Size = Vector3.new(3, 3, 3),
-					CFrame = Root.CFrame * CFrame.new(0, 100, 0),
+					CFrame = Root.CFrame * CFrame.new(Index, 50, Index),
 					Shape = Enum.PartType.Ball,
 					Transparency = 0.8,
 					Parent = workspace,
 				})
-				
-				Connect(Tool.Destroying, function()
+
+				Connect(Changed(Tool, "Parent"), function()
 					Destroy(Ball);
 				end)
-				
+
 				Spawn(function()
 					repeat Wait()
 						Handle.CFrame = Ball.CFrame
-					until (not Ball) or (not Tool)
+						Handle.AssemblyLinearVelocity = Vector3.new(0, Random.new():NextNumber(50, 100), 0);
+						Handle.AssemblyAngularVelocity = Vector3.zero
+						Handle.CanCollide = true
+					until (not Ball) or (not Handle)
 				end)
 			end
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "desync" },
+	Description = "Turns on character desync (rejoins you to apply)",
+	Arguments = {},
+	Task = function()
+		if (not setfflag) then
+			return "Desync", "Your executor doesn't support this command, missing function - setfflag()"
+		end
+
+		setfflag("NextGenReplicatorEnabledWrite4", "false");
+		setfflag("NextGenReplicatorEnabledWrite4", "true");
+		Command.Parse(false, "rejoinrespawn");
+		
+		return "Desync", "Enabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "undesync" },
+	Description = "Turns off desync (rejoins you to apply)",
+	Arguments = {},
+	Task = function()
+		if (not setfflag) then
+			return "Desync", "Your executor doesn't support this command, missing function - setfflag()"
+		end
+		
+		setfflag("NextGenReplicatorEnabledWrite4", "true");
+		setfflag("NextGenReplicatorEnabledWrite4", "false");
+		Command.Parse(false, "rejoinrespawn");
+
+		return "Desync", "Disabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "underground", "ug" },
+	Description = "Makes your character underground on the server (use this for vc trolling)",
+	Arguments = {},
+	Task = function()
+		local Underground = Get("Underground");
+		Add("Underground", not Underground);
+		
+		if (not Underground) then
+			local Highlight = Create("Highlight", {
+				Parent = Character,
+			})
+			
+			Cleaner:Add("Underground", Highlight);
+			Cleaner:Add("Underground", Connect(Services.Run.Heartbeat, function()
+				local New = Root and Root.CFrame
+
+				Add("UndergroundCurrent", New);
+				Humanoid.Sit = false
+
+				if (New) then
+					New -= Vector3.new(0, 15, 0);
+					Root.CFrame = New
+				end
+			end))
+
+			if (not Get("UndergroundBind")) then
+				Add("UndergroundBind", true);
+
+				Services.Run:BindToRenderStep("", Enum.RenderPriority.First.Value, function()
+					local Current = Get("UndergroundCurrent");
+
+					if (Get("Underground") and Current) then
+						Root.CFrame = Current
+					end
+				end)
+			end
+
+			return "Underground", "Your character is now underground for everyone else"
+		else
+			for _ = 1, 10 do
+				Root.CFrame = (Get("UndergroundCurrent") or Root.CFrame);
+				Wait();
+			end
+
+			Add("UndergroundCurrent", nil);
+
+			return "Underground", "Disabled, you're back to normal"
 		end
 	end,
 })
@@ -9785,11 +10017,12 @@ Command.Add({
 		Spawn(function()
 			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
 			Wait(Services.Players.RespawnTime + 0.1);
-			replicatesignal(LocalPlayer.Kill);
-			HatFling(GetPlayer(Input));
+			HatFling(GetPlayer(Input), {
+				PermDeath = true
+			});
 		end)
-		
-		return "Loop Hat Fling", Format("Please wait %d seconds", Services.Players.RespawnTime)
+
+		return "Loop Hat Fling", Format("Please wait %d seconds", Services.Players.RespawnTime), Services.Players.RespawnTime
 	end,
 })
 
@@ -9798,6 +10031,95 @@ Command.Add({
 	Description = "Disables the LoopHatFling command",
 	Arguments = {},
 	Task = function()
+		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+	end,
+})
+
+Command.Add({
+	Aliases = { "clickhatfling", "clickhf" },
+	Description = "Click on a player to fling them using hats",
+	Arguments = {},
+	Task = function()
+		Refresh("ClickHatFling", true);
+		Command.Parse(true, "freecam");
+
+		Spawn(function()
+			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+			Wait(Services.Players.RespawnTime + 0.1);
+			
+			local Fling = HatFling({}, {
+				MaximumTries = 10,
+				Click = true,
+				PermDeath = true,
+			})
+			
+			Cleaner:Add("ClickHatFling", Connect(Mouse.Button1Down, function()
+				local Target = (Mouse.Target);
+				local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+				local User = Services.Players:GetPlayerFromCharacter(ModelDescendant);
+				
+				if (User and User ~= LocalPlayer) then
+					Fling.Click(User);
+				end
+			end))
+		end)
+		
+		return "Click Hat Fling", Format("Please wait %d seconds", Services.Players.RespawnTime), Services.Players.RespawnTime
+	end,
+})
+
+Command.Add({
+	Aliases = { "unclickhatfling", "unclickhf" },
+	Description = "Disables the ClickHatFling command",
+	Arguments = {},
+	Task = function()
+		Command.Parse(true, "freecam");
+		Refresh("ClickHatFling", false);
+		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+	end,
+})
+
+Command.Add({
+	Aliases = { "clickgivehats", "clickghats" },
+	Description = "Click on a player to give them your hats",
+	Arguments = {},
+	Task = function()
+		Refresh("ClickHatGive", true);
+		Command.Parse(true, "freecam");
+
+		Spawn(function()
+			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+			Wait(Services.Players.RespawnTime + 0.1);
+
+			local GiveHats = HatFling({}, {
+				Click = true,
+				PermDeath = true,
+				FlingDisabled = true,
+				GiveHatsMode = true,
+			})
+
+			Cleaner:Add("ClickHatGive", Connect(Mouse.Button1Down, function()
+				local Target = (Mouse.Target);
+				local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
+				local User = Services.Players:GetPlayerFromCharacter(ModelDescendant);
+
+				if (User and User ~= LocalPlayer) then
+					GiveHats.Click(User);
+				end
+			end))
+		end)
+
+		return "Click Give Hats", Format("Please wait %d seconds", Services.Players.RespawnTime), Services.Players.RespawnTime
+	end,
+})
+
+Command.Add({
+	Aliases = { "unclickgivehats", "unclickghats" },
+	Description = "Disables the ClickGiveHats command",
+	Arguments = {},
+	Task = function()
+		Command.Parse(true, "freecam");
+		Refresh("ClickHatGive", false);
 		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
 	end,
 })
@@ -9812,19 +10134,19 @@ Command.Add({
 		Spawn(function()
 			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
 			Wait(Services.Players.RespawnTime + 0.1);
-			replicatesignal(LocalPlayer.Kill);
-			
+
 			local Target = GetPlayer(Input)[1]
-			
+
 			if (Target) then
 				HatFling({ Target }, {
 					FlingDisabled = true,
 					GiveHatsMode = true,
+					PermDeath = true,
 				});
 			end
 		end)
 
-		return "Give Hats", Format("Please wait %d seconds", Services.Players.RespawnTime)
+		return "Give Hats", Format("Please wait %d seconds", Services.Players.RespawnTime), Services.Players.RespawnTime
 	end,
 })
 
@@ -10082,6 +10404,8 @@ do
 
 	if (Settings.Toggles.Developer) then
 		if (Interface) then
+			AimbotSettings.Enabled = false
+			ESPSettings.Enabled = false
 			Interface.Parent = nil
 		end
 
@@ -10111,6 +10435,7 @@ do
 	end
 
 	SetTheme();
+	UpdateUIScale();
 end
 
 Spawn(function()
@@ -10217,6 +10542,8 @@ Spawn(function()
 
 		OldHealth = (Humanoid.Health);
 	end)
+
+
 end)
 
 API:Notify({
@@ -10248,7 +10575,7 @@ if (Methods.Check()) then
 		Task = function()
 			local Tab = Library.Tabs["Vulnerability"]
 
-			if Tab then
+			if (Tab) then
 				Tab.Open();
 			else
 				local Window = Library:CreateWindow({
