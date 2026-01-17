@@ -79,7 +79,7 @@ local Settings = ({
 		UnsureVulnDetector = false,
 		IgnoreVulnerabilityScans = false,
 	}),
-	
+
 	Configs = ({}),
 	UIScale = 1,
 })
@@ -534,7 +534,7 @@ local Attach = function(Part, Target, BringMode, NPCMode)
 				Object:Destroy();
 			end
 		end
-		
+
 		local Attachment = Instance.new("Attachment");
 		local Position = Instance.new("AlignPosition");
 		local Orientation = Instance.new("AlignOrientation");
@@ -545,10 +545,10 @@ local Attach = function(Part, Target, BringMode, NPCMode)
 		SetSRadius(math.huge, math.huge);
 		Part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0);
 		Part.CanCollide = false
-		
+
 		Attachment.Parent = Part
 		Attachment2.Parent = (Target or Root);
-		
+
 		Torque.Parent = Part
 		Torque.Torque = Vector3.new(9e9, 9e9, 9e9);
 		Torque.Attachment0 = Attachment
@@ -570,11 +570,11 @@ local Attach = function(Part, Target, BringMode, NPCMode)
 		for _, Object in next, ({ Attachment, Position, Torque, Attachment2, Orientation }) do
 			Insert(Attached, Object);
 		end
-		
+
 		Connect(Changed(Attachment2, "Parent"), function()
 			Part.CanCollide = OldCollide
 		end)
-		
+
 		if (BringMode) then
 			Delay(1, function()
 				Destroy(Orientation);
@@ -983,7 +983,7 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 		if (Configuration.PermDeath) then
 			replicatesignal(LocalPlayer.Kill);
 		end
-		
+
 		Humanoid.Health = 0
 	end)
 
@@ -1001,7 +1001,7 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 				Offsets[Accessory] = Offset
 			end
 		end
-		
+
 		Wait(0.2);
 	end
 
@@ -1034,7 +1034,7 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 				repeat Wait()
 					for _, Hat in next, Hats do
 						local Handle = Hat:FindFirstChild("Handle");
-						
+
 						if (Handle and _Root and (Configuration.GiveHatsMode or Handle.CanCollide)) then
 							sethiddenproperty(Handle, "PhysicsRepRootPart", _Root);
 
@@ -1057,11 +1057,11 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 			end
 		until (Respawned)
 	end
-		
+
 	if (Configuration.Click) then
 		local Running = true
 		local Thread = nil
-		
+
 		task.spawn(function()
 			repeat Wait()
 				if (not Running) then
@@ -1080,13 +1080,13 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 				end
 			until (Respawned)
 		end)
-		
+
 		return {
 			Click = function(User)
 				if (Thread) then
 					task.cancel(Thread);
 				end
-				
+
 				Running = false
 				Thread = task.spawn(function()
 					Fling({ User });
@@ -1553,11 +1553,11 @@ function Library:CreateWindow(Config: {
 		Spawn(function()
 			Shadow.Visible = true
 			Shadow.Interactable = true
-			
+
 			Tween(Shadow, 0.25, {
 				BackgroundTransparency = (Bool and 0.7 or 1);
 			}); Wait(0.25)
-			
+
 			Shadow.Visible = Bool
 			Shadow.Interactable = Bool
 		end)
@@ -1685,7 +1685,7 @@ function Library:CreateWindow(Config: {
 			Animate.Open(Example, 0);
 			Example.Parent = Window
 			SetShadow(true);
-			
+
 			for Index, Button in next, Example.Actions:GetChildren() do
 				local Type = Button.Name
 
@@ -1696,14 +1696,14 @@ function Library:CreateWindow(Config: {
 						if (Type == "Close") then
 							Animate.Close(Example);
 							SetShadow(false);
-							
+
 							Wait(0.25);
 							Destroy(Example);
 						end
 					end)
 				end
 			end
-			
+
 			for Index, Option in next, Config.Options do
 				local Button = Clone(Features.DropdownButtonExample);
 
@@ -1724,7 +1724,7 @@ function Library:CreateWindow(Config: {
 
 					Animate.Close(Example);
 					SetShadow(false);
-					
+
 					Wait(0.25);
 					Destroy(Example);
 				end)
@@ -4058,7 +4058,7 @@ Command.Add({
 			local Window = Library:CreateWindow({
 				Title = "Esp",
 			})
-			
+
 			if (Settings.Configs.ESP) then
 				for Option, Value in next, Settings.Configs.ESP do
 					ESPSettings[Option] = Value
@@ -4222,7 +4222,7 @@ Command.Add({
 					})
 				end,
 			})
-			
+
 			local Add = function(Player)
 				local Bottom = Drawing.new("Line");
 				local Top = Drawing.new("Line");
@@ -4257,7 +4257,7 @@ Command.Add({
 					if (not UI.Parent) then
 						return SetVisible(false);
 					end
-					
+
 					local TargetRoot = (Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"));
 
 					if
@@ -4271,7 +4271,7 @@ Command.Add({
 						local TeamColor = Player.TeamColor.Color
 						local CurrentText = Player.Name
 						local ShowDistance = ESPSettings.ShowDistance
-						
+
 						for Index, DrawingLine in next, { Bottom, Top, Right, Left, Tracer } do
 							DrawingLine.Color = TeamColor
 
@@ -4311,11 +4311,11 @@ Command.Add({
 							Left.To = Vector2.new(BL.X, BL.Y)
 
 							Name.Position = Vector2.new((TL.X + TR.X) / 2, TL.Y - 20)
-							
+
 							if (not Root or not TargetRoot) then
 								ShowDistance = false
 							end
-							
+
 							if (ESPSettings.Tracers) then
 								Tracer.To = Vector2.new((BL.X + BR.X) / 2, BL.Y);
 								Tracer.Thickness = ESPSettings.TracerThickness
@@ -4507,7 +4507,7 @@ Command.Add({
 			local Window = Library:CreateWindow({
 				Title = "Aimbot",
 			})
-			
+
 			if (Settings.Configs.Aimbot) then
 				for Option, Value in next, Settings.Configs.Aimbot do
 					if (Option ~= "Key") then
@@ -4515,7 +4515,7 @@ Command.Add({
 					end
 				end
 			end
-			
+
 			Window:AddToggle({
 				Title = "Enabled",
 				Tab = "Home",
@@ -4672,7 +4672,7 @@ Command.Add({
 			})
 
 			Window:AddSection({ Title = "Config", Tab = "Home" })
-			
+
 			Window:AddButton({
 				Title = "Save Config",
 				Description = "Whenever you run the Aimbot command, you will set the current settings as the default",
@@ -4680,18 +4680,18 @@ Command.Add({
 				Callback = function(Boolean)
 					Settings.Configs.Aimbot = (function()
 						local Return = ({});
-						
+
 						for Config, Value in next, AimbotSettings do
 							if (typeof(Value) ~= "function") then
 								Return[Config] = Value
 							end
 						end
-						
+
 						return Return
 					end)()
-					
+
 					SaveSettings();
-					
+
 					API:Notify({
 						Title = "Aimbot Config",
 						Description = "Default config has been saved!",
@@ -4759,18 +4759,18 @@ Command.Add({
 							ClosestRoot = nil
 						end
 					end
-					
+
 					if (not UI.Parent) then
 						Circle.Visible = false
 						Visualizer.Visible = false
 						return Render:Disconnect();
 					end
-					
+
 					if (AimbotSettings.RandomPart) then
 						local Available = ({ "Head", "HumanoidRootPart" });
 						AimbotSettings.Part = Available[math.random(1, #Available)];
 					end
-					
+
 					if (AimbotSettings.Triggerbot) then
 						local Target = (function()
 							local Target = Mouse.Target
@@ -4931,7 +4931,7 @@ Command.Add({
 						end))
 					end
 				end
-				
+
 				if (AimbotSettings.Method == "DotLock" or AimbotSettings.Method == "Silent") then
 					EnableAimbot();
 				end
@@ -5328,12 +5328,12 @@ Command.Add({
 			local Window = Library:CreateWindow({
 				Title = "Http",
 			})
-			
+
 			local LogFunction = function(Original, Name)
 				if (not Original or typeof(Original) ~= "function") then
 					return
 				end
-				
+
 				local Old; Old = hookfunction(Original, function(self, Url, ...)					
 					if (Name and Url) then
 						Window:AddButton({
@@ -8321,10 +8321,10 @@ Command.Add({
 			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
 			return "Rejoin Respawn", "Doing regular rejoin because your executor doesn't support queueonteleport"
 		end
-		
+
 		queueonteleport(`local Player = game.Players.LocalPlayer; local Character = Player.Character or Player.CharacterAdded:Wait(); Character:WaitForChild("HumanoidRootPart", 10).CFrame = CFrame.new({ tostring(Root.CFrame) })`);
 		Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
-		
+
 		return "Rejoining", "Please wait"
 	end,
 })
@@ -9212,12 +9212,12 @@ Command.Add({
 
 Command.Add({
 	Aliases = { "freecam", "fc" },
-	Description = "Enables and Disables Freecam",
+	Description = "Enables freecam",
 	Arguments = {},
 	Task = function()
 		if (not Freecam) then
 			Freecam = ({});
-
+			
 			local pi = math.pi
 			local abs = math.abs
 			local clamp = math.clamp
@@ -9665,14 +9665,18 @@ Command.Add({
 				StopFreecam()
 			end
 		end
+		
+		Freecam:EnableFreecam()
+		return "Freecam", "Enabled"
+	end,
+})
 
-		if FreecamEnabled then
-			Freecam:StopFreecam()
-			return "Freecam", "Disabled"
-		else
-			Freecam:EnableFreecam()
-			return "Freecam", "Enabled"
-		end
+Command.Add({
+	Aliases = { "unfreecam", "unfc" },
+	Description = "Disables freecam",
+	Arguments = {},
+	Task = function()
+		Freecam:StopFreecam();
 	end,
 })
 
@@ -9915,7 +9919,7 @@ Command.Add({
 		setfflag("NextGenReplicatorEnabledWrite4", "false");
 		setfflag("NextGenReplicatorEnabledWrite4", "true");
 		Command.Parse(false, "rejoinrespawn");
-		
+
 		return "Desync", "Enabled"
 	end,
 })
@@ -9928,7 +9932,7 @@ Command.Add({
 		if (not setfflag) then
 			return "Desync", "Your executor doesn't support this command, missing function - setfflag()"
 		end
-		
+
 		setfflag("NextGenReplicatorEnabledWrite4", "true");
 		setfflag("NextGenReplicatorEnabledWrite4", "false");
 		Command.Parse(false, "rejoinrespawn");
@@ -9944,12 +9948,12 @@ Command.Add({
 	Task = function()
 		local Underground = Get("Underground");
 		Add("Underground", not Underground);
-		
+
 		if (not Underground) then
 			local Highlight = Create("Highlight", {
 				Parent = Character,
 			})
-			
+
 			Cleaner:Add("Underground", Highlight);
 			Cleaner:Add("Underground", Connect(Services.Run.Heartbeat, function()
 				local New = Root and Root.CFrame
@@ -10046,24 +10050,24 @@ Command.Add({
 		Spawn(function()
 			replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
 			Wait(Services.Players.RespawnTime + 0.1);
-			
+
 			local Fling = HatFling({}, {
 				MaximumTries = 10,
 				Click = true,
 				PermDeath = true,
 			})
-			
+
 			Cleaner:Add("ClickHatFling", Connect(Mouse.Button1Down, function()
 				local Target = (Mouse.Target);
 				local ModelDescendant = Target:FindFirstAncestorOfClass("Model");
 				local User = Services.Players:GetPlayerFromCharacter(ModelDescendant);
-				
+
 				if (User and User ~= LocalPlayer) then
 					Fling.Click(User);
 				end
 			end))
 		end)
-		
+
 		return "Click Hat Fling", Format("Please wait %d seconds", Services.Players.RespawnTime), Services.Players.RespawnTime
 	end,
 })
@@ -10073,9 +10077,10 @@ Command.Add({
 	Description = "Disables the ClickHatFling command",
 	Arguments = {},
 	Task = function()
-		Command.Parse(true, "freecam");
+		Command.Parse(true, "unfreecam");
 		Refresh("ClickHatFling", false);
 		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+		workspace.Gravity = 196.2
 	end,
 })
 
@@ -10118,9 +10123,10 @@ Command.Add({
 	Description = "Disables the ClickGiveHats command",
 	Arguments = {},
 	Task = function()
-		Command.Parse(true, "freecam");
+		Command.Parse(true, "unfreecam");
 		Refresh("ClickHatGive", false);
 		replicatesignal(LocalPlayer.ConnectDiedSignalBackend);
+		workspace.Gravity = 196.2
 	end,
 })
 
@@ -10516,6 +10522,19 @@ Spawn(function()
 			Drawing = loadstring(GetModule("drawing.lua"))();
 		end)
 	end
+	
+	pcall(function()
+		local DesyncEnabled = getfflag("NextGenReplicatorEnabledWrite4"); -- some games make it so this fflag is true always for some reason
+		
+		if (DesyncEnabled == true or DesyncEnabled == "true") then
+			API:Notify({
+				Title = "Desync Reminder!",
+				Description = "Your desync is enabled, to turn it off run <b>undesync</b>",
+				Duration = 10,
+				Type = "Warn",
+			})
+		end
+	end)
 end)
 
 Cmd().UI = UI
