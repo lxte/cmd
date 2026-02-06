@@ -119,6 +119,8 @@ local Services = {
 	AssetService = GetService("AssetService"),
 	Stats = GetService("Stats"),
 	GroupService = GetService("GroupService"),
+	GuiService = GetService("GuiService"),
+	VirtualUser = GetService("VirtualUser"),
 }
 
 local Vuln = ({
@@ -979,7 +981,7 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 		end
 	end)
 
-	task.delay(0.2, function()
+	task.delay(0.2, function()		
 		if (Configuration.PermDeath) then
 			replicatesignal(LocalPlayer.Kill);
 		end
@@ -1002,7 +1004,7 @@ local HatFling = function(Targets: { Player }, Configuration: {})
 			end
 		end
 
-		Wait(0.2);
+		Wait(0.15);
 	end
 
 	local Tries = 0
@@ -8208,7 +8210,7 @@ Command.Add({
 	Task = function()
 		local Fired = (0);
 
-		for Index, Target in next, GetClasses(game, "RemoteEvents") do
+		for Index, Target in next, GetClasses(game, "RemoteEvent") do
 			Target:FireServer();
 			Fired += 1
 		end
@@ -8216,6 +8218,13 @@ Command.Add({
 		for Index, Target in next, GetClasses(game, "UnreliableRemoteEvent") do
 			Target:FireServer();
 			Fired += 1
+		end
+
+		for Index, Target in next, GetClasses(game, "RemoteFunction") do
+			Spawn(function()
+				Fired += 1
+				Target:InvokeServer();
+			end)
 		end
 
 		return "Fired", Format("Fired %s remotes", Fired)
@@ -8512,7 +8521,7 @@ Command.Add({
 				local TargetRoot = GetRoot(Target);
 
 				if (TargetRoot) then
-					TargetRoot.CFrame = Root.CFrame * CFrame.new(0, 0, (Distance and -SetNumber(Distance or 3)));
+					TargetRoot.CFrame = Root.CFrame * CFrame.new(0, 0, -(tonumber(Distance or 3)));
 				end
 			end
 		until (not Get("ClientBring"))
@@ -8613,7 +8622,16 @@ Command.Add({
 	Description = "Makes your vehicle drivable through walls",
 	Arguments = {},
 	Task = function()
-		local NoclipWalls = {}		
+		local NoclipWalls = {}
+		local Result = nil		
+		local Holder = Create("Part", {
+			Size = Vector3.new(200, 2, 200),
+			Anchored = true,
+			CanCollide = true,
+			Transparency = 1,
+			Parent = workspace,
+		})
+
 		Refresh("VehicleNoclip", true);
 
 		repeat Wait(0.1)
@@ -8632,16 +8650,31 @@ Command.Add({
 				local PrimaryPart = (Vehicle.PrimaryPart or VehicleSeat);
 				local Position = (PrimaryPart.Position);
 				local VehicleSize = Vehicle:GetExtentsSize();
-				local Parts = workspace:GetPartBoundsInBox(PrimaryPart.CFrame, Vector3.new(70, 30, 70));
+				local Parts = workspace:GetPartBoundsInBox(PrimaryPart.CFrame, Vector3.new(70, 70, 70));
+
+				if (not Result or not Result.Instance) then
+					local Params = RaycastParams.new();
+					Params.FilterType = Enum.RaycastFilterType.Exclude
+					Params.IgnoreWater = true
+					Params.FilterDescendantsInstances = ({
+						Vehicle,
+						Character,
+						Holder,
+					})
+
+					Result = workspace:Raycast(PrimaryPart.Position, Vector3.new(0, -500, 0), Params);
+				end
+
+				if (Result and Result.Instance) then
+					Holder.CFrame = CFrame.new(PrimaryPart.Position.X, Result.Position.Y - 1.5, PrimaryPart.Position.Z)
+				end
 
 				for Index, Part in next, Parts do
-					if (Part:IsA("BasePart") and Part.Anchored and Part.CanCollide) then
+					if (Part:IsA("BasePart") and Part.CanCollide) then
 						if (Part.Name ~= "Baseplate") then
-							if (not Part:IsDescendantOf(Vehicle)) and (not Part:IsDescendantOf(Character)) then
-								if (Part.Position.Y - (Part.Size.Y / 2)) > (Position.Y - (VehicleSize.Y / 2) - 0.75) then
-									Part.CanCollide = false
-									NoclipWalls[Part] = true
-								end
+							if (not Part:IsDescendantOf(Vehicle)) and (not Part:IsDescendantOf(Character)) and (Part ~= Holder) then
+								Part.CanCollide = false
+								NoclipWalls[Part] = true
 							end
 						end
 					end
@@ -8656,6 +8689,7 @@ Command.Add({
 		end
 
 		NoclipWalls = ({});
+		Holder:Destroy();
 	end,
 })
 
@@ -8665,6 +8699,362 @@ Command.Add({
 	Arguments = {},
 	Task = function()
 		Refresh("VehicleNoclip", false);
+	end,
+})
+
+Command.Add({
+	Aliases = { "vehiclefling", "vfl" },
+	Description = "Fling using vehicles",
+	Arguments = {},
+	Task = function()
+		Refresh("VehicleFling", true);
+
+		Spawn(function()
+			local Velocity = Vector3.zero
+
+			repeat Wait()
+				local Seat = Humanoid.SeatPart
+
+				if (Seat) then
+					Velocity = Seat.Velocity
+					Seat.Velocity = (Velocity * 10000) + Vector3.new(0, 10000, 0);
+					CWait(Services.Run.RenderStepped);
+					Seat.Velocity = Velocity
+				end
+			until (not Get("VehicleFling"))
+		end)
+
+		return "Vehicle Fling", "Vehicle Fling has been enabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "unvehiclefling", "unvfl" },
+	Description = "Disables the VehicleFling command",
+	Arguments = {},
+	Task = function()
+		Refresh("VehicleFling", false);
+	end,
+})
+
+Command.Add({
+	Aliases = { "vehicleflip", "vflip" },
+	Description = "Flips your vehicle over if it's stuck",
+	Arguments = {},
+	Task = function()
+		local Attach = Create("Attachment", {
+			Axis = Vector3.new(0, 1, 0),
+			Parent = Humanoid.SeatPart
+		})
+
+		local Align = Create("AlignOrientation", {
+			Attachment0 = Attach,
+			AlignType = Enum.AlignType.PrimaryAxisParallel,
+			RigidityEnabled = true,
+			Enabled = true,
+			Mode = Enum.OrientationAlignmentMode.OneAttachment,
+			PrimaryAxis = Vector3.new(0, 1, 0),
+			Parent = Humanoid.SeatPart,
+		})
+
+		GetService("Debris"):AddItem(Align, 2);
+		GetService("Debris"):AddItem(Attach, 2);
+	end,
+})
+
+Command.Add({
+	Aliases = { "unload", "destroy" },
+	Description = "Gets rid of Cmd",
+	Arguments = {},
+	Task = function()
+		AimbotSettings.Enabled = false
+		ESPSettings.Enabled = false
+		UI.Parent = nil
+
+		for Name, Objects in next, Cleaner.Objects do
+			Cleaner:Clean(Name);
+		end
+
+		for Global, Value in next, Globals do
+			Globals[Global] = nil
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "joinjobid", "jjobid" },
+	Description = "Joins a server if you have the jobid",
+	Arguments = {
+		{ Name = "JobId", Type = "String" },
+		{ Name = "PlaceId (optional)", Type = "String" },
+	},
+	Task = function(JobId, PlaceId)
+		if (JobId) then
+			local Success, Result = pcall(function()
+				Services.Teleport:TeleportToPlaceInstance(tonumber(PlaceId) or game.PlaceId, JobId, LocalPlayer);
+			end)
+
+			if (not Success) then
+				return "Join JobId", "Error occurred trying to teleport, JobId might be wrong.", 5, "Error"
+			else
+				return "Join JobId", "Joining..."
+			end
+		else
+			return "Join JobId", "Invalid, no jobid found"
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "antiafk", "afk" },
+	Description = "Prevents you from getting kicked if you're idle for 20+ minutes",
+	Arguments = {},
+	Task = function()
+		if (not getconnections) then
+			return "Anti AFK", "Unsupported function - getconnections()", 5, "Error"
+		end
+
+		for _, Connection in next, getconnections(LocalPlayer.Idled) do
+			Connection:Disable();
+		end
+
+		return "Anti AFK", "Enabled"
+	end,
+})
+
+
+Command.Add({
+	Aliases = { "unantiafk", "unafk" },
+	Description = "Disables the AntiAFK Command",
+	Arguments = {},
+	Task = function()
+		if (not getconnections) then
+			return "Anti AFK", "Unsupported function - getconnections()", 5, "Error"
+		end
+
+		for _, Connection in next, getconnections(LocalPlayer.Idled) do
+			Connection:Enable();
+		end
+
+		return "Anti AFK", "Disabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "dance" },
+	Description = "Does a random dance animation",
+	Arguments = {
+		{ Name = "Dance Code", Type = "Number" },
+	},
+	Task = function(Code)
+		local OldAnimationId = "rbxassetid://0"
+
+		if (Get("DanceTrack")) then
+			OldAnimationId = Get("DanceTrack").Animation.AnimationId
+			Get("DanceTrack"):Stop();
+		end
+
+		local Animations = ({
+			[Enum.HumanoidRigType.R6] = { "rbxassetid://137390720", "rbxassetid://28488254", "rbxassetid://27789359", "rbxassetid://52155014", "rbxassetid://90117804", "rbxassetid://91346439", "rbxassetid://99815141", "rbxassetid://33796059", "rbxassetid://45834924", "rbxassetid://248263260", "rbxassetid://101862746", "rbxassetid://161099825", "rbxassetid://429703734" },
+			[Enum.HumanoidRigType.R15] = { "rbxassetid://10370362157", "rbxassetid://12804157977", "rbxassetid://10714394082", "rbxassetid://10714168145", "rbxassetid://10714069471", "rbxassetid://10714345459", "rbxassetid://10714366910" },
+		})
+
+		local List = (function()
+			local Return = ({});
+
+			for Index, Animation in next, Animations[Humanoid.RigType] do
+				if (Animation ~= OldAnimationId) or (tonumber(Code)) then
+					Insert(Return, Animation);
+				end
+			end
+
+			return Return
+		end)()
+
+		local Index = tonumber(Code) or math.random(1, #List);
+		local AnimationTrack = Humanoid.Animator:LoadAnimation(Create("Animation", {
+			AnimationId = List[Index],
+		}))
+
+		AnimationTrack.Looped = true
+		AnimationTrack:Play();
+		Add("DanceTrack", AnimationTrack);
+
+		return "Dance", Format("Dancing with dance code %d", Index), 2
+	end,
+})
+
+Command.Add({
+	Aliases = { "undance" },
+	Description = "Stops dancing",
+	Arguments = {},
+	Task = function()
+		if (Get("DanceTrack")) then
+			Get("DanceTrack"):Stop();
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "antiknockback", "antikb", "akb" },
+	Description = "Disables knockback, run ';antiknockback true' if it doesn't fully work",
+	Arguments = {
+		{ Name = "Anchor (true/false)", Type = "String" },
+	},
+	Task = function(Anchor)
+		local Properties = {
+			BodyVelocity = {
+				Velocity = Vector3.zero,
+				velocity = Vector3.zero,
+				MaxForce = Vector3.zero,
+				maxForce = Vector3.zero,
+				P = 0,
+			},
+
+			BodyForce = {
+				Force = Vector3.zero,
+				force = Vector3.zero,
+			},
+
+			BodyThrust = {
+				Force = Vector3.zero,
+				force = Vector3.zero,
+				Location = Vector3.zero,
+				location = Vector3.zero,
+			},
+
+			BodyGyro = {
+				CFrame = Root.CFrame,
+				cframe = Root.CFrame,
+				MaxTorque = Vector3.zero,
+				maxTorque = Vector3.zero,
+				P = 0,
+				D = 0,
+			},
+
+			BodyAngularVelocity = {
+				AngularVelocity = Vector3.zero,
+				angularvelocity = Vector3.zero,
+				MaxTorque = Vector3.zero,
+				maxTorque = Vector3.zero,
+				P = 0,
+			},
+
+			LinearVelocity = {
+				MaxForce = 0,
+			},
+
+			VectorForce = {
+				Force = Vector3.zero,
+			},
+
+			AlignPosition = {
+				Position = Root.Position,
+				MaxForce = Vector3.zero,
+				Responsiveness = 0,
+			},
+
+			AlignOrientation = {
+				CFrame = Root.CFrame,
+				MaxTorque = Vector3.zero,
+				Responsiveness = 0,
+				MaxAngularVelocity = 0,
+			},
+
+			BodyPosition = {
+				Position = Root.Position,
+				position = Root.Position,
+				MaxForce = Vector3.zero,
+				maxForce = Vector3.zero,
+				P = 0,
+				D = 0,
+			},
+		}
+
+		Refresh("AntiKnockback", true);
+
+		local SetupCharacter = function(Character)
+			local Humanoid = Character:FindFirstChildOfClass("Humanoid");
+
+			local ListenProperty = function(Object, Property, Value)
+				for _, Object in next, (Object and { Object }) or GetClasses(Character, "BasePart") do
+					Object[Property] = Value
+					Connect(Changed(Object, Property), function()
+						Object[Property] = Value
+					end)
+				end
+			end
+
+			local Update = function(Object)
+				local List = Properties[Object.ClassName]
+
+				if (List) then
+					if (Anchor and Anchor == "true") then
+						Spawn(function()
+							repeat Wait();
+								Root.Anchored = true
+							until (not Object.Parent) or (not Get("AntiKnockback"))
+
+							Root.Anchored = false
+						end)
+					end
+
+					for Property, Default in next, List do
+						ListenProperty(Object, Property, Default);
+					end
+				end
+			end
+
+			ListenProperty(nil, "AssemblyLinearVelocity", Vector3.zero);
+			ListenProperty(nil, "Velocity", Vector3.zero);
+			ListenProperty(nil, "AssemblyAngularVelocity", Vector3.zero);
+			ListenProperty(nil, "RotVelocity", Vector3.zero);
+			ListenProperty(Humanoid, "PlatformStand", false);
+
+			for _, Object in next, Character:GetDescendants() do
+				Update(Object);
+			end
+
+			Cleaner:Add("AntiKnockback", Connect(Character.DescendantAdded, function(Object)
+				Update(Object);
+			end))
+		end
+
+		SetupCharacter(Character);
+		Cleaner:Add("AntiKnockback", Connect(LocalPlayer.CharacterAdded, function(Character)
+			SetupCharacter(Character);
+		end))
+
+		return "Anti Knockback", "Enabled - THIS WILL BREAK FLY"
+	end,
+})
+
+Command.Add({
+	Aliases = { "unantiknockback", "unantikb", "unakb" },
+	Description = "Disables the AntiKnockback command",
+	Arguments = {},
+	Task = function()
+		Refresh("AntiKnockback", false);
+		return "Anti Knockback", "Disabled"
+	end,
+})
+
+Command.Add({
+	Aliases = { "2016" },
+	Description = "Makes your Roblox CoreGui look like the 2016 CoreGui",
+	Arguments = {},
+	Task = function()
+		getgenv().Config2016 = ({
+			OldConsole = true,
+			OldGraphics = true,
+			OldPlayerList = true,
+			OldBubbleChat = true,
+
+			ReplaceAgeGroupMessage = true,
+			HideVoiceChatButton = false,
+		})
+
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/projects/refs/heads/main/UI/Core2016/Source.luau"))();
 	end,
 })
 
@@ -8749,7 +9139,7 @@ Command.Add({
 
 		Connection:Disconnect();
 
-		if BodyVelocity then 
+		if (BodyVelocity) then 
 			Destroy(BodyVelocity);
 		end
 
@@ -9105,6 +9495,68 @@ Command.Add({
 })
 
 Command.Add({
+	Aliases = { "antipause" },
+	Description = "Disables the gameplay paused screen",
+	Arguments = {},
+	Task = function()
+		Services.GuiService:SetGameplayPausedNotificationEnabled(false);
+	end,
+})
+
+Command.Add({
+	Aliases = { "unantipause" },
+	Description = "Shows the gameplay paused screen",
+	Arguments = {},
+	Task = function()
+		Services.GuiService:SetGameplayPausedNotificationEnabled(true);
+	end,
+})
+
+Command.Add({
+	Aliases = { "xray" },
+	Description = "Allows you to see through walls",
+	Arguments = {
+		{ Name = "Transparency", Type = "Number" },
+	},
+	Task = function(Transparency)
+		local Transparency = SetNumber(Transparency or 0.5, 0, 1);
+		local Update = function(Part)
+			local Character = Part:FindFirstAncestorOfClass("Model");
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid");
+
+			if (not Humanoid) then
+				Part.LocalTransparencyModifier = Transparency
+			end
+		end
+
+		Refresh("XRay", true);
+
+		for _, Part in next, GetClasses(workspace, "BasePart") do
+			Update(Part);
+		end
+
+		Cleaner:Add("XRay", Connect(workspace.DescendantAdded, function(Part)
+			if (Part:IsA("BasePart")) then
+				Update(Part);
+			end
+		end))
+	end,
+})
+
+Command.Add({
+	Aliases = { "unxray" },
+	Description = "Removes xray",
+	Arguments = {},
+	Task = function()		
+		Refresh("XRay", false);
+
+		for _, Part in next, GetClasses(workspace, "BasePart") do
+			Part.LocalTransparencyModifier = 0
+		end
+	end,
+})
+
+Command.Add({
 	Aliases = { "lay" },
 	Description = "Makes you lay",
 	Arguments = {},
@@ -9217,7 +9669,7 @@ Command.Add({
 	Task = function()
 		if (not Freecam) then
 			Freecam = ({});
-			
+
 			local pi = math.pi
 			local abs = math.abs
 			local clamp = math.clamp
@@ -9665,7 +10117,7 @@ Command.Add({
 				StopFreecam()
 			end
 		end
-		
+
 		Freecam:EnableFreecam()
 		return "Freecam", "Enabled"
 	end,
@@ -9907,18 +10359,31 @@ Command.Add({
 	end,
 })
 
+--[[ testing prob not going to release this command change (old desync has been patched)
 Command.Add({
 	Aliases = { "desync" },
 	Description = "Turns on character desync (rejoins you to apply)",
 	Arguments = {},
-	Task = function()
-		if (not setfflag) then
-			return "Desync", "Your executor doesn't support this command, missing function - setfflag()"
-		end
+	Task = function()		
+		Add("Desync", true);
+		Add("DesyncCoordinate", Root.CFrame);
+		Add("ClientPosition", Root.CFrame);
+		
+		Cleaner:Add("Desync", Connect(Services.Run.Heartbeat, function()
+			Add("ClientPosition", Root.CFrame);
+			Humanoid.Sit = false
+			Root.CFrame = Get("DesyncCoordinate");
+		end))
 
-		setfflag("NextGenReplicatorEnabledWrite4", "false");
-		setfflag("NextGenReplicatorEnabledWrite4", "true");
-		Command.Parse(false, "rejoinrespawn");
+		if (not Get("DesyncBind")) then
+			Add("DesyncBind", true);
+
+			Services.Run:BindToRenderStep("", Enum.RenderPriority.First.Value, function()
+				if (Get("Desync")) then
+					Root.CFrame = Get("ClientPosition");
+				end
+			end)
+		end
 
 		return "Desync", "Enabled"
 	end,
@@ -9929,17 +10394,17 @@ Command.Add({
 	Description = "Turns off desync (rejoins you to apply)",
 	Arguments = {},
 	Task = function()
-		if (not setfflag) then
-			return "Desync", "Your executor doesn't support this command, missing function - setfflag()"
+		for _ = 1, 10 do
+			Root.CFrame = (Get("ClientPosition") or Root.CFrame);
+			Wait();
 		end
 
-		setfflag("NextGenReplicatorEnabledWrite4", "true");
-		setfflag("NextGenReplicatorEnabledWrite4", "false");
-		Command.Parse(false, "rejoinrespawn");
+		Add("Desync", false);
 
 		return "Desync", "Disabled"
 	end,
 })
+]]
 
 Command.Add({
 	Aliases = { "underground", "ug" },
@@ -9989,6 +10454,59 @@ Command.Add({
 			Add("UndergroundCurrent", nil);
 
 			return "Underground", "Disabled, you're back to normal"
+		end
+	end,
+})
+
+Command.Add({
+	Aliases = { "upsidedown", "ud" },
+	Description = "Makes your character upside down on people's screens",
+	Arguments = {},
+	Task = function()
+		local UpsideDown = Get("UpsideDown");
+		Add("UpsideDown", not UpsideDown);
+
+		if (not UpsideDown) then
+			local Highlight = Create("Highlight", {
+				Parent = Character,
+				FillColor = Color3.fromRGB(0, 0, 255),
+			})
+
+			Cleaner:Add("UpsideDown", Highlight);
+			Cleaner:Add("UpsideDown", Connect(Services.Run.Heartbeat, function()
+				local New = Root and Root.CFrame
+
+				Add("UpsideDownCurrent", New);
+				Humanoid.Sit = false
+
+				if (New) then
+					New *= CFrame.Angles(math.pi, 0, 0);
+					Root.CFrame = New
+				end
+			end))
+
+			if (not Get("UpsideDownBind")) then
+				Add("UpsideDownBind", true);
+
+				Services.Run:BindToRenderStep("", Enum.RenderPriority.First.Value, function()
+					local Current = Get("UpsideDownCurrent");
+
+					if (Get("UpsideDown") and Current) then
+						Root.CFrame = Current
+					end
+				end)
+			end
+
+			return "Upside Down", "Your character is now upside down for everyone else"
+		else
+			for _ = 1, 10 do
+				Root.CFrame = (Get("UndergroundCurrent") or Root.CFrame);
+				Wait();
+			end
+
+			Add("UndergroundCurrent", nil);
+
+			return "Upside Down", "Disabled, you're back to normal"
 		end
 	end,
 })
@@ -10449,7 +10967,7 @@ Spawn(function()
 	Animate.Drag(Button, true);
 	Connect(Button.MouseButton1Click, OpenCommandBar);
 
-	if (Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
+	if (not Discover({ Enum.Platform.IOS, Enum.Platform.Android }, UserPlatform)) then
 		Button.Visible = Settings.Toggles.CommandBarOpenButtonShown
 	end
 
@@ -10522,19 +11040,6 @@ Spawn(function()
 			Drawing = loadstring(GetModule("drawing.lua"))();
 		end)
 	end
-	
-	pcall(function()
-		local DesyncEnabled = getfflag("NextGenReplicatorEnabledWrite4"); -- some games make it so this fflag is true always for some reason
-		
-		if (DesyncEnabled == true or DesyncEnabled == "true") then
-			API:Notify({
-				Title = "Desync Reminder!",
-				Description = "Your desync is enabled, to turn it off run <b>undesync</b>",
-				Duration = 10,
-				Type = "Warn",
-			})
-		end
-	end)
 end)
 
 Cmd().UI = UI
