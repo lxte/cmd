@@ -10978,7 +10978,7 @@ Spawn(function()
 
 	-- remove other admin prompts
 	if (Settings.Toggles.RemoveCommandBars) then
-		local Targets = ({ "KCoreUI", "HDAdminGuis", "Essentials Client", "Cmdr" });
+		local Targets = ({ "KCoreUI", "HDAdminGuis", "Essentials Client", "Cmdr", "FluxUILayerTopbar" });
 		local ClearCommandBar = function(UI)
 			if (Discover(Targets, UI.Name)) then
 				Destroy(UI);
