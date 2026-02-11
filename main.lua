@@ -120,7 +120,6 @@ local Services = {
 	Stats = GetService("Stats"),
 	GroupService = GetService("GroupService"),
 	GuiService = GetService("GuiService"),
-	VirtualUser = GetService("VirtualUser"),
 }
 
 local Vuln = ({
